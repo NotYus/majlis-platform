@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B1626">
+<meta name="author" content="روّاد">
+<title>منصّة المجلس</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<script>document.documentElement.dir='rtl';document.documentElement.lang='ar';</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: dark navy rail (sidebar on desktop, bottom tabs on phones) beside an ivory working surface; gold marks the council, four fixed hues mark the companies. */
+  --head:#0B1626; --ink:#0B1626; --ink2:#13233A; --navy:#1B2F4B;
+  --bg:#F6F2EA; --surface:#FFFFFF; --surface2:#FBF8F2; --line:#E7DECD; --line2:#F0EADF;
+  --gold:#B8925A; --gold2:#D9BC84; --gold3:#8A6A3B;
+  --text:#1D2633; --text2:#4A5463; --muted:#7A8392;
+  /* categorical — fixed order, validated (light) */
+  --c-clinic:#1F5FA8; --c-factory:#C08A2E; --c-law:#8E4BB0; --c-edu:#119C84; --c-exp:#B9C1CC;
+  --grid:#EFE8DA; --axis:#CFC5B3; --hover:#FCFAF5; --scrim:rgba(8,17,30,.5); --cur:#F6EDD9;
+  /* status — reserved */
+  --good:#2F7D4F; --good-bg:#E3F1E8; --warn:#9A6A12; --warn-bg:#FBEFD6; --crit:#B23A2E; --crit-bg:#F8E2DF; --idle:#5B6574; --idle-bg:#ECEFF3; --info:#2D5B9A; --info-bg:#E5ECF6;
+  --r:14px; --shadow:0 1px 2px rgba(11,22,38,.04),0 8px 24px rgba(11,22,38,.05);
+  --display:"Amiri",Georgia,serif; --body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --head:#F1E9DA; --bg:#0A111C; --surface:#121B29; --surface2:#172234; --line:#263449; --line2:#1C2838;
+  --gold:#C9A465; --gold3:#D9BC84; --text:#E6E1D7; --text2:#B9C1CD; --muted:#8D97A6;
+  --c-clinic:#5B8FD6; --c-factory:#B98222; --c-law:#A779CC; --c-edu:#14967E; --c-exp:#4A5668;
+  --grid:#1E2A3B; --axis:#33435A; --hover:#162131; --scrim:rgba(0,0,0,.6); --cur:#2A2617;
+  --good:#7CCB98; --good-bg:#16301F; --warn:#E3B45A; --warn-bg:#33270F; --crit:#F08A7E; --crit-bg:#3A1A17; --idle:#A9B3C1; --idle-bg:#222D3C; --info:#8DB4EA; --info-bg:#172A45;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --head:#F1E9DA; --bg:#0A111C; --surface:#121B29; --surface2:#172234; --line:#263449; --line2:#1C2838;
+  --gold:#C9A465; --gold3:#D9BC84; --text:#E6E1D7; --text2:#B9C1CD; --muted:#8D97A6;
+  --c-clinic:#5B8FD6; --c-factory:#B98222; --c-law:#A779CC; --c-edu:#14967E; --c-exp:#4A5668;
+  --grid:#1E2A3B; --axis:#33435A; --hover:#162131; --scrim:rgba(0,0,0,.6); --cur:#2A2617;
+  --good:#7CCB98; --good-bg:#16301F; --warn:#E3B45A; --warn-bg:#33270F; --crit:#F08A7E; --crit-bg:#3A1A17; --idle:#A9B3C1; --idle-bg:#222D3C; --info:#8DB4EA; --info-bg:#172A45;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--body);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+.serif{font-family:var(--display)}
+a{color:inherit;text-decoration:none}
+
+/* layout */
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+aside{background:radial-gradient(140% 80% at 50% 0%,#18304F 0%,var(--ink) 65%);color:#E9E2D3;padding:24px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 22px;border-bottom:1px solid rgba(217,188,132,.18)}
+.brand b{font-family:var(--display);font-size:21px;color:var(--gold2);display:block;line-height:1.2}
+.brand span{font-size:11.5px;color:#9AA6B8}
+nav{margin-top:18px;display:flex;flex-direction:column;gap:2px}
+nav .grp{font-size:11px;color:#7F8CA0;margin:16px 10px 6px}
+nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:#CBD3DF;font-size:14px}
+nav a:hover{background:rgba(255,255,255,.05)}
+nav a.on{background:linear-gradient(270deg,rgba(217,188,132,.18),rgba(217,188,132,.04));color:#F4E6C6;box-shadow:inset -3px 0 0 var(--gold)}
+nav a svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+nav .dot{width:9px;height:9px;border-radius:3px;flex:none}
+nav .badge{margin-right:auto;background:var(--crit);color:#fff;font-size:11px;border-radius:10px;padding:0 7px}
+.aside-foot{margin-top:auto;font-size:11px;color:#7F8CA0;padding:10px;border-top:1px solid rgba(217,188,132,.18)}
+main{padding-block:28px 60px;padding-left:max(36px, env(safe-area-inset-left, 0px));padding-right:36px;min-width:0}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.top h1{font-family:var(--display);font-size:34px;line-height:1.2;color:var(--head)}
+.top .sub{color:var(--muted);font-size:13px}
+.demo{font-size:12px;color:var(--warn);background:var(--warn-bg);border-radius:20px;padding:3px 12px}
+
+/* primitives */
+.grid{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);min-width:0}
+.card h3{font-size:15px;font-weight:600;color:var(--head);display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:12px}
+.card h3 small{font-weight:400;color:var(--muted);font-size:12px}
+.tile .lbl{font-size:12.5px;color:var(--muted)}
+.tile .val{font-family:var(--display);font-size:34px;font-weight:700;color:var(--head);line-height:1.25;margin-top:4px}
+.tile .delta{font-size:12px;margin-top:2px}
+.up{color:var(--good)}.down{color:var(--crit)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 14px;cursor:pointer;font-size:13.5px}
+.btn:hover{border-color:var(--gold)}
+.btn.primary{background:var(--ink);color:#F4E6C6;border-color:var(--gold3)}
+.btn.primary:hover{background:var(--navy)}
+.btn.gold{background:linear-gradient(180deg,#E3C68E,#B8925A);border-color:#B8925A;color:#0B1626;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:20px;padding:2px 10px;white-space:nowrap}
+.pill svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.s-good{background:var(--good-bg);color:var(--good)}.s-warn{background:var(--warn-bg);color:var(--warn)}.s-crit{background:var(--crit-bg);color:var(--crit)}.s-idle{background:var(--idle-bg);color:var(--idle)}.s-info{background:var(--info-bg);color:var(--info)}
+.swatch{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+hr.sep{border:none;border-top:1px solid var(--line2);margin:12px 0}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+select,input[type=text],input[type=date],input[type=search],textarea{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;min-width:0}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--gold2);outline-offset:0}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:none;background:none;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2)}
+.seg button.on{background:var(--ink);color:#F4E6C6}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.split{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.split2{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.dec-cards{display:none}
+.tabbar,.scrim{display:none}
+.credit{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.credit b{color:var(--gold3);font-weight:600}
+.credit-mark{width:8px;height:8px;transform:rotate(45deg);border:1.5px solid var(--gold)}
+.tile .val,td{font-variant-numeric:tabular-nums}
+
+/* company cards */
+.co{position:relative;overflow:hidden;cursor:pointer;transition:transform .15s}
+.co:hover{transform:translateY(-2px)}
+.co .bar{position:absolute;top:0;right:0;left:0;height:4px}
+.co .name{font-weight:700;font-size:15px;color:var(--head)}
+.co .kv{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:14px}
+.co .kv div span{display:block;font-size:11.5px;color:var(--muted)}
+.co .kv div b{font-size:16px;color:var(--head)}
+.meter{height:6px;border-radius:4px;background:var(--line2);overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;border-radius:4px}
+
+/* tables */
+table{width:100%;border-collapse:separate;border-spacing:0}
+th{font-size:12px;font-weight:600;color:var(--muted);text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface2);position:sticky;top:0}
+td{padding:11px 12px;border-bottom:1px solid var(--line2);vertical-align:middle}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--hover)}
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+
+/* chart */
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#F1E9DA;border-radius:10px;padding:8px 12px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);white-space:nowrap;opacity:0;transition:opacity .1s;z-index:5}
+.tip b{color:var(--gold2);display:block;margin-bottom:3px}
+.tip .r{display:flex;align-items:center;gap:7px;justify-content:space-between}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:18px;width:min(640px,100%);max-height:92vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.modal header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modal header h2{font-family:var(--display);font-size:24px}
+.modal .body{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal .full{grid-column:1/-1}
+.modal label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--text2);font-weight:500}
+.modal footer{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-start}
+.err{color:var(--crit);font-size:12.5px;grid-column:1/-1;display:none}
+.x{border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted)}
+
+/* misc components */
+.ladder{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end}
+.lvl{border:1px solid var(--line);border-bottom:4px solid var(--gold);border-radius:12px 12px 0 0;padding:12px;background:var(--surface);display:flex;flex-direction:column;cursor:pointer}
+.lvl.on{background:var(--ink);color:#F1E6CF;border-color:var(--gold3)}
+.lvl.on b{color:#F1E6CF}
+.lvl.on .muted{color:#AEB8C7}
+.lvl .n{font-family:var(--display);font-size:26px;color:var(--gold);line-height:1}
+.agenda .it{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line2)}
+.agenda .it .m{font-family:var(--display);font-size:22px;color:var(--gold3);text-align:center}
+.agenda .it.cur{background:linear-gradient(270deg,var(--cur),transparent);border-radius:10px}
+.timer{font-family:var(--display);font-size:46px;color:var(--head);line-height:1}
+.member{display:flex;gap:14px;align-items:flex-start}
+.avatar{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:20px;flex:none;background:var(--ink);color:var(--gold2)}
+.check{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);cursor:pointer}
+.check input{margin-top:5px;accent-color:var(--ink);width:16px;height:16px}
+.check.done span{color:var(--muted);text-decoration:line-through}
+.phase-head{display:flex;align-items:center;gap:12px}
+.phase-num{width:38px;height:38px;border-radius:50%;background:var(--ink);color:var(--gold2);display:grid;place-items:center;font-family:var(--display);font-size:19px;border:2px solid var(--gold)}
+.kpi{padding:14px 0;border-bottom:1px solid var(--line2)}
+.kpi:last-child{border-bottom:none}
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom, 0px));left:calc(24px + env(safe-area-inset-left, 0px));background:var(--ink);color:#F1E6CF;padding:10px 18px;border-radius:12px;opacity:0;transform:translateY(10px);transition:.2s;z-index:60}
+.toast.show{opacity:1;transform:none}
+.hamb{display:none}
+@media (max-width:980px){
+  .app{grid-template-columns:1fr}
+  aside{position:fixed;inset:0 0 0 auto;width:min(290px,86vw);z-index:40;transform:translateX(105%);transition:transform .2s;padding-top:calc(24px + env(safe-area-inset-top, 0px));padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));height:100%;overflow:auto}
+  aside.open{transform:none}
+  .scrim{display:block;position:fixed;inset:0;background:var(--scrim);z-index:39;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim.open{opacity:1;pointer-events:auto}
+  main{padding-block:16px calc(96px + env(safe-area-inset-bottom, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+  .split,.split2{grid-template-columns:minmax(0,1fr)}
+  .ladder{grid-template-columns:repeat(3,1fr)}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--ink);border-top:1px solid rgba(217,188,132,.25);padding-bottom:env(safe-area-inset-bottom, 0px);padding-left:max(8px, env(safe-area-inset-left, 0px));padding-right:max(8px, env(safe-area-inset-right, 0px))}
+  .tabbar a,.tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;color:#AEB8C7;font-size:11px;background:none;border:none;cursor:pointer;position:relative}
+  .tabbar a.on{color:#F4E6C6}
+  .tabbar a.on::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:#D9BC84}
+  .tabbar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .tabbar .badge{position:absolute;top:6px;margin-right:-26px;background:#B23A2E;color:#fff;font-size:10px;border-radius:9px;padding:0 5px;line-height:16px}
+}
+@media (max-width:640px){
+  .top{margin-bottom:14px}
+  .top h1{font-size:27px}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .tile{padding:14px}
+  .tile .val{font-size:25px}
+  .card{padding:15px 14px}
+  .co .kv{gap:8px 10px}
+  .ladder{grid-template-columns:repeat(2,1fr)}
+  .ladder .lvl{height:auto!important;min-height:120px}
+  .tbl-wrap{display:none}
+  .dec-cards{display:grid;gap:10px}
+  .dec-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:8px;cursor:pointer}
+  .dec-card .meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12.5px;color:var(--muted)}
+  .filters{gap:8px}
+  .filters select,.filters input{flex:1 1 100%}
+  .seg{overflow-x:auto;max-width:100%}
+  .q-grid{grid-template-columns:1fr!important}
+  .modal-bg{align-items:flex-end;padding:0}
+  .modal{border-radius:18px 18px 0 0;max-height:94vh;padding-bottom:env(safe-area-inset-bottom, 0px)}
+  .modal .body{grid-template-columns:1fr}
+  .timer{font-size:36px}
+  .card h3{flex-wrap:wrap}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="app">
+  <aside id="aside">
+    <div class="brand">
+      <svg width="40" height="40" viewBox="0 0 100 100"><g fill="none" stroke="#D9BC84" stroke-width="3"><rect x="22" y="22" width="56" height="56"/><rect x="22" y="22" width="56" height="56" transform="rotate(45 50 50)"/><circle cx="50" cy="50" r="15"/></g></svg>
+      <div><b>منصّة المجلس</b><span>المجلس الإشرافي المشترك</span></div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="aside-foot"><div style="color:#D9BC84;font-weight:600;margin-bottom:6px">صُمّم وطُوّر بواسطة روّاد</div>نموذج أولي للعرض · البيانات تجريبية وتُحفظ في هذا المتصفح<br><a href="#" id="reset" style="color:#D9BC84">إعادة تعيين البيانات</a></div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div class="scrim" id="scrim"></div>
+<nav class="tabbar" id="tabbar" aria-label="التنقل السريع"></nav>
+
+<div class="modal-bg" id="modal"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= Data ================= */
+const tok = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const COMPANIES = [
+  {id:'clinic', name:'عيادات النجوم السبعة الطبية', short:'النجوم السبعة', color:'var(--c-clinic)', get hex(){return tok('--c-clinic');}},
+  {id:'factory',name:'شركة العلامة الكبرى للصناعات الخشبية', short:'العلامة الكبرى', color:'var(--c-factory)', get hex(){return tok('--c-factory');}},
+  {id:'law',    name:'شركة المعرفة القانونية للمحاماة', short:'المعرفة القانونية', color:'var(--c-law)', get hex(){return tok('--c-law');}},
+  {id:'edu',    name:'شركة نوليدج للتعليم', short:'نوليدج', color:'var(--c-edu)', get hex(){return tok('--c-edu');}},
+];
+const MONTHS = ['يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر'];
+const STATUSES = ['لم يبدأ','جارٍ','مكتمل','متأخر'];
+const MEMBERS = [
+  {name:'الدكتور خالد العيسى', role:'رئيس المجلس', resp:'إقرار جدول الأعمال، وترؤس الاجتماعات، وتوجيه الأولويات، واعتماد مخرجات المجلس ضمن صلاحياته.', key:'chair'},
+  {name:'الأستاذة رهف خالد العيسى', role:'نائبة رئيس المجلس', resp:'ترؤس الاجتماعات عند تفويضها، ومتابعة الملفات المكلّفة بها، ومراجعة تقدم المبادرات.', key:'vice'},
+  {name:'الممثل الإداري', role:'عضو وأمين المجلس', resp:'جمع التقارير، وإعداد جدول الأعمال والمحاضر، وإدارة سجل القرارات، ومتابعة التنفيذ والتصعيد.', key:'sec'},
+  {name:'الممثل المالي', role:'عضو المجلس', resp:'إعداد التقرير المالي الموحد مع إظهار نتائج كل شركة، وتحليل الانحرافات ورفع التوصيات.', key:'fin'},
+  {name:'ممثل عيادات النجوم السبعة', role:'عضو المجلس', resp:'دقة بيانات العيادات، وعرض نتائجها وتحدياتها، وتنفيذ القرارات ورفع أدلة الإنجاز.', key:'clinic'},
+  {name:'ممثل العلامة الكبرى', role:'عضو المجلس', resp:'دقة بيانات المصنع، وعرض نتائجه وتحدياته، وتنفيذ القرارات ورفع أدلة الإنجاز.', key:'factory'},
+  {name:'ممثل المعرفة القانونية', role:'عضو المجلس', resp:'عرض مؤشرات العمل والتحصيل دون تفاصيل قضايا العملاء، وتنفيذ القرارات.', key:'law'},
+  {name:'ممثل نوليدج للتعليم', role:'عضو المجلس', resp:'دقة بيانات الشركة، وعرض نتائجها وتحدياتها، وتنفيذ القرارات ورفع أدلة الإنجاز.', key:'edu'},
+];
+const LEVELS = [
+  {t:'التشغيل اليومي ضمن الخطة والموازنة', who:'يقرره مدير الشركة ويعرض نتائجه دوريًا.', by:'مدير الشركة'},
+  {t:'التعثر التشغيلي أو الانحراف عن المستهدف', who:'يقدّم مدير الشركة خطة معالجة للمجلس.', by:'المدير ← المجلس'},
+  {t:'احتياج خارج الموازنة أو يتجاوز صلاحية المدير', who:'يُعرض على المجلس للدراسة، ويعتمد ممن يملك الصلاحية.', by:'المجلس ← صاحب الصلاحية'},
+  {t:'تعيين أو تغيير قيادة رئيسية', who:'يناقشه المجلس ويرفع توصيته لصاحب الصلاحية.', by:'توصية المجلس'},
+  {t:'التوسع أو فرع أو شراكة أو التزام جوهري', who:'يُرفق بدراسة مالية وتشغيلية ويُرفع للاعتماد.', by:'دراسة ← اعتماد'},
+  {t:'الخدمات أو التكاليف المشتركة بين الشركات', who:'توثّق آلية تقديمها وتوزيع تكلفتها واعتمادها لكل شركة.', by:'توثيق لكل شركة'},
+];
+const AGENDA = [
+  {m:10, t:'مراجعة القرارات السابقة والمتأخرة'},
+  {m:15, t:'المؤشرات المالية والسيولة'},
+  {m:10, t:'عرض عيادات النجوم السبعة'},
+  {m:10, t:'عرض العلامة الكبرى'},
+  {m:10, t:'عرض المعرفة القانونية'},
+  {m:10, t:'عرض نوليدج للتعليم'},
+  {m:20, t:'الموضوعات المشتركة والقرارات المطلوبة'},
+  {m:5,  t:'تثبيت القرارات والمسؤوليات والمواعيد'},
+];
+const REPORT_ITEMS = ['النتائج الفعلية مقارنة بالمستهدف','الإيرادات والمصروفات والنتيجة التشغيلية','السيولة والتحصيل والالتزامات القادمة','أبرز الإنجازات والتحديات','حالة القرارات والمبادرات السابقة','القرارات المطلوبة مع التوصية والتكلفة والأثر'];
+
+function seed(){
+  return {
+    fin:{
+      clinic:{rev:[820,845,870,905,940,975], exp:[700,712,725,742,760,776], cash:1120, coll:91, payables:380},
+      factory:{rev:[1420,1390,1360,1310,1280,1250], exp:[1230,1225,1220,1205,1190,1185], cash:610, coll:76, payables:720},
+      law:{rev:[450,470,465,490,505,520], exp:[300,305,310,312,318,322], cash:905, coll:68, payables:140},
+      edu:{rev:[600,580,640,700,720,750], exp:[520,515,560,600,615,630], cash:705, coll:84, payables:260},
+    },
+    kpis:{
+      clinic:[{t:'عدد الزيارات',v:3420,g:3600,u:''},{t:'إشغال المواعيد',v:78,g:85,u:'%'},{t:'الإلغاءات',v:9,g:7,u:'%',low:true},{t:'التحصيل',v:91,g:95,u:'%'},{t:'رضا المستفيدين',v:4.6,g:4.5,u:' / ٥'}],
+      factory:[{t:'حجم الإنتاج (وحدة)',v:1180,g:1300,u:''},{t:'التسليم في الموعد',v:82,g:95,u:'%'},{t:'الهدر وإعادة العمل',v:6.5,g:4,u:'%',low:true},{t:'هامش الربح',v:11,g:15,u:'%'},{t:'التحصيل',v:76,g:90,u:'%'}],
+      law:[{t:'العقود الجديدة',v:14,g:12,u:''},{t:'الأتعاب المحصّلة من المتعاقد عليها',v:68,g:85,u:'%'},{t:'إنجاز الأعمال في موعدها',v:93,g:95,u:'%'},{t:'مستحقات تجاوزت ٩٠ يومًا',v:22,g:10,u:'%',low:true},{t:'رضا العملاء',v:4.7,g:4.5,u:' / ٥'}],
+      edu:[{t:'العقود والتسجيلات',v:640,g:700,u:''},{t:'جاهزية التنفيذ',v:88,g:95,u:'%'},{t:'هامش المشروعات',v:18,g:20,u:'%'},{t:'التحصيل',v:84,g:90,u:'%'},{t:'رضا المستفيدين',v:4.4,g:4.5,u:' / ٥'}],
+    },
+    reports:{clinic:[1,1,1,1,1,0],factory:[1,1,0,1,0,0],law:[1,1,1,0,1,1],edu:[1,0,0,0,0,0]},
+    priorities:{
+      clinic:['رفع إشغال المواعيد إلى ٨٥٪','خفض الإلغاءات عبر التذكير الآلي','تحسين تحصيل مطالبات التأمين'],
+      factory:['معالجة تأخر التسليم','خفض الهدر وإعادة العمل','تسريع تحصيل المستحقات'],
+      law:['رفع نسبة تحصيل الأتعاب','معالجة المستحقات المتقادمة','تنظيم العقود الجديدة'],
+      edu:['جاهزية مشروعات الفصل القادم','ضبط تكلفة المشروعات','رفع التحصيل'],
+    },
+    decisions:[
+      {id:1,co:'factory',desc:'إعداد خطة معالجة لتأخر التسليم وعرضها على المجلس',owner:'ممثل العلامة الكبرى',due:'2026-11-05',status:'جارٍ',evidence:''},
+      {id:2,co:'all',desc:'إعداد مصفوفة الصلاحيات المالية والإدارية',owner:'الممثل الإداري',due:'2026-12-01',status:'جارٍ',evidence:''},
+      {id:3,co:'all',desc:'ملخص السيولة والالتزامات لكل شركة',owner:'الممثل المالي',due:'2026-11-08',status:'مكتمل',evidence:'تقرير السيولة الموحد — نوفمبر'},
+      {id:4,co:'law',desc:'خطة تحصيل المستحقات التي تجاوزت ٩٠ يومًا',owner:'ممثل المعرفة القانونية',due:'2026-11-20',status:'لم يبدأ',evidence:''},
+      {id:5,co:'clinic',desc:'تفعيل التذكير الآلي بالمواعيد لخفض الإلغاءات',owner:'ممثل عيادات النجوم السبعة',due:'2026-11-30',status:'جارٍ',evidence:''},
+      {id:6,co:'edu',desc:'تقرير الوضع الراهن للشركة',owner:'ممثل نوليدج للتعليم',due:'2026-11-03',status:'لم يبدأ',evidence:''},
+      {id:7,co:'all',desc:'اعتماد نموذج التقرير الشهري الموحد',owner:'الممثل الإداري',due:'2026-11-01',status:'مكتمل',evidence:'النموذج المعتمد في محضر الاجتماع التأسيسي'},
+      {id:8,co:'factory',desc:'دراسة احتياج تمويل خط إنتاج إضافي',owner:'الممثل المالي',due:'2026-12-15',status:'لم يبدأ',evidence:''},
+    ],
+    nextId:9,
+    meeting:{date:'2026-11-25', time:'10:00'},
+    planStart:'2026-10-20',
+    plan:[
+      {t:'التسمية والحصر', d:[1,15], out:'قائمة الأعضاء وتقرير الوضع الراهن', tasks:[['تسمية الأعضاء',1],['حصر الصلاحيات القائمة',1],['جمع البيانات والعقود والالتزامات الأساسية',1],['تقرير الوضع الراهن لكل شركة',0]]},
+      {t:'بناء الإطار', d:[16,30], out:'إطار العمل ولوحة الأداء', tasks:[['إعداد مصفوفة الصلاحيات',0],['اعتماد نماذج التقارير',1],['تحديد المؤشرات والمستهدفات',0]]},
+      {t:'التشغيل', d:[31,60], out:'أول دورة متابعة مكتملة', tasks:[['تشغيل الاجتماعات الشهرية',0],['تشغيل المتابعة الأسبوعية',0],['معالجة الأولويات',0],['خطط تحسين لكل شركة',0]]},
+      {t:'القياس والتقييم', d:[61,90], out:'تقرير تقييم وخطة الربع التالي', tasks:[['قياس النتائج',0],['تقييم أداء المجلس',0],['تعديل الإجراءات',0]]},
+    ],
+  };
+}
+const KEY='majlis-platform-v1';
+let S;
+try{ S = JSON.parse(localStorage.getItem(KEY)) || seed(); }catch(e){ S = seed(); }
+const save = ()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+
+/* ================= Helpers ================= */
+const nf = new Intl.NumberFormat('ar-SA');
+const n = (v, d=0)=> new Intl.NumberFormat('ar-SA',{maximumFractionDigits:d,minimumFractionDigits:0}).format(v);
+const money = k => { // input in thousands SAR
+  if (Math.abs(k) >= 1000) return n(k/1000, 2) + ' مليون';
+  return n(k) + ' ألف';
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const co = id => COMPANIES.find(c=>c.id===id);
+const coName = id => id==='all' ? 'مشترك' : co(id).short;
+const today = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
+const parseD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const fmtD = s => s ? new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{day:'numeric',month:'long'}).format(parseD(s)) : '—';
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const effStatus = d => (d.status!=='مكتمل' && d.due && parseD(d.due) < today()) ? 'متأخر' : d.status;
+const sCls = {'لم يبدأ':'s-idle','جارٍ':'s-info','مكتمل':'s-good','متأخر':'s-crit'};
+const sIco = {'لم يبدأ':'<circle cx="12" cy="12" r="8"/>','جارٍ':'<path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8"/>','مكتمل':'<path d="M5 12.5l4.5 4.5L19 7.5"/>','متأخر':'<path d="M12 7v6M12 16.5v.5"/><circle cx="12" cy="12" r="9"/>'};
+const pill = st => `<span class="pill ${sCls[st]}"><svg viewBox="0 0 24 24">${sIco[st]}</svg>${st}</span>`;
+const addBiz = (date, days) => { // business days; weekend Fri+Sat
+  const d = new Date(date); const step = days<0?-1:1; let left=Math.abs(days);
+  while(left>0){ d.setDate(d.getDate()+step); const w=d.getDay(); if(w!==5 && w!==6) left--; }
+  return d;
+};
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2200); }
+const kpiState = k => { const ok = k.low ? k.v<=k.g : k.v>=k.g; const near = k.low ? k.v <= k.g*1.25 : k.v >= k.g*0.92; return ok?'good':(near?'warn':'crit'); };
+const stLabel = {good:'على المسار',warn:'يحتاج متابعة',crit:'متعثر'};
+const stCls = {good:'s-good',warn:'s-warn',crit:'s-crit'};
+const stIco = {good:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',warn:'<path d="M12 8v5M12 16.5v.5"/>',crit:'<path d="M7 7l10 10M17 7L7 17"/>'};
+const stPill = s => `<span class="pill ${stCls[s]}"><svg viewBox="0 0 24 24">${stIco[s]}</svg>${stLabel[s]}</span>`;
+function coHealth(id){
+  const st = S.kpis[id].map(kpiState);
+  const crit = st.filter(x=>x==='crit').length, warn = st.filter(x=>x==='warn').length;
+  return crit>=3 ? 'crit' : (crit+warn>=2 ? 'warn' : 'good');
+}
+const last = a => a[a.length-1];
+const consolidated = key => MONTHS.map((_,i)=>COMPANIES.reduce((s,c)=>s+S.fin[c.id][key][i],0));
+
+/* ================= Charts ================= */
+// Line chart; time runs right→left (RTL). series: [{name,hex,values}]
+function lineChart(series, opts={}){
+  const small=innerWidth<640, W=small?400:760,H=small?250:(opts.h||260),pl=8,pr=8,pt=16,pb=30, axisW=small?62:56;
+  const all = series.flatMap(s=>s.values);
+  let max = Math.max(...all), min = opts.zero ? 0 : Math.min(...all);
+  const pad=(max-min)*0.12||1; max+=pad; min=Math.max(0,min-pad);
+  const ticks=4, step=(max-min)/ticks;
+  const x = i => W-pr-axisW - i*((W-pr-axisW-pl)/(MONTHS.length-1));
+  const y = v => pt + (H-pt-pb) * (1-(v-min)/(max-min));
+  let g='';
+  for(let t=0;t<=ticks;t++){ const v=min+t*step, yy=y(v); g+=`<line x1="${pl}" x2="${W-pr-axisW+6}" y1="${yy}" y2="${yy}" stroke="${tok('--grid')}" stroke-width="1"/><text x="${W-pr}" y="${yy+4}" font-size="11" fill="${tok('--muted')}" text-anchor="end">${money(v)}</text>`; }
+  MONTHS.forEach((m,i)=>{ g+=`<text x="${x(i)}" y="${H-8}" font-size="11.5" fill="${tok('--muted')}" text-anchor="middle">${m}</text>`; });
+  series.forEach(s=>{
+    const d=s.values.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+    g+=`<path d="${d}" fill="none" stroke="${s.hex}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const li=s.values.length-1;
+    g+=`<circle cx="${x(li)}" cy="${y(s.values[li])}" r="4" fill="${s.hex}" stroke="${tok('--surface')}" stroke-width="2"/>`;
+  });
+  const id='c'+Math.random().toString(36).slice(2,8);
+  const html = `<div class="chart" id="${id}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label||'رسم بياني')}">${g}<line class="xh" x1="0" x2="0" y1="${pt}" y2="${H-pb}" stroke="${tok('--gold')}" stroke-width="1" stroke-dasharray="3 3" opacity="0"/><g class="dots"></g><rect x="0" y="0" width="${W}" height="${H}" fill="transparent"/></svg><div class="tip"></div></div>`;
+  setTimeout(()=>{
+    const el=document.getElementById(id); if(!el) return;
+    const svg=el.querySelector('svg'), tip=el.querySelector('.tip'), xh=el.querySelector('.xh'), dots=el.querySelector('.dots');
+    const hide=()=>{ tip.style.opacity=0; xh.setAttribute('opacity',0); dots.innerHTML=''; };
+    svg.addEventListener('mouseleave',hide);
+    const move=e=>{
+      const r=svg.getBoundingClientRect(); const px=(e.clientX-r.left)*(W/r.width);
+      let bi=0,bd=1e9; MONTHS.forEach((_,i)=>{ const dd=Math.abs(x(i)-px); if(dd<bd){bd=dd;bi=i;} });
+      xh.setAttribute('x1',x(bi)); xh.setAttribute('x2',x(bi)); xh.setAttribute('opacity',1);
+      dots.innerHTML=series.map(s=>`<circle cx="${x(bi)}" cy="${y(s.values[bi])}" r="5" fill="${s.hex}" stroke="${tok('--surface')}" stroke-width="2"/>`).join('');
+      const rows=[...series].sort((a,b)=>b.values[bi]-a.values[bi]).map(s=>`<div class="r"><span class="row" style="gap:6px"><i class="swatch" style="background:${s.hex}"></i>${esc(s.name)}</span><span>${money(s.values[bi])}</span></div>`).join('');
+      tip.innerHTML=`<b>${MONTHS[bi]} ٢٠٢٦</b>${rows}`;
+      const tx=(x(bi)/W)*r.width; tip.style.opacity=1;
+      tip.style.top='8px'; tip.style.left=Math.max(0,Math.min(r.width-tip.offsetWidth,(tx>r.width/2? tx-tip.offsetWidth-14 : tx+14)))+'px';
+    };
+    svg.addEventListener('pointermove',move); svg.addEventListener('pointerdown',move);
+  });
+  return html;
+}
+// Grouped bars: revenue vs expense per month for one company
+function barPair(id){
+  const f=S.fin[id], small=innerWidth<640, W=small?400:760,H=small?230:240,pt=14,pb=30,axisW=small?62:56,pl=6;
+  const max=Math.max(...f.rev,...f.exp)*1.12;
+  const gw=(W-axisW-pl)/MONTHS.length, bw=Math.min(22,gw/4);
+  const y=v=>pt+(H-pt-pb)*(1-v/max);
+  let g='';
+  for(let t=0;t<=4;t++){ const v=max*t/4, yy=y(v); g+=`<line x1="${pl}" x2="${W-axisW+6}" y1="${yy}" y2="${yy}" stroke="${tok('--grid')}"/><text x="${W}" y="${yy+4}" font-size="11" fill="${tok('--muted')}" text-anchor="end">${money(v)}</text>`; }
+  const c=co(id);
+  MONTHS.forEach((m,i)=>{
+    const cx=W-axisW-gw*(i+0.5);
+    const r1=f.rev[i], e1=f.exp[i];
+    const bar=(xx,v,fill,tip)=>`<path d="M${xx} ${H-pb} V${y(v)+4} q0 -4 4 -4 h${bw-8} q4 0 4 4 V${H-pb}Z" fill="${fill}"><title>${tip}</title></path>`;
+    g+=bar(cx+1,r1,c.hex,`${m}: الإيرادات ${money(r1)}`);
+    g+=bar(cx-bw-1,e1,tok('--c-exp'),`${m}: المصروفات ${money(e1)}`);
+    g+=`<text x="${cx}" y="${H-8}" font-size="11.5" fill="${tok('--muted')}" text-anchor="middle">${m}</text>`;
+  });
+  g+=`<line x1="${pl}" x2="${W-axisW+6}" y1="${H-pb}" y2="${H-pb}" stroke="${tok('--axis')}"/>`;
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="الإيرادات والمصروفات الشهرية">${g}</svg></div>
+  <div class="legend" style="margin-top:8px"><span><i class="swatch" style="background:${c.hex}"></i>الإيرادات</span><span><i class="swatch" style="background:var(--c-exp)"></i>المصروفات</span></div>`;
+}
+// Horizontal stacked bar for decision statuses
+function statusBar(counts){
+  const total=Object.values(counts).reduce((a,b)=>a+b,0)||1;
+  const col={'مكتمل':'var(--good)','جارٍ':'var(--info)','لم يبدأ':'var(--idle)','متأخر':'var(--crit)'};
+  const segs=STATUSES.filter(s=>counts[s]).map(s=>`<div title="${s}: ${n(counts[s])}" style="flex:${counts[s]};background:${col[s]};border-radius:4px"></div>`).join('');
+  const leg=STATUSES.map(s=>`<span><i class="swatch" style="background:${col[s]}"></i>${s} <b>${n(counts[s]||0)}</b></span>`).join('');
+  return `<div style="display:flex;gap:2px;height:14px;margin:6px 0 12px">${segs}</div><div class="legend">${leg}</div>`;
+}
+
+/* ================= Views ================= */
+const ICON = {
+  dash:'<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>',
+  dec:'<path d="M9 5h10M9 12h10M9 19h10"/><path d="M4 5l1 1 2-2M4 12l1 1 2-2M4 19l1 1 2-2"/>',
+  meet:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  auth:'<path d="M4 20h4v-5H4zM10 20h4V10h-4zM16 20h4V4h-4z"/>',
+  plan:'<path d="M3 12h4l3 7 4-14 3 7h4"/>',
+  team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.5c2.3.2 4 1.8 4.6 4.5"/>',
+};
+function renderTabbar(route){
+  const late = S.decisions.filter(d=>effStatus(d)==='متأخر').length;
+  const t=(h,ic,lbl,extra='')=>`<a href="#${h}" class="${route===h?'on':''}"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${lbl}${extra}</a>`;
+  $('#tabbar').innerHTML = t('dashboard','dash','اللوحة') + t('decisions','dec','القرارات', late?`<span class="badge">${n(late)}</span>`:'') + t('meetings','meet','الاجتماعات') + t('plan','plan','الخطة')
+    + `<button type="button" onclick="toggleMenu(true)"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>المزيد</button>`;
+}
+window.toggleMenu=open=>{ $('#aside').classList.toggle('open',open); $('#scrim').classList.toggle('open',open); };
+function renderNav(route){
+  const late = S.decisions.filter(d=>effStatus(d)==='متأخر').length;
+  const a=(h,ic,t,extra='')=>`<a href="#${h}" class="${route===h?'on':''}"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${t}${extra}</a>`;
+  $('#nav').innerHTML = a('dashboard','dash','لوحة المجلس')
+    + `<div class="grp">الشركات</div>`
+    + COMPANIES.map(c=>`<a href="#company-${c.id}" class="${route==='company-'+c.id?'on':''}"><i class="dot" style="background:${c.hex}"></i>${c.short}</a>`).join('')
+    + `<div class="grp">الحوكمة</div>`
+    + a('decisions','dec','سجل القرارات', late?`<span class="badge">${n(late)}</span>`:'')
+    + a('meetings','meet','الاجتماعات والنصاب')
+    + a('authority','auth','مستويات الصلاحيات')
+    + a('plan','plan','خطة ٩٠ يومًا')
+    + a('members','team','أعضاء المجلس');
+}
+const header = (title, sub, actions='') => `<div class="top"><div><div class="sub">${sub}</div><h1>${title}</h1></div><div class="row">${actions}<span class="demo">بيانات تجريبية</span></div></div>`;
+
+function viewDashboard(){
+  const rev=consolidated('rev'), exp=consolidated('exp');
+  const r=last(rev), e=last(exp), pr=rev[rev.length-2], pe=exp[exp.length-2];
+  const op=r-e, pop=pr-pe;
+  const cash=COMPANIES.reduce((s,c)=>s+S.fin[c.id].cash,0);
+  const pay=COMPANIES.reduce((s,c)=>s+S.fin[c.id].payables,0);
+  const counts={}; S.decisions.forEach(d=>{const s=effStatus(d); counts[s]=(counts[s]||0)+1;});
+  const late=S.decisions.filter(d=>effStatus(d)==='متأخر');
+  const pct=(a,b)=>{const v=(a-b)/b*100; return `<span class="${v>=0?'up':'down'}">${v>=0?'▲':'▼'} ${n(Math.abs(v),1)}٪</span> <span class="muted">عن الشهر السابق</span>`;};
+  const md=parseD(S.meeting.date); const days=Math.round((md-today())/864e5);
+  const series=COMPANIES.map(c=>({name:c.short,hex:c.hex,values:S.fin[c.id].rev}));
+  return header('لوحة المجلس', 'نظرة موحّدة على الشركات الأربع · '+MONTHS[MONTHS.length-1]+' ٢٠٢٦')
+  + `<div class="grid tiles">
+      <div class="card tile"><div class="lbl">الإيرادات الموحدة (الشهر)</div><div class="val">${money(r)}</div><div class="delta">${pct(r,pr)}</div></div>
+      <div class="card tile"><div class="lbl">النتيجة التشغيلية الموحدة</div><div class="val">${money(op)}</div><div class="delta">${pct(op,pop)}</div></div>
+      <div class="card tile"><div class="lbl">السيولة المتاحة</div><div class="val">${money(cash)}</div><div class="delta muted">التزامات قادمة: ${money(pay)}</div></div>
+      <div class="card tile"><div class="lbl">قرارات متأخرة</div><div class="val" style="color:${late.length?'var(--crit)':'var(--ink)'}">${n(late.length)}</div><div class="delta muted">من أصل ${n(S.decisions.length)} قرارًا في السجل</div></div>
+    </div>
+    <div class="grid split" style="margin-top:16px" id="dashRow">
+      <div class="card"><h3>الإيرادات الشهرية بحسب الشركة <small>بالريال · مرّر المؤشر للتفاصيل</small></h3>
+        ${lineChart(series,{label:'الإيرادات الشهرية للشركات الأربع'})}
+        <div class="legend" style="margin-top:10px">${COMPANIES.map(c=>`<span><i class="swatch" style="background:${c.hex}"></i>${c.short}</span>`).join('')}</div>
+      </div>
+      <div class="grid" style="align-content:start">
+        <div class="card"><h3>الاجتماع الشهري القادم <a class="small" style="color:var(--gold3)" href="#meetings">التفاصيل ←</a></h3>
+          <div class="row" style="gap:16px"><div class="serif" style="font-size:44px;line-height:1;color:var(--head)">${n(Math.max(days,0))}</div><div><b>${days>=0?'يومًا متبقيًا':'انعقد'}</b><div class="muted small">${fmtD(S.meeting.date)} · ${esc(S.meeting.time)}</div></div></div>
+          <hr class="sep"><div class="small">موعد استلام التقارير: <b>${fmtD(iso(addBiz(md,-3)))}</b></div><div class="small">موعد تعميم المحضر: <b>${fmtD(iso(addBiz(md,2)))}</b></div>
+        </div>
+        <div class="card"><h3>حالة القرارات <a class="small" style="color:var(--gold3)" href="#decisions">السجل ←</a></h3>${statusBar(counts)}</div>
+      </div>
+    </div>
+    <h2 class="serif" style="font-size:24px;margin:26px 0 12px;color:var(--head)">الشركات</h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr))">
+      ${COMPANIES.map(c=>{const f=S.fin[c.id]; const h=coHealth(c.id); const m=(last(f.rev)-last(f.exp))/last(f.rev)*100; const done=S.reports[c.id].filter(Boolean).length;
+        return `<div class="card co" onclick="location.hash='company-${c.id}'"><i class="bar" style="background:${c.hex}"></i>
+          <div class="row between"><span class="name">${c.short}</span>${stPill(h)}</div>
+          <div class="kv"><div><span>إيرادات الشهر</span><b>${money(last(f.rev))}</b></div><div><span>الهامش التشغيلي</span><b>${n(m,1)}٪</b></div>
+          <div><span>التحصيل</span><b>${n(f.coll)}٪</b><div class="meter"><i style="width:${f.coll}%;background:${c.hex}"></i></div></div>
+          <div><span>التقرير الشهري</span><b>${n(done)} / ${n(6)}</b><div class="meter"><i style="width:${done/6*100}%;background:var(--gold)"></i></div></div></div>
+        </div>`;}).join('')}
+    </div>
+    <div class="card" style="margin-top:16px"><h3>يتطلب انتباه المجلس</h3>
+      ${late.length? late.map(d=>`<div class="row between" style="padding:9px 0;border-bottom:1px solid var(--line2)"><span><b>${esc(d.desc)}</b><span class="muted small"> · ${coName(d.co)} · ${esc(d.owner)}</span></span><span class="row">${pill('متأخر')}<span class="small muted">كان مستحقًا ${fmtD(d.due)}</span></span></div>`).join('') : '<div class="muted">لا توجد قرارات متأخرة.</div>'}
+      ${COMPANIES.filter(c=>coHealth(c.id)==='crit').map(c=>`<div class="row between" style="padding:9px 0;border-bottom:1px solid var(--line2)"><span><b>${c.short}</b><span class="muted small"> · مؤشرات متعددة دون المستهدف — يُطلب خطة معالجة (المستوى ٢)</span></span>${stPill('crit')}</div>`).join('')}
+    </div>`;
+}
+
+function viewCompany(id){
+  const c=co(id); if(!c) return viewDashboard();
+  const f=S.fin[id], k=S.kpis[id];
+  const decs=S.decisions.filter(d=>d.co===id);
+  return header(c.name, `<span class="row" style="gap:6px"><i class="swatch" style="background:${c.hex}"></i>ملف الشركة · ${MONTHS[MONTHS.length-1]} ٢٠٢٦</span>`, `<button class="btn primary" onclick="openDecision(null,'${id}')">+ قرار لهذه الشركة</button>`)
+  + `<div class="grid tiles">
+      <div class="card tile"><div class="lbl">الإيرادات</div><div class="val">${money(last(f.rev))}</div></div>
+      <div class="card tile"><div class="lbl">المصروفات</div><div class="val">${money(last(f.exp))}</div></div>
+      <div class="card tile"><div class="lbl">النتيجة التشغيلية</div><div class="val">${money(last(f.rev)-last(f.exp))}</div></div>
+      <div class="card tile"><div class="lbl">السيولة</div><div class="val">${money(f.cash)}</div><div class="delta muted">التزامات قادمة ${money(f.payables)}</div></div>
+    </div>
+    <div class="grid split2" style="margin-top:16px">
+      <div class="card"><h3>الإيرادات والمصروفات <small>آخر ستة أشهر</small></h3>${barPair(id)}</div>
+      <div class="card"><h3>مؤشرات الأداء <small>الفعلي مقابل المستهدف</small></h3>
+        ${k.map((x,i)=>{const s=kpiState(x); const ratio=x.low? Math.min(1,x.g/x.v) : Math.min(1,x.v/x.g);
+          return `<div class="kpi"><div class="row between"><span>${x.t}</span>${stPill(s)}</div>
+          <div class="row between" style="margin-top:4px"><b style="font-size:18px">${n(x.v,1)}${x.u}</b><span class="muted small">المستهدف ${n(x.g,1)}${x.u}${x.low?' (الأقل أفضل)':''}</span></div>
+          <div class="meter"><i style="width:${ratio*100}%;background:${c.hex}"></i></div></div>`;}).join('')}
+      </div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));margin-top:16px">
+      <div class="card"><h3>التقرير الشهري <small>${n(S.reports[id].filter(Boolean).length)} من ${n(6)} مكتمل</small></h3>
+        ${REPORT_ITEMS.map((t,i)=>`<label class="check ${S.reports[id][i]?'done':''}"><input type="checkbox" ${S.reports[id][i]?'checked':''} onchange="S.reports['${id}'][${i}]=this.checked?1:0;save();render()"><span>${t}</span></label>`).join('')}
+        <div class="small muted" style="margin-top:8px">يُرسل قبل الاجتماع بثلاثة أيام عمل · صفحتان كحد أقصى</div>
+      </div>
+      <div class="card"><h3>أهم ثلاث أولويات</h3>
+        ${S.priorities[id].map((p,i)=>`<div class="row" style="padding:7px 0"><span class="serif" style="color:var(--gold);font-size:22px;width:20px">${n(i+1)}</span><input type="text" value="${esc(p)}" style="flex:1" onchange="S.priorities['${id}'][${i}]=this.value;save();toast('تم الحفظ')"></div>`).join('')}
+      </div>
+      <div class="card"><h3>قرارات الشركة <small>${n(decs.length)}</small></h3>
+        ${decs.length? decs.map(d=>`<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line2);cursor:pointer" onclick="openDecision(${d.id})"><span>${esc(d.desc)}</span>${pill(effStatus(d))}</div>`).join(''):'<div class="muted">لا توجد قرارات.</div>'}
+      </div>
+    </div>`;
+}
+
+let F={co:'',st:'',q:''};
+function viewDecisions(){
+  const rows=S.decisions.filter(d=>(!F.co||d.co===F.co)&&(!F.st||effStatus(d)===F.st)&&(!F.q||(d.desc+d.owner).includes(F.q)))
+    .sort((a,b)=>(effStatus(a)==='متأخر'?-1:0)-(effStatus(b)==='متأخر'?-1:0) || a.due.localeCompare(b.due));
+  return header('سجل القرارات','قرار واحد · مسؤول واحد · لا يُغلق إلا بدليل إنجاز', `<button class="btn" onclick="exportCSV()">نسخ CSV</button><button class="btn primary" onclick="openDecision()">+ قرار جديد</button>`)
+  + `<div class="filters">
+      <select onchange="F.co=this.value;render()"><option value="">كل الشركات</option><option value="all" ${F.co==='all'?'selected':''}>مشترك</option>${COMPANIES.map(c=>`<option value="${c.id}" ${F.co===c.id?'selected':''}>${c.short}</option>`).join('')}</select>
+      <div class="seg">${['',...STATUSES].map(s=>`<button class="${F.st===s?'on':''}" onclick="F.st='${s}';render()">${s||'الكل'}</button>`).join('')}</div>
+      <input type="search" placeholder="بحث في الوصف أو المسؤول" value="${esc(F.q)}" oninput="F.q=this.value;clearTimeout(window._q);window._q=setTimeout(()=>{render();const i=document.querySelector('input[type=search]');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)">
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>رقم القرار</th><th>الشركة المعنية</th><th>وصف القرار</th><th>مسؤول التنفيذ</th><th>الموعد</th><th>الحالة</th><th>دليل الإنجاز</th></tr></thead><tbody>
+    ${rows.map(d=>`<tr onclick="openDecision(${d.id})"><td class="serif" style="font-size:16px;color:var(--gold3)">ق-${n(String(d.id).padStart(3,'0')).replace(/٬/g,'')}</td>
+      <td><span class="row" style="gap:6px">${d.co==='all'?'<i class="swatch" style="background:var(--gold)"></i>':`<i class="swatch" style="background:${co(d.co).hex}"></i>`}${coName(d.co)}</span></td>
+      <td style="max-width:340px">${esc(d.desc)}</td><td>${esc(d.owner)}</td><td>${fmtD(d.due)}</td><td>${pill(effStatus(d))}</td><td class="small ${d.evidence?'':'muted'}">${esc(d.evidence)||'—'}</td></tr>`).join('') || `<tr><td colspan="7" class="empty">لا توجد قرارات مطابقة.</td></tr>`}
+    </tbody></table></div>
+    <div class="dec-cards">${rows.map(d=>`<div class="dec-card" role="button" tabindex="0" onclick="openDecision(${d.id})"><div class="row between"><span class="serif" style="color:var(--gold3);font-size:17px">ق-${n(String(d.id).padStart(3,'0')).replace(/٬/g,'')}</span>${pill(effStatus(d))}</div><b>${esc(d.desc)}</b><div class="meta"><span class="row" style="gap:5px"><i class="swatch" style="background:${d.co==='all'?'var(--gold)':co(d.co).hex}"></i>${coName(d.co)}</span><span>${esc(d.owner)}</span><span>${fmtD(d.due)}</span></div>${d.evidence?`<div class="small">الدليل: ${esc(d.evidence)}</div>`:''}</div>`).join('') || '<div class="empty">لا توجد قرارات مطابقة.</div>'}</div>
+    <p class="small muted" style="margin-top:10px">يتحوّل القرار تلقائيًا إلى «متأخر» عند تجاوز موعده دون إكمال، ويصعّده أمين المجلس للرئيس ونائبته.</p>`;
+}
+window.openDecision=function(id, presetCo){
+  const d = id ? S.decisions.find(x=>x.id===id) : {id:null,co:presetCo||'all',desc:'',owner:'',due:iso(addBiz(today(),10)),status:'لم يبدأ',evidence:'',reason:''};
+  const owners=MEMBERS.map(m=>m.name);
+  $('#modalBox').innerHTML=`<header><h2>${id?'تعديل القرار ق-'+n(String(id).padStart(3,'0')).replace(/٬/g,''):'قرار جديد'}</h2><button class="x" onclick="closeModal()" aria-label="إغلاق">×</button></header>
+  <div class="body">
+    <label class="full">وصف القرار<textarea id="f_desc" rows="2">${esc(d.desc)}</textarea></label>
+    <label>الشركة المعنية<select id="f_co"><option value="all">مشترك</option>${COMPANIES.map(c=>`<option value="${c.id}" ${d.co===c.id?'selected':''}>${c.short}</option>`).join('')}</select></label>
+    <label>مسؤول التنفيذ (واحد)<select id="f_owner">${owners.map(o=>`<option ${d.owner===o?'selected':''}>${o}</option>`).join('')}</select></label>
+    <label>الموعد المحدد<input type="date" id="f_due" value="${d.due}"></label>
+    <label>الحالة<select id="f_status">${['لم يبدأ','جارٍ','مكتمل'].map(s=>`<option ${d.status===s?'selected':''}>${s}</option>`).join('')}</select></label>
+    <label class="full">دليل الإنجاز (مستند أو نتيجة موثقة)<input type="text" id="f_ev" value="${esc(d.evidence)}" placeholder="مطلوب لإغلاق القرار"></label>
+    <label class="full">سبب التأخر وخطة المعالجة (عند التأخر)<input type="text" id="f_reason" value="${esc(d.reason||'')}"></label>
+    <div class="err" id="f_err"></div>
+  </div>
+  <footer><button class="btn primary" onclick="saveDecision(${id||'null'})">حفظ</button><button class="btn" onclick="closeModal()">إلغاء</button>${id?`<button class="btn" style="margin-right:auto;color:var(--crit)" onclick="delDecision(${id})">حذف</button>`:''}</footer>`;
+  $('#modal').classList.add('open'); setTimeout(()=>$('#f_desc').focus(),50);
+};
+window.closeModal=()=>$('#modal').classList.remove('open');
+window.saveDecision=function(id){
+  const v={co:$('#f_co').value,desc:$('#f_desc').value.trim(),owner:$('#f_owner').value,due:$('#f_due').value,status:$('#f_status').value,evidence:$('#f_ev').value.trim(),reason:$('#f_reason').value.trim()};
+  const err=$('#f_err'); err.style.display='block';
+  if(!v.desc){ err.textContent='اكتب وصف القرار.'; return; }
+  if(!v.due){ err.textContent='حدّد موعد الإنجاز.'; return; }
+  if(v.status==='مكتمل' && !v.evidence){ err.textContent='لا يُغلق القرار إلا بدليل إنجاز — أضف المستند أو النتيجة الموثقة.'; return; }
+  if(id){ Object.assign(S.decisions.find(x=>x.id===id),v); } else { S.decisions.push({id:S.nextId++,...v}); }
+  save(); closeModal(); render(); toast('تم حفظ القرار');
+};
+function ask(title,msg,yes,onYes){
+  $('#modalBox').innerHTML=`<header><h2>${title}</h2><button class="x" onclick="closeModal()" aria-label="إغلاق">×</button></header><div class="body"><p class="full">${msg}</p></div><footer><button class="btn primary" id="askYes" style="background:var(--crit);border-color:var(--crit)">${yes}</button><button class="btn" onclick="closeModal()">تراجع</button></footer>`;
+  $('#modal').classList.add('open'); $('#askYes').onclick=()=>{ closeModal(); onYes(); };
+}
+window.delDecision=function(id){ ask('حذف القرار','سيُحذف هذا القرار من السجل في هذا المتصفح، ولا يمكن التراجع عن ذلك.','حذف القرار',()=>{ S.decisions=S.decisions.filter(x=>x.id!==id); save(); render(); toast('حُذف القرار'); }); };
+window.exportCSV=function(){
+  const h=['رقم القرار','الشركة','الوصف','المسؤول','الموعد','الحالة','دليل الإنجاز'];
+  const rows=S.decisions.map(d=>[d.id,coName(d.co),d.desc,d.owner,d.due,effStatus(d),d.evidence].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(','));
+  const csv=[h.join(','),...rows].join('\n');
+  $('#modalBox').innerHTML=`<header><h2>نسخ السجل بصيغة CSV</h2><button class="x" onclick="closeModal()" aria-label="إغلاق">×</button></header><div class="body"><p class="full small muted">انسخ النص والصقه في Excel أو Google Sheets.</p><textarea id="csvOut" class="full" rows="8" readonly>${esc(csv)}</textarea></div><footer><button class="btn primary" id="csvCopy">نسخ</button><button class="btn" onclick="closeModal()">إغلاق</button></footer>`;
+  $('#modal').classList.add('open');
+  $('#csvCopy').onclick=()=>{ const t=$('#csvOut'); navigator.clipboard.writeText(csv).then(()=>toast('نُسخ السجل')).catch(()=>{ t.focus(); t.select(); toast('النص محدد، انسخه يدويًا'); }); };
+};
+
+let T={running:false,start:0,elapsed:0,iv:null};
+let Q={present:{chair:1,vice:1,sec:1,fin:1,clinic:1,factory:0,law:1,edu:0},co:'',fin:false,conflict:''};
+function quorum(){
+  const p=Object.keys(Q.present).filter(k=>Q.present[k]);
+  const checks=[
+    {ok:p.length>=5, t:`حضور خمسة أعضاء على الأقل (الحاضرون: ${n(p.length)})`},
+    {ok:Q.present.chair||Q.present.vice, t:'حضور الرئيس أو نائبة الرئيس'},
+  ];
+  if(Q.co) checks.push({ok:!!Q.present[Q.co], t:`حضور ممثل ${co(Q.co).short} لأن القرار يخصها`});
+  if(Q.fin) checks.push({ok:!!Q.present.fin, t:'حضور الممثل المالي لأن للقرار أثرًا ماليًا'});
+  const voters=p.filter(k=>k!==Q.conflict).length;
+  return {checks, ok:checks.every(c=>c.ok), voters, need:Math.floor(voters/2)+1};
+}
+function viewMeetings(){
+  const md=parseD(S.meeting.date);
+  const q=quorum();
+  const totalSec=90*60, el=T.elapsed+(T.running?(Date.now()-T.start)/1000:0);
+  let acc=0, cur=-1; AGENDA.forEach((a,i)=>{ if(el>=acc*60 && el<(acc+a.m)*60) cur=i; acc+=a.m; });
+  const mm=Math.floor(el/60), ss=Math.floor(el%60);
+  return header('الاجتماعات والنصاب','الاجتماع الشهري · المتابعة الأسبوعية · المراجعة الربع سنوية')
+  + `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))">
+    <div class="card"><h3>الاجتماع الشهري القادم</h3>
+      <div class="row" style="flex-wrap:wrap"><input type="date" value="${S.meeting.date}" onchange="S.meeting.date=this.value;save();render()"><input type="text" value="${esc(S.meeting.time)}" style="width:90px" onchange="S.meeting.time=this.value;save()"></div>
+      <hr class="sep">
+      <div class="row between"><span>آخر موعد لاستلام التقارير</span><b>${fmtD(iso(addBiz(md,-3)))}</b></div>
+      <div class="small muted">قبل الاجتماع بثلاثة أيام عمل</div>
+      <div class="row between" style="margin-top:8px"><span>آخر موعد لتعميم المحضر</span><b>${fmtD(iso(addBiz(md,2)))}</b></div>
+      <div class="small muted">خلال يومي عمل بعد الاجتماع</div>
+      <hr class="sep">
+      <div class="small"><b>الإيقاع:</b> متابعة أسبوعية يديرها أمين المجلس · اجتماع شهري · مراجعة ربع سنوية · اجتماع استثنائي بطلب الرئيس أو نائبته.</div>
+    </div>
+    <div class="card"><h3>مدقّق النصاب والتصويت</h3>
+      <div class="grid q-grid" style="grid-template-columns:1fr 1fr;gap:4px 12px">
+        ${MEMBERS.map(m=>`<label class="row small" style="cursor:pointer"><input type="checkbox" ${Q.present[m.key]?'checked':''} onchange="Q.present['${m.key}']=this.checked?1:0;render()" style="accent-color:var(--ink)">${m.name.replace('الدكتور ','د. ').replace('الأستاذة ','أ. ')}</label>`).join('')}
+      </div>
+      <hr class="sep">
+      <div class="row" style="flex-wrap:wrap">
+        <select onchange="Q.co=this.value;render()"><option value="">القرار لا يخص شركة بعينها</option>${COMPANIES.map(c=>`<option value="${c.id}" ${Q.co===c.id?'selected':''}>يخص ${c.short}</option>`).join('')}</select>
+        <label class="row small"><input type="checkbox" ${Q.fin?'checked':''} onchange="Q.fin=this.checked;render()">له أثر مالي</label>
+      </div>
+      <select style="margin-top:8px;width:100%" onchange="Q.conflict=this.value;render()"><option value="">لا يوجد تعارض مصالح</option>${MEMBERS.map(m=>`<option value="${m.key}" ${Q.conflict===m.key?'selected':''}>تعارض مصالح: ${m.name}</option>`).join('')}</select>
+      <div style="margin-top:12px">${q.checks.map(c=>`<div class="row small" style="padding:3px 0">${c.ok?stPill('good').replace('على المسار','متحقق'):stPill('crit').replace('متعثر','غير متحقق')}<span>${c.t}</span></div>`).join('')}</div>
+      <div class="card" style="margin-top:10px;background:${q.ok?'var(--good-bg)':'var(--crit-bg)'};border:none;box-shadow:none;padding:12px 14px">
+        <b>${q.ok?'النصاب مكتمل — يمكن اتخاذ القرار':'النصاب غير مكتمل — لا يُتخذ القرار'}</b>
+        <div class="small">يحق التصويت لـ ${n(q.voters)} عضوًا${Q.conflict?' (بعد امتناع صاحب المصلحة، ويُثبت في المحضر)':''} · الأغلبية المطلوبة ${n(q.need)} · عند التعادل يرجّح جانب رئيس الجلسة</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px"><h3>جدول الاجتماع ومؤقّت التسعين دقيقة <span class="row"><button class="btn gold" onclick="timer('toggle')">${T.running?'إيقاف مؤقت':'بدء'}</button><button class="btn" onclick="timer('next')">البند التالي</button><button class="btn" onclick="timer('reset')">إعادة</button></span></h3>
+    <div class="row" style="gap:18px;align-items:center;margin-bottom:6px"><div class="timer" id="timer">${n(mm)}:${n(String(ss).padStart(2,'0')).replace(/٬/g,'')}</div><div style="flex:1"><div class="meter" style="height:10px"><i id="tbar" style="width:${Math.min(100,el/totalSec*100)}%;background:var(--gold)"></i></div><div class="small muted" style="margin-top:4px">من أصل ${n(90)} دقيقة</div></div></div>
+    <div class="agenda">${(()=>{let a=0;return AGENDA.map((x,i)=>{const s=a;a+=x.m;return `<div class="it ${i===cur?'cur':''}"><div class="m">${n(x.m)}</div><div><b>${x.t}</b><div class="small muted">الدقيقة ${n(s)} – ${n(a)}</div></div><div>${el>=a*60?stPill('good').replace('على المسار','تم'):(i===cur?'<span class="pill s-info">جارٍ</span>':'')}</div></div>`;}).join('');})()}</div>
+  </div>`;
+}
+window.timer=function(a){
+  if(a==='toggle'){ if(T.running){T.elapsed+=(Date.now()-T.start)/1000;T.running=false;clearInterval(T.iv);} else {T.start=Date.now();T.running=true;T.iv=setInterval(()=>{ if(location.hash.startsWith('#meetings')) render(); },1000);} }
+  if(a==='reset'){ T.running=false; T.elapsed=0; clearInterval(T.iv); }
+  if(a==='next'){ const el=T.elapsed+(T.running?(Date.now()-T.start)/1000:0); let acc=0; for(const x of AGENDA){acc+=x.m; if(acc*60>el+0.5){ T.elapsed=acc*60; if(T.running) T.start=Date.now(); break;}} }
+  render();
+};
+
+let LV=0;
+function viewAuthority(){
+  const l=LEVELS[LV];
+  return header('مستويات الصلاحيات','لكل قرار مكانه — اختر نوع الطلب لمعرفة مساره')
+  + `<div class="card"><div class="ladder">${LEVELS.map((x,i)=>`<div class="lvl ${i===LV?'on':''}" style="height:${150+i*34}px" onclick="LV=${i};render()"><div class="n">${n(i+1)}</div><b style="font-size:13.5px;margin-top:6px;line-height:1.5">${x.t}</b><span class="small muted" style="margin-top:auto">${x.by}</span></div>`).join('')}</div></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));margin-top:16px">
+    <div class="card"><h3>نوع الطلب</h3><select style="width:100%" onchange="LV=+this.value;render()">${LEVELS.map((x,i)=>`<option value="${i}" ${i===LV?'selected':''}>${n(i+1)} — ${x.t}</option>`).join('')}</select>
+      <div class="card" style="margin-top:12px;background:var(--ink);color:#F1E6CF;border:none"><div class="small" style="color:var(--gold2)">المسار</div><div class="serif" style="font-size:24px;margin-top:4px">${l.by}</div><div style="margin-top:6px;color:#C9D1DD">${l.who}</div></div>
+    </div>
+    <div class="card"><h3>مبادئ ثابتة</h3>
+      <div class="kpi">لا يحل المجلس محل مدير الشركة في إدارة العمل اليومي، وتصدر التوجيهات للموظفين عبر مديرهم المسؤول.</div>
+      <div class="kpi">تُعد مصفوفة الصلاحيات المالية والإدارية (الحدود المالية وأسماء أصحاب الاعتماد) خلال أول ثلاثين يومًا. <span class="pill s-warn">قيد الإعداد</span></div>
+      <div class="kpi">حتى اعتمادها تستمر الصلاحيات القائمة، وتكون مخرجات المجلس فيما يتجاوز التفويض توصيات مرفوعة للاعتماد.</div>
+      <div class="kpi">لا يمنح التصويت صلاحية تتجاوز التفويض المعتمد للمجلس.</div>
+    </div>
+  </div>`;
+}
+
+function viewPlan(){
+  const start=parseD(S.planStart); const day=Math.max(1,Math.min(90,Math.floor((today()-start)/864e5)+1));
+  const all=S.plan.flatMap(p=>p.tasks), done=all.filter(t=>t[1]).length;
+  return header('خطة التأسيس خلال ٩٠ يومًا','من التسمية إلى التقييم')
+  + `<div class="grid tiles">
+      <div class="card tile"><div class="lbl">اليوم الحالي من الخطة</div><div class="val">${n(day)} <span class="small muted">/ ${n(90)}</span></div><div class="meter"><i style="width:${day/90*100}%;background:var(--gold)"></i></div></div>
+      <div class="card tile"><div class="lbl">المهام المنجزة</div><div class="val">${n(done)} <span class="small muted">/ ${n(all.length)}</span></div><div class="meter"><i style="width:${done/all.length*100}%;background:var(--ink)"></i></div></div>
+      <div class="card tile"><div class="lbl">تاريخ البدء</div><input type="date" value="${S.planStart}" style="margin-top:8px" onchange="S.planStart=this.value;save();render()"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));margin-top:16px">
+    ${S.plan.map((p,pi)=>{const dn=p.tasks.filter(t=>t[1]).length; const active=day>=p.d[0]&&day<=p.d[1]; const st=dn===p.tasks.length?'good':(day>p.d[1]?'crit':(active?'warn':null));
+      return `<div class="card" style="${active?'border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,188,132,.25)':''}">
+        <div class="phase-head"><div class="phase-num">${n(pi+1)}</div><div><div class="small muted">الأيام ${n(p.d[0])} – ${n(p.d[1])}</div><b style="font-size:16px">${p.t}</b></div></div>
+        <div style="margin:10px 0">${st?stPill(st).replace('على المسار','مكتملة').replace('متعثر','متأخرة').replace('يحتاج متابعة','جارية'):'<span class="pill s-idle">لم تبدأ</span>'}</div>
+        ${p.tasks.map((t,ti)=>`<label class="check ${t[1]?'done':''}"><input type="checkbox" ${t[1]?'checked':''} onchange="S.plan[${pi}].tasks[${ti}][1]=this.checked?1:0;save();render()"><span>${t[0]}</span></label>`).join('')}
+        <div class="small" style="margin-top:10px"><span class="muted">المخرجات:</span> <b>${p.out}</b></div></div>`;}).join('')}
+    </div>`;
+}
+
+function viewMembers(){
+  return header('أعضاء المجلس','ثمانية أعضاء · لكل عضو مسؤولية واضحة')
+  + `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))">${MEMBERS.map((m,i)=>{const c=co(m.key);
+    return `<div class="card member"><div class="avatar" style="${i===0?'background:linear-gradient(180deg,#E3C68E,#B8925A);color:#0B1626':''}${c?`;background:${c.hex};color:#fff`:''}">${m.name.replace(/^(الدكتور|الأستاذة|ممثل|الممثل)\s*/,'').trim()[0]}</div>
+      <div><b style="font-size:15px">${m.name}</b><div class="small" style="color:var(--gold3)">${m.role}</div><div class="small muted" style="margin-top:6px">${m.resp}</div>
+      <div class="small" style="margin-top:8px">قرارات مسندة: <b>${n(S.decisions.filter(d=>d.owner===m.name&&effStatus(d)!=='مكتمل').length)}</b> مفتوحة</div></div></div>`;}).join('')}</div>
+    <p class="small muted" style="margin-top:14px">يُفضّل أن يكون ممثل كل شركة مديرها التنفيذي أو المسؤول الأول عن تشغيلها، مع صلاحية تنفيذية واضحة داخل شركته.</p>`;
+}
+
+/* ================= Router ================= */
+function render(){
+  const route=(location.hash||'#dashboard').slice(1);
+  renderNav(route); renderTabbar(route);
+  const p=route.startsWith('company-')?'company':route, arg=route.slice(8);
+  const v={dashboard:viewDashboard,company:()=>viewCompany(arg),decisions:viewDecisions,meetings:viewMeetings,authority:viewAuthority,plan:viewPlan,members:viewMembers}[p]||viewDashboard;
+  const y=window.scrollY; $('#main').innerHTML=v()+`<footer class="credit"><span class="credit-mark"></span>صُمّم وطُوّر بواسطة <b>روّاد</b></footer>`; if(render._last===route) window.scrollTo(0,y); else window.scrollTo(0,0);
+  render._last=route;
+  toggleMenu(false);
+}
+window.addEventListener('hashchange',render);
+let _w=innerWidth; window.addEventListener('resize',()=>{ if((innerWidth<640)!==(_w<640)){ _w=innerWidth; render(); } });
+$('#scrim').addEventListener('click',()=>toggleMenu(false));
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render); }catch(e){}
+new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+$('#reset').addEventListener('click',e=>{ e.preventDefault(); ask('إعادة تعيين البيانات','ستعود جميع البيانات التجريبية في هذا المتصفح إلى حالتها الأصلية، وتُحذف تعديلاتك.','إعادة التعيين',()=>{ S=seed(); save(); render(); toast('أُعيدت البيانات التجريبية'); }); });
+render();
+</script>
+
+
+</body>
+</html>
