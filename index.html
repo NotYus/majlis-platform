@@ -102,8 +102,13 @@ select:focus,input:focus,textarea:focus{outline:2px solid var(--gold2);outline-o
 .split2{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
 .dec-cards{display:none}
 .tabbar,.scrim{display:none}
-.credit{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:var(--muted)}
-.credit b{color:var(--gold3);font-weight:600}
+.credit{margin-bottom:56px;margin-top:36px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.credit a{color:var(--gold3);font-weight:700;text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:4px}
+.credit a:hover{color:var(--gold)}
+.wa-fab{position:fixed;z-index:35;left:calc(24px + env(safe-area-inset-left, 0px));bottom:calc(24px + env(safe-area-inset-bottom, 0px));display:inline-flex;align-items:center;gap:8px;padding:11px 18px 11px 20px;border-radius:40px;background:linear-gradient(180deg,#E3C68E,#B8925A);color:#0B1626;font-weight:700;font-size:14px;box-shadow:0 10px 28px rgba(11,22,38,.28);border:1px solid #F2DDAE}
+.wa-fab:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.wa-fab svg{width:20px;height:20px;fill:none;stroke:#0B1626;stroke-width:1.6;stroke-linejoin:round}
+@media (max-width:980px){ .wa-fab{bottom:calc(72px + env(safe-area-inset-bottom, 0px));left:calc(14px + env(safe-area-inset-left, 0px));padding:10px 15px;font-size:13px} }
 .credit-mark{width:8px;height:8px;transform:rotate(45deg);border:1.5px solid var(--gold)}
 .tile .val,td{font-variant-numeric:tabular-nums}
 
@@ -169,7 +174,7 @@ tbody tr:hover td{background:var(--hover)}
 .phase-num{width:38px;height:38px;border-radius:50%;background:var(--ink);color:var(--gold2);display:grid;place-items:center;font-family:var(--display);font-size:19px;border:2px solid var(--gold)}
 .kpi{padding:14px 0;border-bottom:1px solid var(--line2)}
 .kpi:last-child{border-bottom:none}
-.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom, 0px));left:calc(24px + env(safe-area-inset-left, 0px));background:var(--ink);color:#F1E6CF;padding:10px 18px;border-radius:12px;opacity:0;transform:translateY(10px);transition:.2s;z-index:60}
+.toast{position:fixed;bottom:calc(84px + env(safe-area-inset-bottom, 0px));left:calc(24px + env(safe-area-inset-left, 0px));background:var(--ink);color:#F1E6CF;padding:10px 18px;border-radius:12px;opacity:0;transform:translateY(10px);transition:.2s;z-index:60}
 .toast.show{opacity:1;transform:none}
 .hamb{display:none}
 @media (max-width:980px){
@@ -224,7 +229,7 @@ tbody tr:hover td{background:var(--hover)}
       <div><b>منصّة المجلس</b><span>المجلس الإشرافي المشترك</span></div>
     </div>
     <nav id="nav"></nav>
-    <div class="aside-foot"><div style="color:#D9BC84;font-weight:600;margin-bottom:6px">صُمّم وطُوّر بواسطة روّاد</div>نموذج أولي للعرض · البيانات تجريبية وتُحفظ في هذا المتصفح<br><a href="#" id="reset" style="color:#D9BC84">إعادة تعيين البيانات</a></div>
+    <div class="aside-foot"><div style="color:#D9BC84;font-weight:600;margin-bottom:6px">صُمّم وطُوّر بواسطة <a href="https://wa.me/966570091554?text=%D9%85%D8%B1%D8%AD%D8%A8%D9%8B%D8%A7%20%D8%B1%D9%88%D9%91%D8%A7%D8%AF%D8%8C%20%D8%B4%D8%A7%D9%87%D8%AF%D8%AA%20%D9%85%D9%86%D8%B5%D9%91%D8%A9%20%D8%A7%D9%84%D9%85%D8%AC%D9%84%D8%B3%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84" target="_blank" rel="noopener" style="color:#F1DDAE;text-decoration:underline">روّاد</a></div>نموذج أولي للعرض · البيانات تجريبية وتُحفظ في هذا المتصفح<br><a href="#" id="reset" style="color:#D9BC84">إعادة تعيين البيانات</a></div>
   </aside>
   <main id="main"></main>
 </div>
@@ -233,6 +238,7 @@ tbody tr:hover td{background:var(--hover)}
 
 <div class="modal-bg" id="modal"><div class="modal" id="modalBox"></div></div>
 <div class="toast" id="toast"></div>
+<a class="wa-fab" href="https://wa.me/966570091554?text=%D9%85%D8%B1%D8%AD%D8%A8%D9%8B%D8%A7%20%D8%B1%D9%88%D9%91%D8%A7%D8%AF%D8%8C%20%D8%B4%D8%A7%D9%87%D8%AF%D8%AA%20%D9%85%D9%86%D8%B5%D9%91%D8%A9%20%D8%A7%D9%84%D9%85%D8%AC%D9%84%D8%B3%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84" target="_blank" rel="noopener" aria-label="تواصل مع روّاد عبر واتساب"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.8a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.3-4.3A8.5 8.5 0 1 1 20.5 11.8z"/><path d="M9 8.6c.2-.4.5-.4.8-.4h.5c.2 0 .4 0 .5.4l.7 1.6c.1.2 0 .4-.1.6l-.5.6c-.1.1-.2.3 0 .5.6 1 1.4 1.8 2.4 2.4.2.1.4.1.5 0l.6-.7c.2-.2.4-.2.6-.1l1.6.7c.3.1.4.3.4.5v.5c0 .3-.1.6-.4.8-.6.4-1.4.6-2.2.4-2.6-.7-4.7-2.8-5.4-5.4-.2-.7 0-1.5.4-2z" fill="currentColor" stroke="none"/></svg>تواصل مع روّاد</a>
 
 <script>
 /* ================= Data ================= */
@@ -713,7 +719,7 @@ function render(){
   renderNav(route); renderTabbar(route);
   const p=route.startsWith('company-')?'company':route, arg=route.slice(8);
   const v={dashboard:viewDashboard,company:()=>viewCompany(arg),decisions:viewDecisions,meetings:viewMeetings,authority:viewAuthority,plan:viewPlan,members:viewMembers}[p]||viewDashboard;
-  const y=window.scrollY; $('#main').innerHTML=v()+`<footer class="credit"><span class="credit-mark"></span>صُمّم وطُوّر بواسطة <b>روّاد</b></footer>`; if(render._last===route) window.scrollTo(0,y); else window.scrollTo(0,0);
+  const y=window.scrollY; $('#main').innerHTML=v()+`<footer class="credit"><span class="credit-mark"></span>صُمّم وطُوّر بواسطة <a href="https://wa.me/966570091554?text=%D9%85%D8%B1%D8%AD%D8%A8%D9%8B%D8%A7%20%D8%B1%D9%88%D9%91%D8%A7%D8%AF%D8%8C%20%D8%B4%D8%A7%D9%87%D8%AF%D8%AA%20%D9%85%D9%86%D8%B5%D9%91%D8%A9%20%D8%A7%D9%84%D9%85%D8%AC%D9%84%D8%B3%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84" target="_blank" rel="noopener" title="تواصل مع روّاد عبر واتساب">روّاد</a></footer>`; if(render._last===route) window.scrollTo(0,y); else window.scrollTo(0,0);
   render._last=route;
   toggleMenu(false);
 }
