@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0B1626">
 <meta name="author" content="روّاد">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="المجلس">
 <title>منصّة المجلس</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <script>document.documentElement.dir='rtl';document.documentElement.lang='ar';</script>
@@ -404,9 +408,12 @@ a.chip:hover{border-color:var(--gold);color:var(--head)}
 .ibx .it .ac{display:flex;gap:6px;flex-wrap:wrap}
 .brep h4{font-size:15px;color:var(--head);margin:18px 0 6px}
 .brep ul{margin:0;padding-inline-start:20px;display:grid;gap:5px;line-height:1.75}
+.trl{display:grid;gap:8px;max-height:220px;overflow:auto;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+[dir=ltr] .credit,[dir=ltr] body{font-family:"IBM Plex Sans Arabic",system-ui,sans-serif}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<script>if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));</script>
 </head>
 <body>
 <div class="app">
@@ -789,6 +796,63 @@ function v5Seed(o){
   o.journal.sort((a,b)=>a.d.localeCompare(b.d)||a.id-b.id);
   return {appts,insclaims,mos,cases,hours,courses,enrol,loans,letters,quotes,recur,petty,ics};
 }
+/* ================= v6 reference data: oversight, strategy, cash planning, sector additions ================= */
+var EN=(()=>{ try{ return localStorage.getItem('majlis-lang')==='en'; }catch(e){ return false; } })();
+const AUD_AREAS=['المالية','الموارد البشرية والرواتب','المشتريات','المخزون','تقنية المعلومات','الامتثال','الإيرادات والتحصيل','التشغيل'];
+const MACHINES=['منشار CNC الرئيسي','مكبس الألواح','خط الدهان الآلي','ماكينة لصق الحواف','ضاغط الهواء المركزي','رافعة شوكية رقم ٢'];
+const DT_CAUSES=['عطل ميكانيكي','عطل كهربائي','صيانة مخططة','نقص مواد','انتظار مشغّل'];
+function v6Seed(o){
+  const R=PRNG(20261114), pick=a=>a[Math.floor(R()*a.length)], rint=(a,b)=>a+Math.floor(R()*(b-a+1));
+  const dI=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const D0=pD('2026-11-14'), dd=k=>{ const d=new Date(D0); d.setDate(d.getDate()+k); return dI(d); };
+  let id=19001; const nid=()=>id++;
+  // internal audit findings & plan
+  const F=[['clinic','الإيرادات والتحصيل','مطالبات تأمين تُرسل بعد مهلة الشركة','عالية','٧٪ من مطالبات سبتمبر أُرسلت بعد ٤٥ يومًا من الخدمة فرُفضت لتجاوز المهلة التعاقدية.','ربط إعداد الدفعة بإقفال الشهر وتنبيه آلي قبل المهلة بعشرة أيام.','رئيس قسم المطالبات',-6,'قيد المعالجة','اعتمدنا جدول إقفال شهري ونعمل على التنبيه الآلي.'],
+    ['clinic','المخزون','عدم مطابقة جرد المستودع الطبي','متوسطة','فرق ٤٫٢٪ بين الجرد الفعلي والسجل في أصناف التعقيم.','جرد دوري شهري للأصناف عالية الحركة وتوقيع أمين المستودع.','مدير العمليات',20,'مفتوحة',''],
+    ['factory','المخزون','صرف مواد خام دون أمر إنتاج','عالية','٣ عمليات صرف خشب بلوط في أكتوبر دون أمر إنتاج مرتبط بقيمة ٦٢ ألف ريال.','منع الصرف من المستودع إلا بأمر إنتاج معتمد.','أمين المستودع الرئيسي',-12,'مفتوحة',''],
+    ['factory','المشتريات','الشراء من مورد واحد دون عروض منافسة','متوسطة','٥ طلبات شراء فوق ٢٥ ألف ريال اعتُمدت بعرض سعر واحد.','ثلاثة عروض لأي شراء يتجاوز ٢٥ ألف ريال، ومبرر مكتوب عند الاستثناء.','مدير المشتريات',14,'قيد المعالجة','سنطبق قاعدة الثلاثة عروض من ديسمبر.'],
+    ['factory','التشغيل','تأخر الصيانة الوقائية لخط الدهان','متوسطة','آخر صيانة وقائية قبل ١١٠ أيام والمخطط كل ٩٠ يومًا.','جدول صيانة وقائية في نظام المرافق مع تنبيه.','مشرف الصيانة',-3,'بانتظار التحقق','نُفذت الصيانة في ١٠ نوفمبر وأُرفق التقرير.'],
+    ['law','الإيرادات والتحصيل','أتعاب منفّذة غير مفوترة','عالية','١٨٠ ساعة عمل في الربع الثالث لم تُفوتر بقيمة تقديرية ١٥٣ ألف ريال.','فوترة الساعات شهريًا من نظام الساعات ومراجعة الشريك.','الشريك المدير',25,'قيد المعالجة','بدأ تسجيل الساعات في النظام وفوترتها شهريًا.'],
+    ['law','الامتثال','وكالات منتهية لقضايا قائمة','عالية','قضيتان منظورتان بوكالات منتهية.','تنبيه قبل ٣٠ يومًا من انتهاء الوكالة وتجديدها قبل الجلسة.','رئيس قسم التقاضي',-1,'مفتوحة',''],
+    ['edu','المالية','تحصيل الرسوم بعد بدء البرامج','متوسطة','٢٢٪ من المتدربين بدأوا البرامج دون سداد القسط الأول.','لا تفعيل للتسجيل قبل سداد القسط الأول.','مشرف العمليات',10,'مفتوحة',''],
+    ['edu','تقنية المعلومات','حسابات مستخدمين لموظفين غادروا','منخفضة','٤ حسابات فعّالة على منصة التعلم لموظفين انتهت خدمتهم.','إغلاق الحسابات ضمن إجراءات إخلاء الطرف.','مسؤول تقنية المعلومات',-20,'مغلقة','أُغلقت الحسابات وأضيف البند لنموذج إخلاء الطرف.'],
+    ['clinic','الموارد البشرية والرواتب','تراخيص مهنية قريبة الانتهاء دون متابعة','متوسطة','٣ تراخيص هيئة التخصصات تنتهي خلال ٦٠ يومًا دون طلب تجديد.','متابعة شهرية من الموارد البشرية مع تنبيه آلي.','مدير الموارد البشرية',30,'قيد المعالجة','أُضيفت التنبيهات في المنصة.'],
+    ['factory','الموارد البشرية والرواتب','عمل إضافي غير معتمد مسبقًا','منخفضة','١٢٪ من ساعات الإضافي في أكتوبر دون موافقة مسبقة موثقة.','نموذج موافقة مسبقة للإضافي يرفق بالمسير.','مدير الموارد البشرية',40,'مفتوحة','']];
+  const findings=F.map(([c,area,title,risk,finding,rec,owner,due,st,resp])=>({id:nid(),co:c,area,title,risk,finding,rec,owner,due:dd(due),resp,raised:dd(due-45),closed:st==='مغلقة'?dd(due+2):'',status:st}));
+  const auditPlan=[['clinic','الإيرادات والتحصيل','الربع الرابع ٢٠٢٦','منجز'],['clinic','المخزون','الربع الرابع ٢٠٢٦','جارٍ'],['factory','المخزون','الربع الرابع ٢٠٢٦','منجز'],['factory','المشتريات','الربع الرابع ٢٠٢٦','جارٍ'],['law','الإيرادات والتحصيل','الربع الرابع ٢٠٢٦','منجز'],['edu','المالية','الربع الرابع ٢٠٢٦','منجز'],['clinic','تقنية المعلومات','الربع الأول ٢٠٢٧','مخطط'],['factory','الموارد البشرية والرواتب','الربع الأول ٢٠٢٧','مخطط'],['law','الامتثال','الربع الأول ٢٠٢٧','مخطط'],['edu','الإيرادات والتحصيل','الربع الأول ٢٠٢٧','مخطط']].map(([co,area,q,st])=>({co,area,q,st}));
+  // conflict-of-interest register
+  const coi=[...['chair','sec','fin','clinic','law','edu'].map(m=>({id:nid(),co:'all',member:m,type:'إفصاح سنوي',year:'2026',party:'',desc:m==='law'?'لا مصالح خارج الشركات الأربع. يقدّم المكتب خدمات قانونية لشركات المجموعة بأسعار السوق.':'لا توجد مصالح أو عضويات تتعارض مع عمل المجلس.',amt:0,date:dd(-rint(10,40)),status:'معتمد'})),
+    {id:nid(),co:'factory',member:'factory',type:'مصلحة في قرار',year:'2026',party:'التمويل المرحلي لخط التشطيب',desc:'ممثل العلامة الكبرى طرف مستفيد من قرار التمويل المرحلي؛ امتنع عن التصويت.',amt:350000,date:dd(-4),status:'معتمد'},
+    {id:nid(),co:'law',member:'law',type:'معاملة مع طرف ذي علاقة',year:'2026',party:'العلامة الكبرى',desc:'عقد استشارات قانونية لعقود التوريد بأتعاب شهرية ١٨ ألف ريال.',amt:216000,date:dd(-9),status:'قيد المراجعة'},
+    {id:nid(),co:'edu',member:'edu',type:'معاملة مع طرف ذي علاقة',year:'2026',party:'عيادات النجوم السبعة',desc:'برنامج الإسعافات الأولية لفريق الاستقبال بقيمة ١٢٫٥ ألف ريال.',amt:12500,date:dd(-6),status:'مقدّم'}];
+  // strategic goals
+  const G=[['clinic','رفع إشغال المواعيد','إشغال المواعيد','%',72,85,78,'رئيس قسم الباطنية','التذكير الآلي بالمواعيد · فتح العيادات المسائية'],['clinic','خفض رفض مطالبات التأمين','نسبة الرفض','%',11,5,7.9,'رئيس قسم المطالبات','تدقيق الترميز قبل الإرسال · الموافقات المسبقة'],['clinic','نمو الإيرادات السنوية','الإيرادات الشهرية','ألف',780,1000,975,'المدير العام','عيادة الجلدية الجديدة · عقود رعاية الشركات'],
+    ['factory','التسليم في الموعد','نسبة التسليم في الموعد','%',74,95,82,'مدير المصنع','وردية إضافية للتشطيب · تخطيط الإنتاج الأسبوعي'],['factory','خفض الهدر وإعادة العمل','الهدر وإعادة العمل','%',8,4,6.5,'مدير الجودة','فحص الجودة قبل التشطيب · تدريب المشغّلين'],['factory','رفع التحصيل','نسبة التحصيل','%',70,90,76,'المدير المالي','دفعة مقدمة ٣٠٪ · متابعة أسبوعية للمتأخرات'],
+    ['law','رفع تحصيل الأتعاب','الأتعاب المحصّلة من المتعاقد عليها','%',60,85,68,'الشريك المدير','فوترة الساعات شهريًا · أتعاب احتفاظ شهرية'],['law','العقود الجديدة','عقود جديدة شهريًا','',8,12,14,'رئيس قسم العقود','باقات الشركات الناشئة'],['law','معالجة المستحقات المتقادمة','مستحقات تجاوزت ٩٠ يومًا','%',30,10,22,'مسؤول التحصيل','تسويات ودية · إحالة للتحصيل القضائي'],
+    ['edu','رفع إشغال البرامج','إشغال المقاعد','%',55,80,64,'رئيس التدريب','حملات التسويق الرقمي · عروض المجموعات'],['edu','نمو العقود المؤسسية','عقود مؤسسية نشطة','',3,10,6,'مدير المبيعات','باقات تدريب سنوية للشركات'],['edu','رضا المتدربين','متوسط التقييم','/ ٥',4.1,4.6,4.4,'مدير البرامج','تقييم المدربين بعد كل برنامج']];
+  const goals=G.map(([c,title,measure,unit,base,target,cur,owner,inits])=>({id:nid(),co:c,year:'2026',title,measure,unit,base,target,cur,owner,inits,upd:dd(-rint(2,20))}));
+  // department budgets for Q4 (claims + purchases, excluding payroll)
+  const dbud={}; COMPANIES.forEach(c=>{ dbud[c.id]={}; DEPTS[c.id].forEach(([d,cnt])=>{ dbud[c.id][d]=Math.round((cnt*2500+(/إنتاج|تمريض|مستودع|أسنان|مختبر|تشطيب/.test(d)?60000:8000))/1000)*1000; }); });
+  // factory: safety & downtime
+  const hse=[['إصابة عمل','متوسطة','الإنتاج','جرح في اليد أثناء تغيير شفرة المنشار',3,-26,'مغلق','تدريب على إجراءات الإيقاف قبل الصيانة وتوفير قفازات مقاومة للقطع'],['حادث وشيك','بسيطة','المستودعات والمخزون','سقوط حمولة من رافعة شوكية دون إصابات',0,-15,'مغلق','مراجعة حدود التحميل'],['ملاحظة سلامة','بسيطة','التشطيب والدهان','نقص كمامات التنفس في قسم الدهان',0,-8,'قيد المعالجة','طلب شراء كمامات'],['تفتيش','بسيطة','الإنتاج','تفتيش الدفاع المدني الدوري — ملاحظتان',0,-5,'قيد المعالجة','استبدال طفايتين وتحديث مخطط الإخلاء'],['حادث وشيك','متوسطة','الإنتاج','انزلاق عامل بسبب نشارة على الأرض',0,-3,'مفتوح',''],['إصابة عمل','بسيطة','النقل والتركيب','التواء كاحل أثناء التركيب لدى العميل',1,-41,'مغلق','أحذية سلامة لفريق التركيب']].map(([type,sev,area,desc,lost,d,st,action])=>({id:nid(),co:'factory',type,sev,area,desc,lost,date:dd(d),action,status:st}));
+  const down=[];
+  for(let i=0;i<11;i++){ const k=-rint(0,40); down.push({id:nid(),co:'factory',machine:pick(MACHINES),start:dd(k),hrs:rint(2,30),cause:pick(DT_CAUSES),note:'',status:'عادت للعمل'}); }
+  down.push({id:nid(),co:'factory',machine:'خط الدهان الآلي',start:dd(-1),hrs:18,cause:'عطل كهربائي',note:'بانتظار قطعة غيار من المورد',status:'متوقفة'});
+  // clinic: patient satisfaction
+  const docs=o.emps.filter(e=>e.co==='clinic'&&e.status!=='منتهي الخدمة'&&/الطب العام|الأسنان|الجلدية/.test(e.dept)&&!/مساعد|فني/.test(e.title));
+  const CMT={5:['تعامل راقٍ وشرح واضح','الطبيب ممتاز والمواعيد دقيقة','خدمة سريعة ونظافة عالية'],4:['جيد لكن الانتظار طويل قليلًا','الطبيب متعاون'],3:['الانتظار تجاوز ٤٠ دقيقة','صعوبة في الحجز هاتفيًا'],2:['تأخر الموعد ساعة دون اعتذار','الفاتورة أعلى من المتوقع'],1:['رُفضت الموافقة التأمينية ولم يُبلغني أحد','سوء تعامل في الاستقبال']};
+  const surveys=[]; for(let i=0;i<64;i++){ const d=pick(docs), sc=R()<.55?5:R()<.6?4:R()<.5?3:R()<.6?2:1, k=-rint(0,30);
+    surveys.push({id:nid(),co:'clinic',date:dd(k),dept:d.dept,doc:d.id,score:sc,nps:Math.min(10,Math.max(0,sc*2+rint(-1,1))),comment:R()<.6?pick(CMT[sc]):'',followed:sc<=2&&k<-10,fnote:sc<=2&&k<-10?'تواصلنا مع المراجع واعتذرنا وصُححت الفاتورة.':''}); }
+  // law: opposing parties on cases + conflict checks
+  const OPP=['مؤسسة الأفق للتجارة','شركة البناء الحديث','ورثة آل سالم','الهيئة العامة للعقار','شركة المدار للتوريدات','مصنع الصفوة للمعادن','شركة رواسي العقارية','مكتب التميز للاستشارات','شركة الخليج للمقاولات','مؤسسة نجمة الشرق','شركة المسار اللوجستية','مجموعة الواحة','شركة ديار العقارية','مؤسسة البيان'];
+  (o.cases||[]).forEach((c,i)=>c.opp=OPP[i%OPP.length]);
+  const lcl=o.clients.filter(c=>c.co==='law');
+  const cchk=[['شركة المدار للتوريدات','مؤسسة الأفق للتجارة','مطالبة بقيمة عقد توريد',-2],['مؤسسة الريادة التجارية','شركة نماء للمقاولات','نزاع مقاولة',-6],[lcl[0]?lcl[0].name:'عميل حالي','شركة الخليج للمقاولات','استشارة عقود',-9],['شركة السحاب للتقنية','بنك محلي','مراجعة اتفاقية تمويل',-13],['ورثة آل سالم','الهيئة العامة للعقار','نزاع ملكية',-18],['مؤسسة الفجر','شركة البيان للتعليم','دعوى عمالية',-22]].map(([name,opp,matter,d])=>({id:nid(),co:'law',name,opp,matter,date:dd(d),hits:[],status:''}));
+  // education: trainee evaluations
+  const evals=[]; (o.courses||[]).filter(c=>c.start<=dd(0)).forEach(c=>{ const k=rint(6,12), base=c.title.includes('خدمة')?3.6:c.title.includes('PMP')?4.6:4.2;
+    for(let i=0;i<k;i++){ const v=x=>Math.max(1,Math.min(5,Math.round(x+(R()-.5)*1.6))); evals.push({id:nid(),co:'edu',course:c.id,date:c.end<dd(0)?c.end:dd(-rint(0,5)),content:v(base),trainer:v(base+.2),overall:v(base),comment:R()<.4?pick(['محتوى عملي ومفيد','المدرب متمكن','الوقت قصير للمحتوى','أمثلة من بيئة العمل السعودية','القاعة باردة','أتمنى مواد إضافية بعد البرنامج']):''}); } });
+  return {findings,auditPlan,coi,goals,dbud,hse,down,surveys,cchk,evals,trail:[]};
+}
 function seed(){
   const o={
     fin:{
@@ -942,7 +1006,8 @@ function seed(){
     evals:{'2026-Q4':{chair:[4,4,3,4,3,4,4,3],sec:[4,3,3,4,2,4,3,3],fin:[3,4,3,3,3,4,3,2]}},
   };
   Object.assign(o, erpSeed(o));
-  return Object.assign(o, v5Seed(o));
+  Object.assign(o, v5Seed(o));
+  return Object.assign(o, v6Seed(o));
 }
 const KEY='majlis-platform-v1';
 let S;
@@ -955,7 +1020,7 @@ const save = ()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){
 
 /* ================= Helpers ================= */
 const nf = new Intl.NumberFormat('ar-SA');
-const n = (v, d=0)=> new Intl.NumberFormat('ar-SA',{maximumFractionDigits:d,minimumFractionDigits:0}).format(v);
+const n = (v, d=0)=> new Intl.NumberFormat(EN?'en-US':'ar-SA',{maximumFractionDigits:d,minimumFractionDigits:0}).format(v);
 const money = k => { // input in thousands SAR
   if (Math.abs(k) >= 1000) return n(k/1000, 2) + ' مليون';
   return n(k) + ' ألف';
@@ -966,7 +1031,7 @@ const co = id => COMPANIES.find(c=>c.id===id);
 const coName = id => id==='all' ? 'مشترك' : co(id).short;
 const today = () => { const d=new Date(); d.setHours(0,0,0,0); return d; };
 const parseD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-const fmtD = s => s ? new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{day:'numeric',month:'long'}).format(parseD(s)) : '—';
+const fmtD = s => s ? new Intl.DateTimeFormat(EN?'en-GB':'ar-SA-u-ca-gregory',{day:'numeric',month:'long'}).format(parseD(s)) : '—';
 const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const effStatus = d => (d.status!=='مكتمل' && d.due && parseD(d.due) < today()) ? 'متأخر' : d.status;
 const sCls = {'لم يبدأ':'s-idle','جارٍ':'s-info','مكتمل':'s-good','متأخر':'s-crit'};
@@ -1107,21 +1172,21 @@ function renderNav(route){
   const sc=k=>S[REG[k].key].filter(r=>inScope(r.co));
   const G=[
     ['cos','الشركات',COMPANIES.filter(c=>inScope(c.id)).map(c=>['company-'+c.id,`<a href="#company-${c.id}" class="${route==='company-'+c.id?'on':''}"><i class="dot" style="background:${c.hex}"></i>${c.short}</a>`,0])],
-    ['sector','أنظمة القطاعات',[...(inScope('clinic')?[a('appts','appt','المواعيد والأطباء'),a('insclaims','shield','مطالبات التأمين الطبي',S.insclaims.filter(r=>r.status==='قيد الإعداد'&&r.month<m).length)]:[]),...(inScope('factory')?[a('mos','gear','أوامر الإنتاج والجودة',S.mos.filter(moLate).length)]:[]),...(inScope('law')?[a('cases','gavel','القضايا والجلسات',S.cases.filter(r=>r.next&&daysTo(r.next)>=0&&daysTo(r.next)<=2).length),a('hours','clock','ساعات العمل والأتعاب')]:[]),...(inScope('edu')?[a('courses','course','البرامج والدورات'),a('enrol','student','المتدربون والرسوم')]:[])]],
+    ['sector','أنظمة القطاعات',[...(inScope('clinic')?[a('appts','appt','المواعيد والأطباء'),a('insclaims','shield','مطالبات التأمين الطبي',S.insclaims.filter(r=>r.status==='قيد الإعداد'&&r.month<m).length),a('surveys','smile','رضا المرضى',S.surveys.filter(r=>r.score<=2&&!r.followed).length)]:[]),...(inScope('factory')?[a('mos','gear','أوامر الإنتاج والجودة',S.mos.filter(moLate).length),a('hse','hse','السلامة المهنية'),a('down','down','توقف الآلات',S.down.filter(r=>r.status==='متوقفة').length)]:[]),...(inScope('law')?[a('cases','gavel','القضايا والجلسات',S.cases.filter(r=>r.next&&daysTo(r.next)>=0&&daysTo(r.next)<=2).length),a('hours','clock','ساعات العمل والأتعاب'),...(S.me==='law'?[a('cchk','cchk','فحص تعارض المصالح')]:[])]:[]),...(inScope('edu')?[a('courses','course','البرامج والدورات'),a('enrol','student','المتدربون والرسوم'),a('evals','star','تقييم المدربين والبرامج')]:[])]],
     ['hr','الموارد البشرية',[a('hr','hr','شؤون الموظفين',docs),a('payroll','pay','مسير الرواتب',myPay),a('leave','leave','الإجازات والحضور',myLeave),a('ess','ess','بوابة الموظف'),a('loans','loan','السلف والقروض',sc('loans').filter(r=>(r.status==='مقدّم'&&canHR(r.co))||(r.status==='معتمد'&&canFin(r.co))).length),a('letters','letter','الخطابات الرسمية',sc('letters').filter(r=>r.status==='مطلوب'&&canHR(r.co)).length),a('recruit','recruit','التوظيف'),a('training','train','التدريب والتطوير')]],
-    ['fin','المالية والمحاسبة',[a('ledger','ledger','القيود ودليل الحسابات'),a('ar','ar','الفواتير والتحصيل',odInv),a('ap','ap','الموردون والمدفوعات',bills),a('quotes','quote','عروض الأسعار'),a('recur','recur','الفواتير المتكررة',sc('recur').filter(r=>recSt2(r)==='مستحقة').length),a('petty','petty','الصندوق والعهد النقدية'),a('ic','ic','المعاملات بين الشركات'),a('claims','claim','المصروفات والعُهد',sc('claims').filter(r=>r.status==='مقدّمة').length),a('banks','bank','البنوك والخزينة'),a('assets','asset','الأصول الثابتة'),a('statements','stmt','القوائم المالية والضريبة'),a('finance','fin','الموازنة والتوقعات'),a('services','svc','الخدمات المشتركة')]],
+    ['fin','المالية والمحاسبة',[a('ledger','ledger','القيود ودليل الحسابات'),a('ar','ar','الفواتير والتحصيل',odInv),a('ap','ap','الموردون والمدفوعات',bills),a('quotes','quote','عروض الأسعار'),a('recur','recur','الفواتير المتكررة',sc('recur').filter(r=>recSt2(r)==='مستحقة').length),a('petty','petty','الصندوق والعهد النقدية'),a('ic','ic','المعاملات بين الشركات'),a('dbudget','budget','موازنات الإدارات'),a('claims','claim','المصروفات والعُهد',sc('claims').filter(r=>r.status==='مقدّمة').length),a('banks','bank','البنوك والخزينة'),a('assets','asset','الأصول الثابتة'),a('statements','stmt','القوائم المالية والضريبة'),a('finance','fin','الموازنة والتوقعات'),a('services','svc','الخدمات المشتركة')]],
     ['ops','العمليات والإدارات',[a('procure','proc','المشتريات',sc('procure').filter(r=>r.status==='بانتظار الاعتماد').length),a('inventory','inv','المخزون والمستودعات',sc('inventory').filter(r=>r.qty<=0).length),a('it','it','تقنية المعلومات',sc('it').filter(r=>slaBreach(r,'مغلقة')).length),a('contracts','contract','العقود',sc('contracts').filter(r=>conSt(r)==='ينتهي قريبًا').length),a('compliance','lic','التراخيص والامتثال',sc('compliance').filter(r=>licSt(r)!=='سارية').length),a('support','support','خدمة العملاء والشكاوى',sc('support').filter(r=>slaBreach(r,'محلولة')).length),a('marketing','mkt','التسويق والحملات'),a('facilities','fac','المرافق والصيانة')]],
     ['cycle','الدورة الشهرية للمجلس',[a('reports','reports','التقارير الشهرية',pendS),a('minutes','minutes','محاضر الاجتماعات'),a('votes','vote','التصويت بالتمرير',myVotes),a('requests','req','طلبات الاعتماد',myReq),a('pack','pack','حزمة الاجتماع')]],
     ['biz','الأعمال',[a('clients','clients','العملاء'),a('files','files','المستندات'),a('tasks','tasks','المهام والمتابعة',lateT),a('calendar','cal','التقويم')]],
-    ['gov','الحوكمة',[a('decisions','dec','سجل القرارات',late),a('meetings','meet','الاجتماعات والنصاب'),a('risks','risk','سجل المخاطر'),a('authority','auth','مستويات الصلاحيات'),a('plan','plan','خطة ٩٠ يومًا'),a('members','team','أعضاء المجلس'),a('people','team','ملخص القوى العاملة'),a('evaluation','eval','تقييم المجلس')]],
-    ['rep','التقارير',[a('trends','trend','التقارير والاتجاهات')]],
-    ['sys','النظام',[a('kpiset','kpi','إعداد المؤشرات'),a('activity','log','سجل النشاط'),a('settings','cog','الإعدادات')]],
+    ['gov','الحوكمة والرقابة',[a('audit','audit','المراجعة الداخلية',S.findings.filter(r=>inScope(r.co)&&findSt(r)==='متأخرة').length),a('goals','goal','الأهداف الاستراتيجية',S.goals.filter(g=>inScope(g.co)&&gSt(g)==='متأخر').length),a('coi','coi','تعارض المصالح'),a('decisions','dec','سجل القرارات',late),a('meetings','meet','الاجتماعات والنصاب'),a('risks','risk','سجل المخاطر'),a('authority','auth','مستويات الصلاحيات'),a('plan','plan','خطة ٩٠ يومًا'),a('members','team','أعضاء المجلس'),a('people','team','ملخص القوى العاملة'),a('evaluation','eval','تقييم المجلس')]],
+    ['rep','التقارير',[a('trends','trend','التقارير والاتجاهات'),a('cashfc','cashfc','توقع السيولة ١٣ أسبوعًا')]],
+    ['sys','النظام',[a('kpiset','kpi','إعداد المؤشرات'),a('activity','log','سجل النشاط'),a('trail','trail','سجل التغييرات'),a('import','import','استيراد من Excel'),a('settings','cog','الإعدادات')]],
   ];
   const DEF={cos:1,sector:1,hr:1,fin:1,ops:1,rep:1};
   $('#nav').innerHTML = a('dashboard','dash','لوحة المجلس')[1] + a('inbox','inbox','بانتظار إجرائي',inboxItems().length)[1] + a('depts','dept','الإدارات والأنظمة')[1]
     + G.map(([k,t,items])=>{ const here=items.some(i=>i[0]===route), open=here||(NAVC[k]!==undefined?NAVC[k]:!!DEF[k]), cnt=items.reduce((s,i)=>s+i[2],0);
       return `<button type="button" class="navgrp ${open?'':'closed'}" onclick="navToggle('${k}',${open})" aria-expanded="${open}"><span>${t}</span><span class="row" style="gap:6px">${!open&&cnt?`<span class="badge">${n(cnt)}</span>`:''}<i aria-hidden="true">▾</i></span></button><div class="navitems" ${open?'':'hidden'}>${items.map(i=>i[1]).join('')}</div>`; }).join('');
-  $('#roleBox').innerHTML = `<label>تعمل الآن بصفة<select onchange="setRole(this.value)">${MEMBERS.map(m=>`<option value="${m.key}" ${S.me===m.key?'selected':''}>${shortName(m.name)} — ${m.role}</option>`).join('')}</select></label>`;
+  $('#roleBox').innerHTML = `<label>تعمل الآن بصفة<select onchange="setRole(this.value)">${MEMBERS.map(m=>`<option value="${m.key}" ${S.me===m.key?'selected':''}>${shortName(m.name)} — ${m.role}</option>`).join('')}</select></label><button type="button" class="btn" style="margin-top:8px;width:100%" onclick="setLang()">${EN?'العربية':'English'}</button>`;
 }
 const header = (title, sub, actions='') => { const al=alerts().length; return `<div class="top"><div><div class="sub">${sub}</div><h1>${title}</h1></div><div class="row tools">${actions}<button class="btn" onclick="openSearch()" aria-label="بحث شامل" title="بحث شامل (Ctrl+K)"><svg viewBox="0 0 24 24">${ICON.search}</svg><span class="hide-sm">بحث</span></button><button class="btn" onclick="openAlerts()" aria-label="التنبيهات" title="التنبيهات"><svg viewBox="0 0 24 24">${ICON.bell}</svg>${al?`<span class="cnt">${n(al)}</span>`:''}</button><span class="demo">بيانات تجريبية</span></div></div>`; };
 
@@ -1848,13 +1913,13 @@ function viewCalendar(){
   for(let i=0;i<cells;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const key=iso(d), l=dayList(key,d);
     g+=`<button class="d ${d.getMonth()!==CAL.m?'out':''} ${d.getDay()>=5?'we':''} ${key===tdy?'today':''} ${key===CAL.sel?'sel':''}" onclick="CAL.sel='${key}';render()" aria-label="${fmtD(key)}${l.length?' · '+n(l.length)+' مواعيد':''}"><span class="dn">${n(d.getDate())}</span>${l.slice(0,3).map(e=>`<span class="ev k-${e.k}">${esc(e.t)}</span>`).join('')}${l.length>3?`<span class="more">+${n(l.length-3)} أخرى</span>`:''}<span class="dots">${l.slice(0,5).map(e=>`<i class="k-${e.k}"></i>`).join('')}</span></button>`; }
   const sd=parseD(CAL.sel), sl=dayList(CAL.sel,sd);
-  const title=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{month:'long',year:'numeric'}).format(first);
+  const title=new Intl.DateTimeFormat(EN?'en-GB':'ar-SA-u-ca-gregory',{month:'long',year:'numeric'}).format(first);
   return header('التقويم','الاجتماعات ومواعيد التقارير واستحقاق القرارات والمهام وتجديد العقود في مكان واحد',`<button class="btn" onclick="calMove(-1)" aria-label="الشهر السابق">→</button><button class="btn" onclick="calMove(0)">اليوم</button><button class="btn" onclick="calMove(1)" aria-label="الشهر التالي">←</button>`)
   + `<div class="grid">
       <div class="card"><h3><span class="serif" style="font-size:24px">${title}</span><small>الأسبوع يبدأ الأحد · الجمعة والسبت عطلة</small></h3><div class="cal">${g}</div>
         <div class="legend" style="margin-top:12px">${KINDS.map(([k,l])=>`<span><span class="ev k-${k}" style="padding:0 8px">${l}</span></span>`).join('')}</div></div>
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))">
-      <div class="card"><h3>${new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',day:'numeric',month:'long'}).format(sd)}</h3>
+      <div class="card"><h3>${new Intl.DateTimeFormat(EN?'en-GB':'ar-SA-u-ca-gregory',{weekday:'long',day:'numeric',month:'long'}).format(sd)}</h3>
         ${sl.length?sl.map(e=>`<button class="evrow" onclick="${e.go}"><span class="ev k-${e.k}" style="max-width:none;flex:1;min-width:0;white-space:normal">${esc(e.t)}</span></button>`).join(''):'<div class="muted">لا مواعيد في هذا اليوم.</div>'}
       </div>
       <div class="card"><h3>القادم خلال ٣٠ يومًا</h3>${upcoming(30,10)}</div>
@@ -1902,7 +1967,7 @@ window.resetAll=function(){ ask('إعادة تعيين البيانات','ستع
 
 /* ================= v3: monthly cycle, approvals, finance, services, people, KPIs, pack, evaluation ================= */
 const curMonth=()=>S.meeting.date.slice(0,7);
-const monthName=ym=>new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{month:'long',year:'numeric'}).format(parseD(ym+'-01'));
+const monthName=ym=>new Intl.DateTimeFormat(EN?'en-GB':'ar-SA-u-ca-gregory',{month:'long',year:'numeric'}).format(parseD(ym+'-01'));
 const SUBST={draft:'لم يُرسل',submitted:'بانتظار المراجعة',returned:'معاد للتعديل',approved:'معتمد'};
 const subCls={draft:'s-idle',submitted:'s-info',returned:'s-warn',approved:'s-good'};
 const REVIEWERS=['sec','chair','vice'];
@@ -2227,7 +2292,7 @@ function viewPack(){
   const kv=arr=>`<div class="kvs" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">${arr.map(([l,v])=>`<div><div class="small">${l}</div><b style="font-size:17px">${v}</b></div>`).join('')}</div>`;
   return header('حزمة الاجتماع',`تُرسل للأعضاء قبل الاجتماع · ${fmtD(md)}`,framed?'':`<button class="btn primary" onclick="window.print()">طباعة / حفظ PDF</button>`)
   + `<div class="pack">
-    <section class="card pk-cover"><div class="serif" style="color:var(--gold3);font-size:19px">المجلس الإشرافي المشترك</div><h2 class="serif">حزمة الاجتماع الشهري</h2><div>${new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(parseD(md))} · الساعة ${esc(S.meeting.time)}</div><div class="small muted" style="margin-top:8px">${COMPANIES.map(c=>c.short).join(' · ')}</div></section>
+    <section class="card pk-cover"><div class="serif" style="color:var(--gold3);font-size:19px">المجلس الإشرافي المشترك</div><h2 class="serif">حزمة الاجتماع الشهري</h2><div>${new Intl.DateTimeFormat(EN?'en-GB':'ar-SA-u-ca-gregory',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(parseD(md))} · الساعة ${esc(S.meeting.time)}</div><div class="small muted" style="margin-top:8px">${COMPANIES.map(c=>c.short).join(' · ')}</div></section>
     <section class="card"><h3>جدول الأعمال <small>${n(90)} دقيقة</small></h3>${(()=>{let a=0;return AGENDA.map((x,i)=>{const s=a;a+=x.m;return `<div class="mini" style="cursor:default"><span>${n(i+1)}. ${x.t}</span><span class="small muted">${n(s)} – ${n(a)} د</span></div>`;}).join('');})()}</section>
     <section class="card"><h3>الملخص الموحد <small>${MONTHS[L]} ٢٠٢٦</small></h3>${kv([['الإيرادات',money(rev[L])],['المصروفات',money(exp[L])],['النتيجة التشغيلية',money(rev[L]-exp[L])],['السيولة',money(COMPANIES.reduce((s,c)=>s+S.fin[c.id].cash,0))],['قرارات مفتوحة',n(open.length)],['قرارات متأخرة',n(late.length)]])}</section>
     ${COMPANIES.map(c=>{const f=S.fin[c.id], s=subOf(c.id), st=s?s.status:'draft', rk=S.risks.filter(r=>r.co===c.id&&r.status!=='مغلق').sort((a,b)=>b.L*b.I-a.L*a.I).slice(0,2);
@@ -2998,7 +3063,7 @@ bal=function(a,cos,from,to){ if(!ELIM) return _bal0(a,cos,from,to); let d=0,c=0;
 const regScope=(D,r)=>D.scope?D.scope(r):inScope(r.co);
 const isoAdd=(s,days)=>{ const d=parseD(s); d.setDate(d.getDate()+days); return iso(d); };
 const addM=(s,m)=>{ const d=parseD(s); d.setMonth(d.getMonth()+m); return iso(d); };
-const fmtDY=s=>s?new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{day:'numeric',month:'long',year:'numeric'}).format(parseD(s)):'—';
+const fmtDY=s=>s?new Intl.DateTimeFormat(EN?'en-GB':'ar-SA-u-ca-gregory',{day:'numeric',month:'long',year:'numeric'}).format(parseD(s)):'—';
 const clientLbl=r=>{ const c=r.cl&&S.clients.find(x=>x.id===r.cl); return c?clName(c):(r.cname||'—'); };
 const meter=(v,col)=>`<div class="meter"><i style="width:${Math.max(0,Math.min(100,v))}%;background:var(--${col||'gold'})"></i></div>`;
 const secEdit=c=>()=>S.me===c||S.me==='sec';
@@ -3434,15 +3499,337 @@ Object.assign(ICON,{
 });
 Object.assign(NAVI,{appts:'appt',insclaims:'shield',mos:'gear',cases:'gavel',hours:'clock',courses:'course',enrol:'student',ess:'ess',loans:'loan',letters:'letter',quotes:'quote',recur:'recur',petty:'petty',ic:'ic',inbox:'inbox',trends:'trend'});
 
+
+/* ================= v6: oversight, strategy, cash planning, import, English, sector additions ================= */
+const RISKCLS={'عالية':'s-crit','متوسطة':'s-warn','منخفضة':'s-idle'};
+const findSt=r=>r.status!=='مغلقة'&&r.due<todayI()?'متأخرة':r.status;
+const auditor=()=>['sec','chair','vice'].includes(S.me);
+/* ---------- change history ---------- */
+const trailPush=(k,rid,co,name,ch,pay)=>{ if(!ch.length) return; S.trail.unshift({ts:Date.now(),who:S.me,k,rid,co,name,ch,pay:!!pay}); if(S.trail.length>1500) S.trail.length=1500; };
+const TRK={leave:'الإجازات',claims:'المصروفات',assets:'الأصول',procure:'المشتريات',inventory:'المخزون',it:'تقنية المعلومات',contracts:'العقود',compliance:'التراخيص',support:'الشكاوى',marketing:'التسويق',facilities:'المرافق',training:'التدريب',emp:'ملفات الموظفين',inv:'فواتير المبيعات',bill:'فواتير الموردين',payroll:'مسير الرواتب'};
+const trkName=k=>TRK[k]||(REG[k]?REG[k].title:k);
+const fvLbl=(x,r,v)=>{ if(v===null||v===undefined||v==='') return '—'; if(x.t==='emp') return empName(v); if(x.t==='co') return coName(v); if(x.t==='opt'){ const o=x.o(r).find(o=>String(o[0])===String(v)); return o?o[1]:String(v); } if(x.t==='num') return n(+v,2); if(x.t==='date') return fmtD(v); return String(v); };
+const _saveRec0=window.saveRec;
+window.saveRec=function(id,rid){ const D=REG[id], r=rid?S[D.key].find(x=>x.id===rid):null, before=r?JSON.parse(JSON.stringify(r)):null, first=S[D.key][0];
+  _saveRec0(id,rid);
+  if(r){ const ch=D.fields.filter(x=>String(before[x.k]??'')!==String(r[x.k]??'')).map(x=>[x.l,fvLbl(x,before,before[x.k]),fvLbl(x,r,r[x.k])]); trailPush(id,rid,r.co,D.name(r),ch); }
+  else if(S[D.key][0]!==first){ const nr=S[D.key][0]; trailPush(id,nr.id,nr.co,D.name(nr),[['السجل','—','أُنشئ']]); }
+  save(); };
+const _recSt0=window.recSt;
+const XLBL={closed:'تاريخ الإغلاق',sent:'تاريخ الإرسال',paidOn:'تاريخ السداد',issued:'تاريخ الإصدار',done:'تاريخ الإنجاز',start:'تاريخ البدء',mat:'تكلفة المواد',ref:'رقم الخطاب',inv:'الفاتورة',followed:'تمت المتابعة',draft:'مسودة'};
+window.recSt=function(id,rid,st,extra){ const D=REG[id], r=S[D.key].find(x=>x.id===rid), sf=D.stOf||(x=>x.status), prev=sf(r), prevRaw=r.status, ex=extra?Object.fromEntries(Object.keys(extra).map(k=>[k,r[k]])):{};
+  _recSt0(id,rid,st,extra);
+  const ch=[]; if(sf(r)!==prev) ch.push(['الحالة',prev||'—',sf(r)||'—']); else if(r.status!==prevRaw&&r.status) ch.push(['المرحلة',prevRaw||'—',r.status]);
+  Object.keys(ex).forEach(k=>{ if(String(ex[k]??'')!==String(r[k]??'')){ const x=D.fields.find(f=>f.k===k)||{l:XLBL[k]||k,t:/date|due|end|expiry|poa|next|valid|start|closed|paidOn|sent|issued|done/.test(k)?'date':'text'}; ch.push([x.l,fvLbl(x,r,ex[k]),fvLbl(x,r,r[k])]); } });
+  trailPush(id,rid,r.co,D.name(r),ch); save(); };
+const EMPF=[['name','الاسم'],['dept','الإدارة'],['title','المسمى'],['grade','الدرجة'],['basic','الراتب الأساسي',1],['hous','بدل السكن',1],['trans','بدل النقل',1],['bank','البنك'],['iq','انتهاء الإقامة'],['cend','انتهاء العقد'],['lic','انتهاء الترخيص المهني'],['status','الحالة']];
+const _saveEmp0=window.saveEmp;
+window.saveEmp=function(id){ const e=id?emp(id):null, b=e?JSON.parse(JSON.stringify(e)):null, cnt=S.emps.length; _saveEmp0(id);
+  if(e){ const ch=EMPF.filter(([k])=>String(b[k]??'')!==String(e[k]??'')); trailPush('emp',id,e.co,e.name,ch.map(([k,l,p])=>[l,p?SAR(b[k]):String(b[k]||'—'),p?SAR(e[k]):String(e[k]||'—')]),ch.some(c=>c[2])); }
+  else if(S.emps.length>cnt){ const ne=S.emps[S.emps.length-1]; trailPush('emp',ne.id,ne.co,ne.name,[['السجل','—','أُنشئ ملف الموظف']]); } save(); };
+['invIssue','invPay','invVoid'].forEach(f=>{ const o=window[f]; window[f]=function(id){ const i=S.invs.find(x=>x.id===id), s0=invSt(i), p0=invPaid(i); o.apply(this,arguments); const ch=[]; if(invSt(i)!==s0) ch.push(['الحالة',s0,invSt(i)]); if(invPaid(i)!==p0) ch.push(['المحصّل',SAR(p0),SAR(invPaid(i))]); trailPush('inv',id,i.co,i.no,ch); save(); }; });
+{ const o=window.billAct; window.billAct=function(id,st){ const b=S.bills.find(x=>x.id===id), s0=billSt(b); o(id,st); trailPush('bill',id,b.co,b.no+' — '+supName(b.sup),[['الحالة',s0,billSt(b)]]); save(); }; }
+{ const o=window.saveAdj; window.saveAdj=function(c,id){ const r=runOf(c,todayI().slice(0,7)), a=JSON.stringify(r.adj[id]||{}); o(c,id); const b=r.adj[id]||{}, p=JSON.parse(a); const ch=[['العمل الإضافي','ot'],['أيام الغياب','abs'],['خصومات أخرى','ded']].filter(([,k])=>(+p[k]||0)!==(+b[k]||0)).map(([l,k])=>[l,n(+p[k]||0),n(+b[k]||0)]); trailPush('payroll',id,c,empName(id)+' — '+monthName(r.month),ch,1); save(); }; }
+const trailFor=(k,rid)=>S.trail.filter(t=>t.k===k&&t.rid===rid);
+const trailHTML=(k,rid,co)=>{ const L=trailFor(k,rid).filter(t=>!t.pay||seePay(co)); if(!L.length) return '';
+  return `<div class="full sec-title">سجل التغييرات</div><div class="full trl">${L.slice(0,8).map(t=>`<div class="small"><b>${esc(shortName(memberOf(t.who).name))}</b> <span class="muted">· ${new Intl.DateTimeFormat(EN?'en-GB':'ar-SA-u-ca-gregory',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(t.ts)}</span><div>${t.ch.map(c=>`${esc(c[0])}: <s class="muted">${esc(c[1])}</s> ← <b>${esc(c[2])}</b>`).join(' · ')}</div></div>`).join('')}</div>`; };
+const addTrail=(k,rid,co)=>{ const b=document.querySelector('#modalBox .body'); if(b) b.insertAdjacentHTML('beforeend',trailHTML(k,rid,co)); };
+{ const o=window.openRec; window.openRec=function(id,rid,preset){ window._budOk=false; o(id,rid,preset); if(rid){ const r=S[REG[id].key].find(x=>x.id===rid); if(r) addTrail(id,rid,r.co); } }; }
+{ const o=window.openEmp; window.openEmp=function(id){ o(id); const e=emp(id); if(e) addTrail('emp',id,e.co); }; }
+{ const o=window.openInv; window.openInv=function(id){ o(id); const i=S.invs.find(x=>x.id===id); if(i) addTrail('inv',id,i.co); }; }
+{ const o=window.openBill; window.openBill=function(id){ o(id); const b=id&&S.bills.find(x=>x.id===id); if(b) addTrail('bill',id,b.co); }; }
+let TLF={k:'',who:'',q:'',lim:60};
+function viewTrail(){
+  const all=S.trail.filter(t=>inScope(t.co)&&(!t.pay||seePay(t.co))), rows=all.filter(t=>(!TLF.k||t.k===TLF.k)&&(!TLF.who||t.who===TLF.who)&&(!TLF.q||(t.name+' '+t.ch.flat().join(' ')).includes(TLF.q)));
+  const ks=[...new Set(all.map(t=>t.k))];
+  return header('سجل التغييرات','كل تعديل على السجلات: من غيّر ماذا ومتى، والقيمة قبل التعديل وبعده',csvBtn)
+  + `<div class="filters"><select onchange="TLF.k=this.value;render()" aria-label="النظام"><option value="">كل الأنظمة</option>${ks.map(k=>`<option value="${k}" ${TLF.k===k?'selected':''}>${esc(trkName(k))}</option>`).join('')}</select><select onchange="TLF.who=this.value;render()" aria-label="العضو"><option value="">كل الأعضاء</option>${MEMBERS.map(m=>`<option value="${m.key}" ${TLF.who===m.key?'selected':''}>${esc(shortName(m.name))}</option>`).join('')}</select>${sbox('TLF',TLF.q,'بحث في السجلات والقيم')}</div>
+    <div class="grid tiles">${tile('تغييرات مسجلة',n(all.length))}${tile('اليوم',n(all.filter(t=>iso(new Date(t.ts))===todayI()).length))}${tile('تغييرات على الرواتب',n(all.filter(t=>t.pay).length),'تظهر لمن يملك صلاحية الرواتب')}${tile('أكثر الأنظمة تعديلًا',ks.length?esc(trkName(ks.sort((a,b)=>all.filter(t=>t.k===b).length-all.filter(t=>t.k===a).length)[0])):'—')}</div>
+    <div class="tbl-wrap" style="margin-top:16px"><table><thead><tr><th>الوقت</th><th>العضو</th><th>النظام</th><th>السجل</th><th>التغيير</th></tr></thead><tbody>${rows.slice(0,TLF.lim).map(t=>`<tr><td class="small">${new Intl.DateTimeFormat(EN?'en-GB':'ar-SA-u-ca-gregory',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(t.ts)}</td><td>${esc(shortName(memberOf(t.who).name))}</td><td>${esc(trkName(t.k))}${t.pay?' <span class="pill s-warn">راتب</span>':''}</td><td><b>${esc(t.name)}</b><div class="small muted">${coName(t.co)}</div></td><td class="small">${t.ch.map(c=>`${esc(c[0])}: <s class="muted">${esc(c[1])}</s> ← <b>${esc(c[2])}</b>`).join('<br>')}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا تغييرات مسجلة بعد. أي تعديل أو اعتماد في المنصة يظهر هنا.</td></tr>'}</tbody></table></div>
+    <div class="dec-cards">${rows.slice(0,TLF.lim).map(t=>`<div class="dec-card"><div class="row between"><b>${esc(t.name)}</b><span class="small muted">${esc(trkName(t.k))}</span></div><div class="small">${t.ch.map(c=>`${esc(c[0])}: ${esc(c[1])} ← <b>${esc(c[2])}</b>`).join('<br>')}</div><div class="meta"><span>${esc(shortName(memberOf(t.who).name))}</span><span>${coName(t.co)}</span></div></div>`).join('')}</div>
+    ${rows.length>TLF.lim?`<div style="text-align:center;margin-top:14px"><button class="btn" onclick="TLF.lim+=100;render()">عرض المزيد</button></div>`:''}`;
+}
+/* ---------- department budgets ---------- */
+const budSpent=(c,d)=>S.claims.filter(x=>x.co===c&&['معتمدة','مصروفة'].includes(x.status)&&(emp(x.emp)||{}).dept===d&&x.date>='2026-10-01').reduce((s,x)=>s+x.amt,0)+S.preqs.filter(x=>x.co===c&&['معتمد','أمر شراء','مستلم'].includes(x.status)&&x.dept===d).reduce((s,x)=>s+x.amt,0);
+const budComm=(c,d)=>S.claims.filter(x=>x.co===c&&x.status==='مقدّمة'&&(emp(x.emp)||{}).dept===d).reduce((s,x)=>s+x.amt,0)+S.preqs.filter(x=>x.co===c&&x.status==='بانتظار الاعتماد'&&x.dept===d).reduce((s,x)=>s+x.amt,0);
+const budOf=(c,d)=>S.dbud[c]&&S.dbud[c][d];
+function budWarn(c,d,amt,rid){ const b=budOf(c,d); if(!b||rid) return ''; const left=b-budSpent(c,d)-budComm(c,d); if(amt<=left||window._budOk) return ''; window._budOk=true;
+  return `تنبيه موازنة: المتبقي من موازنة «${d}» للربع ${SAR(Math.max(0,left))} ريال والمبلغ ${SAR(amt)} ريال. اضغط «حفظ» مرة أخرى للتأكيد، وسيظهر الطلب متجاوزًا للموازنة.`; }
+{ const ck=REG.claims.check; REG.claims.check=(v,rid)=>(ck&&ck(v,rid))||budWarn(v.co,(emp(v.emp)||{}).dept,v.amt,rid); }
+{ const ck=REG.procure.check; REG.procure.check=(v,rid)=>(ck&&ck(v,rid))||budWarn(v.co,v.dept,v.amt,rid);
+  REG.procure.fields=REG.procure.fields.map(f=>f.k==='dept'?{k:'dept',l:'الإدارة الطالبة',t:'opt',o:r=>DEPTS[r.co||defCo()].map(([d])=>[d,d])}:f); }
+let DBF={co:''};
+function viewBudgets(){
+  DBF.co=fixCo(DBF.co||scopeCos()[0].id,false); const c=DBF.co, can=canFin(c);
+  const rows=DEPTS[c].map(([d])=>({d,b:budOf(c,d)||0,s:budSpent(c,d),m:budComm(c,d)})), T=k=>rows.reduce((s,r)=>s+r[k],0), over=rows.filter(r=>r.s+r.m>r.b);
+  return header('موازنات الإدارات','الموازنة التشغيلية للربع الرابع لكل إدارة (المصروفات والمشتريات دون الرواتب) مع تنبيه قبل التجاوز',csvBtn)
+  + `<div class="filters">${coSeg('DBF.co',c,false)}</div>
+    <div class="grid tiles">${tile('موازنة الربع',sarK(T('b'))+' ريال')}${tile('المنصرف والمعتمد',sarK(T('s'))+' ريال',n(T('s')/Math.max(1,T('b'))*100)+'٪ من الموازنة')}${tile('طلبات بانتظار الاعتماد',sarK(T('m'))+' ريال','محجوزة من الموازنة')}${tile('إدارات تجاوزت أو ستتجاوز',n(over.length),'',over.length?'crit':'')}</div>
+    <div class="tbl-x" style="margin-top:16px"><table class="stmt"><thead><tr><th>الإدارة</th><th>موازنة الربع</th><th>المنصرف والمعتمد</th><th>بانتظار الاعتماد</th><th>المتبقي</th><th>الاستهلاك</th></tr></thead><tbody>${rows.map(r=>{ const u=(r.s+r.m)/Math.max(1,r.b)*100; return `<tr><td><b>${esc(r.d)}</b></td><td>${can?`<input type="number" value="${r.b}" style="width:110px" onchange="S.dbud['${c}']['${r.d}']=+this.value||0;logAct('عدّل موازنة ${r.d} — ${co(c).short}');save();render()" aria-label="الموازنة">`:SAR(r.b)}</td><td>${SAR(r.s)}</td><td>${r.m?SAR(r.m):'—'}</td><td class="${r.b-r.s-r.m<0?'down':''}">${SAR(r.b-r.s-r.m)}</td><td style="min-width:130px">${n(u)}٪${meter(u,u>100?'crit':u>80?'warn':'good')}</td></tr>`; }).join('')}<tr class="sum"><td>الإجمالي</td><td>${SAR(T('b'))}</td><td>${SAR(T('s'))}</td><td>${SAR(T('m'))}</td><td>${SAR(T('b')-T('s')-T('m'))}</td><td></td></tr></tbody></table></div>
+    <div class="small muted" style="margin-top:8px">تُحتسب مطالبات المصروفات بإدارة الموظف، وطلبات الشراء بالإدارة الطالبة. عند تجاوز المتبقي تظهر رسالة تنبيه قبل الحفظ.</div>`;
+}
+/* ---------- 13-week cash forecast ---------- */
+let CFF={co:'all'};
+function cashForecast(cos){
+  const W=13, t0=today(), ws=[...Array(W)].map((_,i)=>{ const d=new Date(t0); d.setDate(d.getDate()-d.getDay()+i*7); return iso(d); }), wEnd=(()=>{ const d=parseD(ws[W-1]); d.setDate(d.getDate()+7); return iso(d); })(), wk=s=>s>=wEnd?-1:s<ws[0]?0:ws.findIndex((w,k)=>s>=w&&(k===W-1||s<ws[k+1]));
+  const rows={}, add=(cat,dir,w,a)=>{ if(w<0||w>=W||!a) return; const k=dir+'|'+cat; (rows[k]=rows[k]||Array(W).fill(0))[w]+=a; };
+  const open=cos.reduce((s,c)=>s+bal('1110',[c])+bal('1120',[c]),0);
+  cos.forEach(c=>{ const f=S.fin[c], coll=f.coll/100;
+    S.invs.filter(i=>i.co===c&&!['draft','void'].includes(i.status)&&invBal(i)>0).forEach(i=>{ const od=-daysTo(i.due); add('تحصيل فواتير قائمة','in',od>0?Math.min(3,1+Math.floor(od/45)):wk(i.due),invBal(i)*(od>90?.3:od>0?.6:.95)); });
+    S.recur.filter(r=>r.co===c&&r.active==='نعم').forEach(r=>{ let d=r.next<todayI()?todayI():r.next; for(let g=0;g<14&&wk(d)>=0&&d<=ws[W-1];g++){ add('فواتير متكررة','in',wk(d)+Math.round(30/7),r.amt*(1+VAT)); d=addM(d,FREQM[r.freq]||1); } });
+    if(c==='clinic') S.insclaims.filter(r=>['مرسلة','تمت التسوية'].includes(r.status)).forEach(r=>add('سداد مطالبات التأمين','in',(x=>x<0?-1:Math.max(1,x))(wk(isoAdd(r.sent||todayI(),r.status==='تمت التسوية'?40:60))),r.status==='تمت التسوية'?r.appr:r.amt*.9));
+    if(c==='edu') S.enrol.filter(e=>e.status!=='منسحب'&&enrBal(e)>0).forEach(e=>{ const x=enrBal(e)*.85/4; [1,2,3,4].forEach(w=>add('أقساط المتدربين','in',w,x)); });
+    for(let w=5;w<W;w++) add('تحصيل مبيعات جديدة (تقدير)','in',w,f.rev[5]*1000*coll/4.33*.9);
+    S.bills.filter(b=>b.co===c&&b.status!=='paid').forEach(b=>add('سداد الموردين','out',wk(b.due),billTot(b)));
+    const es=S.emps.filter(e=>e.co===c&&isAct(e)), net=es.reduce((s,e)=>s+payLine(e).net,0), gosi=es.reduce((s,e)=>{ const p=payLine(e); return s+p.ge+p.gc; },0), pay=es.reduce((s,e)=>s+pkg(e)+payLine(e).gc,0);
+    for(let k=0;k<4;k++){ const m=addM(todayI().slice(0,7)+'-01',k).slice(0,7); const r=runOf(c,m); if(!(r&&r.status==='paid')) add('صافي الرواتب (٢٧ من الشهر)','out',wk(m+'-27'),net); add('التأمينات الاجتماعية (١٥ من الشهر)','out',wk(addM(m+'-01',1).slice(0,8)+'15'),gosi); }
+    S.loans.filter(l=>l.co===c&&l.status==='معتمد').forEach(l=>add('صرف سلف معتمدة','out',0,l.amt));
+    let vo=0,vi=0; S.journal.forEach(j=>{ if(j.co!==c||j.d<'2026-10-01') return; j.lines.forEach(l=>{ if(l[0]==='2120') vo+=l[2]-l[1]; if(l[0]==='1160') vi+=l[1]-l[2]; }); }); add('ضريبة القيمة المضافة — الربع الرابع','out',wk('2027-01-31'),Math.max(0,vo-vi)*1.4);
+    const opx=Math.max(0,f.exp[5]*1000-pay)/4.33; for(let w=0;w<W;w++) add('مصروفات تشغيلية أخرى (تقدير)','out',w,opx); });
+  const ins=Object.entries(rows).filter(([k])=>k.startsWith('in|')), outs=Object.entries(rows).filter(([k])=>k.startsWith('out|'));
+  const tin=ws.map((_,w)=>ins.reduce((s,[,a])=>s+a[w],0)), tout=ws.map((_,w)=>outs.reduce((s,[,a])=>s+a[w],0)); let run=open; const close=ws.map((_,w)=>run+=tin[w]-tout[w]);
+  const buffer=cos.reduce((s,c)=>s+S.emps.filter(e=>e.co===c&&isAct(e)).reduce((a,e)=>a+payLine(e).net,0),0);
+  return {ws,ins,outs,tin,tout,close,open,buffer}; }
+function viewCashFc(){
+  CFF.co=fixCo(CFF.co,true); const cos=cosOf(CFF.co), F=cashForecast(cos), W=F.ws.length, low=Math.min(...F.close), lw=F.close.indexOf(low), below=F.close.filter(x=>x<F.buffer).length;
+  const mx=Math.max(...F.close,F.buffer,F.open)*1.1, mn=Math.min(0,low*1.1), H=200, sm=innerWidth<640, Wd=sm?400:760, bw=(Wd-60)/W, y=v=>12+(H-24)*(1-(v-mn)/(mx-mn));
+  const chart=`<svg viewBox="0 0 ${Wd} ${H+26}" style="width:100%;height:auto;display:block" role="img" aria-label="رصيد النقد المتوقع أسبوعيًا"><line x1="0" x2="${Wd}" y1="${y(F.buffer)}" y2="${y(F.buffer)}" stroke="${tok('--warn')}" stroke-dasharray="4 4"/><text x="4" y="${y(F.buffer)-4}" font-size="11" fill="${tok('--warn')}">حد الأمان: رواتب شهر</text>${mn<0?`<line x1="0" x2="${Wd}" y1="${y(0)}" y2="${y(0)}" stroke="${tok('--axis')}"/>`:''}
+    ${F.close.map((v,i)=>{ const x=Wd-30-(i+1)*bw+3, top=Math.min(y(v),y(Math.max(0,mn))), h=Math.max(2,Math.abs(y(Math.max(0,mn))-y(v))); return `<rect x="${x}" y="${top}" width="${bw-6}" height="${h}" rx="3" fill="${v<F.buffer?tok('--crit'):tok('--c-clinic')}"><title>الأسبوع ${i+1} (${fmtD(F.ws[i])}): ${SAR(v)} ريال</title></rect><text x="${x+(bw-6)/2}" y="${H+20}" font-size="10.5" text-anchor="middle" fill="${tok('--muted')}">${i+1}</text>`; }).join('')}</svg>`;
+  const row=(lbl,a,cls)=>`<tr><td>${lbl}</td>${a.map(v=>`<td class="${cls||''}">${v?sarK(v):'—'}</td>`).join('')}<td><b>${sarK(a.reduce((s,v)=>s+v,0))}</b></td></tr>`;
+  return header('توقع السيولة — ١٣ أسبوعًا','من الفواتير والمستحقات والرواتب والتأمينات والضريبة الفعلية في المنصة، مع تقدير للمبيعات الجديدة والمصروفات الأخرى',csvBtn)
+  + `<div class="filters">${coSeg('CFF.co',CFF.co,true)}</div>
+    <div class="grid tiles">${tile('النقد اليوم',sarK(F.open)+' ريال','الصندوق والبنك')}${tile('أدنى رصيد متوقع',sarK(low)+' ريال','الأسبوع '+n(lw+1)+' · '+fmtD(F.ws[lw]),low<F.buffer?'crit':'')}${tile('بعد ١٣ أسبوعًا',sarK(F.close[W-1])+' ريال',(F.close[W-1]>=F.open?'+':'')+sarK(F.close[W-1]-F.open))}${tile('أسابيع تحت حد الأمان',n(below),'حد الأمان = صافي رواتب شهر ('+sarK(F.buffer)+')',below?'warn':'')}</div>
+    <div class="card" style="margin-top:16px"><h3>رصيد النقد المتوقع نهاية كل أسبوع <small>الأعمدة الحمراء تحت حد الأمان</small></h3>${chart}</div>
+    <div class="tbl-x" style="margin-top:16px"><table class="stmt"><thead><tr><th>البند</th>${F.ws.map((w,i)=>`<th>${n(i+1)}<div class="small muted">${fmtD(w)}</div></th>`).join('')}<th>الإجمالي</th></tr></thead><tbody>
+      <tr class="sum"><td>النقد أول الأسبوع</td>${F.close.map((v,i)=>`<td>${sarK(i?F.close[i-1]:F.open)}</td>`).join('')}<td></td></tr>
+      <tr class="grp"><td colspan="${W+2}">المقبوضات المتوقعة</td></tr>${F.ins.map(([k,a])=>row(k.slice(3),a,'up')).join('')}${row('<b>إجمالي المقبوضات</b>',F.tin)}
+      <tr class="grp"><td colspan="${W+2}">المدفوعات المتوقعة</td></tr>${F.outs.map(([k,a])=>row(k.slice(4),a,'down')).join('')}${row('<b>إجمالي المدفوعات</b>',F.tout)}
+      <tr class="sum"><td>النقد آخر الأسبوع</td>${F.close.map(v=>`<td class="${v<F.buffer?'down':''}">${sarK(v)}</td>`).join('')}<td></td></tr></tbody></table></div>
+    <div class="small muted" style="margin-top:8px">الفواتير المتأخرة تُحتسب باحتمال تحصيل ٦٠٪ (و٣٠٪ بعد ٩٠ يومًا)، والمبيعات الجديدة بنسبة التحصيل المعتمدة لكل شركة. ${CFF.co==='all'?'التحويلات بين الشركات لا تؤثر على الموحّد.':''}</div>`;
+}
+/* ---------- conflict of interest ---------- */
+const coiMissing=()=>MEMBERS.filter(m=>!S.coi.some(x=>x.member===m.key&&x.type==='إفصاح سنوي'&&x.year==='2026'));
+/* ---------- goals ---------- */
+const gProg=g=>Math.max(0,Math.min(1.2,(g.cur-g.base)/((g.target-g.base)||1)));
+const yrFrac=()=>{ const d=today(), a=new Date(d.getFullYear(),0,1), b=new Date(d.getFullYear(),11,31); return (d-a)/(b-a); };
+const gSt=g=>gProg(g)>=1?'محقق':gProg(g)>=yrFrac()-.12?'على المسار':gProg(g)>=yrFrac()-.3?'معرض للخطر':'متأخر';
+function goalsCard(cid){ const gs=S.goals.filter(g=>g.co===cid); if(!gs.length) return '';
+  return `<div class="card" style="margin-top:16px"><h3>الأهداف الاستراتيجية ٢٠٢٦ <a class="more-link" href="#goals" onclick="GF.goals={co:'${cid}',st:'',q:''}">كل الأهداف ←</a></h3>${gs.map(g=>`<div style="margin-bottom:12px;cursor:pointer" onclick="openRec('goals',${g.id})"><div class="row between small" style="gap:8px"><b>${esc(g.title)}</b><span class="pill ${REG.goals.cls[gSt(g)]}">${gSt(g)}</span></div><div class="small muted">${esc(g.measure)}: ${n(g.cur,1)}${g.unit==='%'?'٪':' '+g.unit} من مستهدف ${n(g.target,1)}${g.unit==='%'?'٪':' '+g.unit}</div>${meter(gProg(g)*100,{'محقق':'good','على المسار':'good','معرض للخطر':'warn','متأخر':'crit'}[gSt(g)])}</div>`).join('')}</div>`; }
+
+Object.assign(REG,{
+  audit:{key:'findings',title:'المراجعة الداخلية',one:'ملاحظة مراجعة',newT:'ملاحظة مراجعة جديدة',sub:'خطة المراجعة السنوية والملاحظات بدرجة خطورتها ورد الإدارة وموعد المعالجة والتحقق من الإغلاق',ph:'بحث بالملاحظة أو المجال',
+    states:['مفتوحة','قيد المعالجة','بانتظار التحقق','متأخرة','مغلقة'],stOf:findSt,cls:{'مفتوحة':'s-warn','قيد المعالجة':'s-info','بانتظار التحقق':'s-info','متأخرة':'s-crit','مغلقة':'s-good'},
+    canEdit:r=>auditor()||(r&&S.me===r.co),
+    fields:[{k:'co',l:'الشركة',t:'co'},{k:'area',l:'المجال',t:'sel',o:AUD_AREAS},{k:'title',l:'عنوان الملاحظة',t:'text',req:1,full:1},{k:'risk',l:'درجة الخطورة',t:'sel',o:['عالية','متوسطة','منخفضة']},{k:'finding',l:'الملاحظة',t:'area',full:1,req:1},{k:'rec',l:'التوصية',t:'area',full:1},{k:'owner',l:'المسؤول عن المعالجة',t:'text'},{k:'due',l:'موعد المعالجة',t:'date',req:1},{k:'resp',l:'رد الإدارة وخطة المعالجة',t:'area',full:1}],
+    blank:()=>({co:defCo(),area:AUD_AREAS[0],title:'',risk:'متوسطة',finding:'',rec:'',owner:'',due:isoAdd(todayI(),30),resp:'',raised:todayI(),closed:'',status:'مفتوحة'}),
+    name:r=>r.title, text:r=>r.title+' '+r.area+' '+r.finding+' '+r.owner, sort:(a,b)=>['متأخرة','مفتوحة','قيد المعالجة','بانتظار التحقق','مغلقة'].indexOf(findSt(a))-['متأخرة','مفتوحة','قيد المعالجة','بانتظار التحقق','مغلقة'].indexOf(findSt(b))||['عالية','متوسطة','منخفضة'].indexOf(a.risk)-['عالية','متوسطة','منخفضة'].indexOf(b.risk),
+    cols:[['الملاحظة',r=>`<b>${esc(r.title)}</b><div class="small muted">${r.area} · ${esc(r.owner)}</div>`],['الشركة',r=>coCell(r.co)],['الخطورة',r=>`<span class="pill ${RISKCLS[r.risk]}">${r.risk}</span>`],['موعد المعالجة',r=>fmtD(r.due)+(findSt(r)==='متأخرة'?` <span class="small down">${n(-daysTo(r.due))} يومًا</span>`:'')],['رد الإدارة',r=>r.resp?'<span class="pill s-good">قُدّم</span>':'<span class="pill s-idle">لم يُقدّم</span>']],
+    meta:r=>[r.area,r.risk,'المعالجة '+fmtD(r.due)],
+    acts:r=>{ const L=[], st=r.status; if(S.me===r.co||S.me==='sec'){ if(st==='مفتوحة') L.push(['تقديم خطة المعالجة',`findResp(${r.id})`,'gold']); if(st==='قيد المعالجة') L.push(['تمت المعالجة — للتحقق',`recSt('audit',${r.id},'بانتظار التحقق')`,'gold']); }
+      if(auditor()){ if(st==='بانتظار التحقق') L.push(['إغلاق بعد التحقق',`recSt('audit',${r.id},'مغلقة',{closed:todayI()})`,'gold'],['إعادة للمعالجة',`recSt('audit',${r.id},'قيد المعالجة')`]); if(st!=='مغلقة') L.push(['تمديد ٣٠ يومًا',`recSt('audit',${r.id},'${st}',{due:isoAdd(todayI(),30)})`]); } return L; },
+    info:r=>r.status==='مفتوحة'&&(S.me===r.co||S.me==='sec')?'<span class="small muted">اكتب رد الإدارة وخطة المعالجة ثم اضغط «تقديم خطة المعالجة».</span>':'',
+    tiles:b=>{ const op=b.filter(r=>r.status!=='مغلقة'), od=op.filter(r=>findSt(r)==='متأخرة'), cl=b.filter(r=>r.status==='مغلقة');
+      return [['ملاحظات مفتوحة',n(op.length),n(op.filter(r=>r.risk==='عالية').length)+' عالية الخطورة'],['متأخرة عن موعدها',n(od.length),'',od.length?'crit':''],['بانتظار التحقق',n(b.filter(r=>r.status==='بانتظار التحقق').length)],['نسبة الإغلاق',b.length?n(cl.length/b.length*100)+'٪':'—',n(cl.length)+' مغلقة']]; },
+    extra:b=>{ const cs=scopeCos(); return `<div class="grid split2" style="margin-top:16px"><div class="card"><h3>خريطة المخاطر المفتوحة</h3><div class="tbl-x"><table class="stmt"><thead><tr><th>الشركة</th><th>عالية</th><th>متوسطة</th><th>منخفضة</th></tr></thead><tbody>${cs.map(c=>`<tr><td><span class="row" style="gap:6px">${dot(c.id)}${c.short}</span></td>${['عالية','متوسطة','منخفضة'].map(k=>{ const x=b.filter(r=>r.co===c.id&&r.risk===k&&r.status!=='مغلقة').length; return `<td>${x?`<span class="pill ${RISKCLS[k]}">${n(x)}</span>`:'<span class="muted">٠</span>'}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div></div>
+      <div class="card"><h3>خطة المراجعة الداخلية</h3>${S.auditPlan.filter(p=>inScope(p.co)).map(p=>`<div class="mini" style="cursor:default"><span class="row" style="gap:6px">${dot(p.co)}<span>${esc(p.area)} <span class="small muted">· ${coName(p.co)} · ${p.q}</span></span></span><span class="pill ${p.st==='منجز'?'s-good':p.st==='جارٍ'?'s-info':'s-idle'}">${p.st}</span></div>`).join('')}</div></div>`; },
+    stat:()=>n(S.findings.filter(r=>inScope(r.co)&&findSt(r)==='متأخرة').length)+' ملاحظات متأخرة'},
+  coi:{key:'coi',title:'تعارض المصالح',one:'إفصاح',newT:'إفصاح جديد',sub:'الإفصاحات السنوية للأعضاء والمعاملات مع الأطراف ذات العلاقة والمصالح في القرارات',ph:'بحث بالعضو أو الطرف',
+    states:['مقدّم','قيد المراجعة','معتمد','يتطلب إجراء'],cls:{'مقدّم':'s-warn','قيد المراجعة':'s-info','معتمد':'s-good','يتطلب إجراء':'s-crit'},
+    fields:[{k:'member',l:'العضو',t:'opt',o:()=>MEMBERS.map(m=>[m.key,shortName(m.name)+' — '+m.role])},{k:'type',l:'نوع الإفصاح',t:'sel',o:['إفصاح سنوي','معاملة مع طرف ذي علاقة','مصلحة في قرار']},{k:'co',l:'الشركة المعنية',t:'co',all:1},{k:'year',l:'السنة',t:'sel',o:['2026','2027']},{k:'party',l:'الطرف أو القرار',t:'text'},{k:'amt',l:'القيمة (ريال)',t:'num'},{k:'desc',l:'التفاصيل',t:'area',full:1,req:1}],
+    blank:()=>({co:'all',member:S.me,type:'إفصاح سنوي',year:'2026',party:'',desc:'',amt:0,date:todayI(),status:'مقدّم'}),
+    name:r=>r.type+' — '+shortName(memberOf(r.member).name), text:r=>memberOf(r.member).name+' '+r.type+' '+r.party+' '+r.desc, sort:(a,b)=>b.date.localeCompare(a.date),
+    cols:[['العضو',r=>`<b>${esc(shortName(memberOf(r.member).name))}</b><div class="small muted">${esc(memberOf(r.member).role)}</div>`],['النوع',r=>r.type],['الشركة',r=>coCell(r.co)],['الطرف أو القرار',r=>esc(r.party)||'—'],['القيمة',r=>r.amt?sarK(r.amt):'—'],['التاريخ',r=>fmtD(r.date)]],
+    meta:r=>[r.type,esc(r.party||''),fmtD(r.date)],
+    acts:r=>['chair','vice','sec'].includes(S.me)&&r.status!=='معتمد'?[['اعتماد الإفصاح',`recSt('coi',${r.id},'معتمد')`,'gold'],...(r.status==='مقدّم'?[['قيد المراجعة',`recSt('coi',${r.id},'قيد المراجعة')`]]:[]),['يتطلب إجراء',`recSt('coi',${r.id},'يتطلب إجراء')`]]:[],
+    tiles:b=>{ const miss=coiMissing(); return [['الإفصاحات السنوية ٢٠٢٦',n(MEMBERS.length-miss.length)+' / '+n(MEMBERS.length),miss.length?'لم يُفصح: '+miss.map(m=>shortName(m.name)).join('، '):'اكتملت',miss.length?'warn':'good'],['معاملات أطراف ذات علاقة',n(b.filter(r=>r.type==='معاملة مع طرف ذي علاقة').length),sarK(b.filter(r=>r.type==='معاملة مع طرف ذي علاقة').reduce((s,r)=>s+r.amt,0))+' ريال'],['بانتظار المراجعة',n(b.filter(r=>['مقدّم','قيد المراجعة'].includes(r.status)).length)],['امتناع عن التصويت لتعارض',n(S.votes.reduce((s,v)=>s+v.conflict.length,0))]]; },
+    extra:()=>`<div class="card" style="margin-top:16px"><h3>التصويت مع إفصاح عن تعارض <small>العضو المتعارض لا يصوّت ولا يُحتسب في النصاب</small></h3>${S.votes.filter(v=>v.conflict.length).map(v=>`<div class="mini" onclick="location.hash='votes'"><span>${esc(v.title)}</span><span class="small muted">امتنع: ${v.conflict.map(k=>esc(shortName(memberOf(k).name))).join('، ')}</span></div>`).join('')||'<div class="small muted">لا توجد.</div>'}</div>`},
+  goals:{key:'goals',title:'الأهداف الاستراتيجية',one:'هدف',newT:'هدف استراتيجي جديد',sub:'أهداف كل شركة لعام ٢٠٢٦ ومؤشر قياسها وخط الأساس والمستهدف والمبادرات، مع الحكم الآلي على المسار',ph:'بحث بالهدف',
+    states:['على المسار','معرض للخطر','متأخر','محقق'],stOf:gSt,cls:{'على المسار':'s-good','معرض للخطر':'s-warn','متأخر':'s-crit','محقق':'s-info'},
+    fields:[{k:'co',l:'الشركة',t:'co'},{k:'title',l:'الهدف',t:'text',req:1,full:1},{k:'measure',l:'مؤشر القياس',t:'text',req:1},{k:'unit',l:'الوحدة',t:'sel',o:['%','','ألف','/ ٥']},{k:'base',l:'خط الأساس',t:'num'},{k:'target',l:'المستهدف',t:'num',req:1},{k:'cur',l:'القيمة الحالية',t:'num'},{k:'owner',l:'المسؤول',t:'text'},{k:'inits',l:'المبادرات (افصل بـ ·)',t:'area',full:1}],
+    blank:()=>({co:defCo(),year:'2026',title:'',measure:'',unit:'%',base:0,target:0,cur:0,owner:'',inits:'',upd:todayI()}),
+    check:v=>v.target===v.base?'المستهدف يجب أن يختلف عن خط الأساس.':'',
+    name:r=>r.title, text:r=>r.title+' '+r.measure+' '+r.inits,
+    cols:[['الهدف',r=>`<b>${esc(r.title)}</b><div class="small muted">${esc(r.measure)} · ${esc(r.owner)}</div>`],['الشركة',r=>coCell(r.co)],['الأساس ← المستهدف',r=>`${n(r.base,1)} ← ${n(r.target,1)}${r.unit==='%'?'٪':' '+r.unit}`],['الحالي',r=>`<b>${n(r.cur,1)}${r.unit==='%'?'٪':' '+r.unit}</b>`],['التقدم',r=>`${n(gProg(r)*100)}٪${meter(gProg(r)*100,{'محقق':'good','على المسار':'good','معرض للخطر':'warn','متأخر':'crit'}[gSt(r)])}`],['المبادرات',r=>`<div class="small">${esc(r.inits)}</div>`]],
+    meta:r=>[esc(r.measure),'التقدم '+n(gProg(r)*100)+'٪'],
+    info:()=>`<span class="small muted">التقدم = (الحالي − الأساس) ÷ (المستهدف − الأساس)، ويُقارن بما مضى من السنة (${n(yrFrac()*100)}٪).</span>`,
+    tiles:b=>[['أهداف ٢٠٢٦',n(b.length)],['على المسار أو محققة',n(b.filter(r=>['على المسار','محقق'].includes(gSt(r))).length),'',''],['معرضة للخطر',n(b.filter(r=>gSt(r)==='معرض للخطر').length),'','warn'],['متأخرة',n(b.filter(r=>gSt(r)==='متأخر').length),'',b.some(r=>gSt(r)==='متأخر')?'crit':'']],
+    stat:()=>n(S.goals.filter(r=>inScope(r.co)&&['على المسار','محقق'].includes(gSt(r))).length)+' أهداف على المسار'},
+  hse:{key:'hse',only:'factory',canEdit:secEdit('factory'),title:'السلامة المهنية',one:'بلاغ سلامة',newT:'بلاغ سلامة جديد',sub:'إصابات العمل والحوادث الوشيكة وملاحظات السلامة والتفتيش — العلامة الكبرى',ph:'بحث بالوصف أو القسم',
+    states:['مفتوح','قيد المعالجة','مغلق'],cls:{'مفتوح':'s-warn','قيد المعالجة':'s-info','مغلق':'s-good'},
+    fields:[{k:'type',l:'النوع',t:'sel',o:['إصابة عمل','حادث وشيك','ملاحظة سلامة','تفتيش']},{k:'sev',l:'الخطورة',t:'sel',o:['بسيطة','متوسطة','جسيمة']},{k:'area',l:'القسم',t:'opt',o:()=>DEPTS.factory.map(([d])=>[d,d])},{k:'date',l:'التاريخ',t:'date'},{k:'lost',l:'أيام العمل المفقودة',t:'num'},{k:'desc',l:'الوصف',t:'area',full:1,req:1},{k:'action',l:'الإجراء التصحيحي',t:'area',full:1}],
+    blank:()=>({co:'factory',type:'ملاحظة سلامة',sev:'بسيطة',area:'الإنتاج',date:todayI(),lost:0,desc:'',action:'',status:'مفتوح'}),
+    name:r=>r.type+' — '+r.area, text:r=>r.type+' '+r.area+' '+r.desc, sort:(a,b)=>b.date.localeCompare(a.date),
+    cols:[['البلاغ',r=>`<b>${esc(r.desc)}</b><div class="small muted">${r.type} · ${esc(r.area)}</div>`],['الخطورة',r=>`<span class="pill ${r.sev==='جسيمة'?'s-crit':r.sev==='متوسطة'?'s-warn':'s-idle'}">${r.sev}</span>`],['التاريخ',r=>fmtD(r.date)],['أيام مفقودة',r=>r.lost?n(r.lost):'—'],['الإجراء',r=>`<span class="small">${esc(r.action)||'—'}</span>`]],
+    meta:r=>[r.type,r.sev,fmtD(r.date)],
+    acts:r=>secEdit('factory')()&&r.status!=='مغلق'?[...(r.status==='مفتوح'?[['قيد المعالجة',`recSt('hse',${r.id},'قيد المعالجة')`]]:[]),['إغلاق بعد التصحيح',`recSt('hse',${r.id},'مغلق')`,'gold']]:[],
+    tiles:b=>{ const inj=b.filter(r=>r.type==='إصابة عمل'&&r.lost>0).sort((a,c)=>c.date.localeCompare(a.date))[0], m=todayI().slice(0,7);
+      return [['أيام بلا إصابة مضيعة للوقت',inj?n(-daysTo(inj.date)):'—','منذ آخر إصابة بأيام مفقودة'],['بلاغات هذا الشهر',n(b.filter(r=>r.date.slice(0,7)===m).length)],['أيام العمل المفقودة',n(b.reduce((s,r)=>s+(+r.lost||0),0)),'آخر ٩٠ يومًا'],['إجراءات مفتوحة',n(b.filter(r=>r.status!=='مغلق').length),'',b.some(r=>r.status!=='مغلق'&&r.sev!=='بسيطة')?'warn':'']]; },
+    stat:()=>n(S.hse.filter(r=>r.status!=='مغلق').length)+' إجراءات سلامة مفتوحة'},
+  down:{key:'down',only:'factory',canEdit:secEdit('factory'),title:'توقف الآلات',one:'توقف آلة',newT:'تسجيل توقف آلة',sub:'ساعات توقف خطوط الإنتاج وأسبابها وجاهزية الآلات',ph:'بحث بالآلة أو السبب',
+    states:['متوقفة','عادت للعمل'],cls:{'متوقفة':'s-crit','عادت للعمل':'s-good'},
+    fields:[{k:'machine',l:'الآلة',t:'sel',o:MACHINES},{k:'start',l:'تاريخ التوقف',t:'date'},{k:'hrs',l:'ساعات التوقف',t:'num',req:1},{k:'cause',l:'السبب',t:'sel',o:DT_CAUSES},{k:'note',l:'ملاحظات',t:'area',full:1}],
+    blank:()=>({co:'factory',machine:MACHINES[0],start:todayI(),hrs:1,cause:DT_CAUSES[0],note:'',status:'متوقفة'}),
+    name:r=>r.machine+' — '+fmtD(r.start), text:r=>r.machine+' '+r.cause+' '+r.note, sort:(a,b)=>(a.status==='متوقفة'?0:1)-(b.status==='متوقفة'?0:1)||b.start.localeCompare(a.start),
+    cols:[['الآلة',r=>`<b>${esc(r.machine)}</b><div class="small muted">${esc(r.note)}</div>`],['السبب',r=>r.cause],['التاريخ',r=>fmtD(r.start)],['الساعات',r=>n(r.hrs)]],
+    meta:r=>[r.cause,n(r.hrs)+' ساعة'],
+    acts:r=>secEdit('factory')()&&r.status==='متوقفة'?[['عادت للعمل',`recSt('down',${r.id},'عادت للعمل')`,'gold'],['إنشاء طلب صيانة',`downMaint(${r.id})`]]:[],
+    tiles:b=>{ const m=todayI().slice(0,7), mm=b.filter(r=>r.start.slice(0,7)===m), hrs=mm.reduce((s,r)=>s+r.hrs,0), cap=MACHINES.length*16*Math.max(1,+todayI().slice(8)), byC={}; b.forEach(r=>byC[r.cause]=(byC[r.cause]||0)+r.hrs); const top=Object.entries(byC).sort((a,c)=>c[1]-a[1])[0];
+      return [['آلات متوقفة الآن',n(b.filter(r=>r.status==='متوقفة').length),'',b.some(r=>r.status==='متوقفة')?'crit':''],['ساعات التوقف هذا الشهر',n(hrs)],['جاهزية الآلات',n((1-hrs/cap)*100,1)+'٪','١٦ ساعة تشغيل يوميًا'],['السبب الأكثر',top?top[0]:'—',top?n(top[1])+' ساعة':'']]; },
+    stat:()=>n(S.down.filter(r=>r.status==='متوقفة').length)+' آلات متوقفة'},
+  surveys:{key:'surveys',only:'clinic',canEdit:secEdit('clinic'),title:'رضا المرضى',one:'تقييم',newT:'تقييم مريض',sub:'استبيان ما بعد الزيارة: التقييم من ٥ ومؤشر صافي الترويج والمتابعة الفورية للتقييمات المنخفضة',ph:'بحث بالتعليق أو الطبيب',
+    states:['بحاجة متابعة','تمت المتابعة','لا يحتاج'],stOf:r=>r.score<=2?(r.followed?'تمت المتابعة':'بحاجة متابعة'):'لا يحتاج',cls:{'بحاجة متابعة':'s-crit','تمت المتابعة':'s-good','لا يحتاج':'s-idle'},
+    fields:[{k:'doc',l:'الطبيب',t:'opt',o:()=>doctors().map(e=>[e.id,e.name+' — '+e.dept])},{k:'date',l:'تاريخ الزيارة',t:'date'},{k:'score',l:'التقييم (١ – ٥)',t:'num',req:1},{k:'nps',l:'احتمال التوصية (٠ – ١٠)',t:'num'},{k:'comment',l:'تعليق المريض',t:'area',full:1},{k:'fnote',l:'ملاحظة المتابعة',t:'area',full:1}],
+    blank:()=>({co:'clinic',doc:(doctors()[0]||{}).id,dept:'',date:todayI(),score:5,nps:9,comment:'',followed:false,fnote:''}),
+    check:v=>v.score<1||v.score>5?'التقييم من ١ إلى ٥.':v.nps<0||v.nps>10?'احتمال التوصية من ٠ إلى ١٠.':'',
+    onNew:r=>{ r.dept=(emp(r.doc)||{}).dept||''; },
+    name:r=>'تقييم '+n(r.score)+' من ٥ — '+empName(r.doc), text:r=>r.comment+' '+empName(r.doc)+' '+r.dept, sort:(a,b)=>(a.score<=2&&!a.followed?0:1)-(b.score<=2&&!b.followed?0:1)||b.date.localeCompare(a.date),
+    cols:[['التقييم',r=>`<b>${'★'.repeat(r.score)}<span class="muted">${'★'.repeat(5-r.score)}</span></b><div class="small muted">${esc(r.comment)||'بلا تعليق'}</div>`],['الطبيب',r=>`${esc(empName(r.doc))}<div class="small muted">${esc(r.dept)}</div>`],['التوصية',r=>n(r.nps)+' / ١٠'],['التاريخ',r=>fmtD(r.date)]],
+    meta:r=>[n(r.score)+' من ٥',esc(empName(r.doc)),fmtD(r.date)],
+    acts:r=>secEdit('clinic')()&&r.score<=2&&!r.followed?[['تسجيل المتابعة',`recSt('surveys',${r.id},'',{followed:true,fnote:($('#rf_fnote')||{}).value||'تم التواصل مع المراجع.'})`,'gold'],['تحويل إلى شكوى',`svComplaint(${r.id})`]]:[],
+    tiles:b=>{ const avg=b.length?b.reduce((s,r)=>s+r.score,0)/b.length:0, pro=b.filter(r=>r.nps>=9).length, det=b.filter(r=>r.nps<=6).length;
+      return [['متوسط التقييم',n(avg,2)+' / ٥',n(b.length)+' تقييمًا',avg<4?'warn':''],['صافي الترويج NPS',b.length?n((pro-det)/b.length*100):'—','المروّجون ناقص المنتقدين'],['بحاجة متابعة',n(b.filter(r=>r.score<=2&&!r.followed).length),'تقييم ٢ أو أقل',b.some(r=>r.score<=2&&!r.followed)?'crit':''],['تقييمات هذا الشهر',n(b.filter(r=>r.date.slice(0,7)===todayI().slice(0,7)).length)]]; },
+    extra:b=>{ const by={}; b.forEach(r=>{ const x=by[r.doc]=by[r.doc]||{s:0,n:0}; x.s+=r.score; x.n++; });
+      return `<div class="card" style="margin-top:16px"><h3>التقييم بحسب الطبيب</h3>${Object.entries(by).sort((a,c)=>c[1].s/c[1].n-a[1].s/a[1].n).map(([k,x])=>`<div style="margin-bottom:9px"><div class="row between small"><span>${esc(empName(+k))} <span class="muted">· ${n(x.n)} تقييمًا</span></span><b>${n(x.s/x.n,2)}</b></div>${meter(x.s/x.n/5*100,x.s/x.n<3.5?'crit':x.s/x.n<4.2?'warn':'good')}</div>`).join('')}</div>`; },
+    stat:()=>n(S.surveys.filter(r=>r.score<=2&&!r.followed).length)+' تقييمات بحاجة متابعة'},
+  cchk:{key:'cchk',only:'law',canEdit:()=>S.me==='law',title:'فحص تعارض المصالح',one:'فحص',newT:'فحص قبل قبول موكّل',sub:'قبل قبول أي موكّل: البحث في العملاء الحاليين وخصوم القضايا القائمة — النتائج سرّية للمكتب',ph:'بحث بالاسم',
+    states:['لا تعارض','تعارض محتمل','قُبل بعد المراجعة','اعتُذر عن التوكل'],stOf:r=>r.status||(r.hits&&r.hits.length?'تعارض محتمل':'لا تعارض'),cls:{'لا تعارض':'s-good','تعارض محتمل':'s-crit','قُبل بعد المراجعة':'s-info','اعتُذر عن التوكل':'s-idle'},
+    fields:[{k:'name',l:'اسم الموكّل المحتمل',t:'text',req:1,priv:1},{k:'opp',l:'الطرف الآخر',t:'text',req:1,priv:1},{k:'matter',l:'موضوع التوكل',t:'text',full:1,priv:1}],
+    blank:()=>({co:'law',name:'',opp:'',matter:'',date:todayI(),hits:[],status:''}),
+    onNew:r=>{ r.hits=conflictHits(r.name,r.opp); },
+    name:r=>lawSee()?r.name+' ضد '+r.opp:'فحص بتاريخ '+fmtD(r.date), text:r=>lawSee()?r.name+' '+r.opp+' '+r.matter:'',
+    cols:[['الموكّل المحتمل',r=>lawSee()?`<b>${esc(r.name)}</b><div class="small muted">ضد ${esc(r.opp)} · ${esc(r.matter)}</div>`:'<span class="muted">سرّي</span>'],['التاريخ',r=>fmtD(r.date)],['النتيجة',r=>lawSee()&&r.hits.length?`<span class="small">${r.hits.map(esc).join('<br>')}</span>`:r.hits.length?n(r.hits.length)+' تطابقات':'لا تطابق']],
+    meta:r=>[fmtD(r.date)],
+    more:r=>lawSee()?`<div class="full sec-title">نتيجة الفحص</div><div class="full small">${r.hits.length?r.hits.map(h=>'• '+esc(h)).join('<br>'):'لا تطابق مع العملاء الحاليين أو خصوم القضايا القائمة.'}</div>`:'',
+    acts:r=>lawSee()&&r.hits.length&&!r.status?[['قبول بعد مراجعة الشريك المدير',`recSt('cchk',${r.id},'قُبل بعد المراجعة')`,'gold'],['الاعتذار عن التوكل',`recSt('cchk',${r.id},'اعتُذر عن التوكل')`]]:[],
+    tiles:b=>[['فحوص هذا الشهر',n(b.filter(r=>r.date.slice(0,7)===todayI().slice(0,7)).length)],['تعارضات محتملة',n(b.filter(r=>r.hits.length).length),'',b.some(r=>r.hits.length&&!r.status)?'warn':''],['اعتُذر عنها',n(b.filter(r=>r.status==='اعتُذر عن التوكل').length)],['إجمالي الفحوص',n(b.length)]]},
+  evals:{key:'evals',only:'edu',canEdit:secEdit('edu'),title:'تقييم المدربين والبرامج',one:'تقييم',newT:'تقييم متدرب',sub:'تقييم المحتوى والمدرب والبرنامج بعد كل برنامج — من ٥',ph:'بحث بالتعليق',
+    states:['ممتاز','جيد','يحتاج تحسين'],stOf:r=>r.overall>=4.5?'ممتاز':r.overall>=3.5?'جيد':'يحتاج تحسين',cls:{'ممتاز':'s-good','جيد':'s-info','يحتاج تحسين':'s-crit'},
+    fields:[{k:'course',l:'البرنامج',t:'opt',o:()=>S.courses.map(c=>[c.id,c.title])},{k:'content',l:'المحتوى (١ – ٥)',t:'num'},{k:'trainer',l:'المدرب (١ – ٥)',t:'num'},{k:'overall',l:'التقييم العام (١ – ٥)',t:'num'},{k:'comment',l:'تعليق',t:'area',full:1}],
+    blank:()=>({co:'edu',course:(S.courses[0]||{}).id,date:todayI(),content:5,trainer:5,overall:5,comment:''}),
+    check:v=>[v.content,v.trainer,v.overall].some(x=>x<1||x>5)?'التقييمات من ١ إلى ٥.':'',
+    name:r=>courseOf(r.course).title, text:r=>courseOf(r.course).title+' '+r.comment+' '+empName(courseOf(r.course).trainer), sort:(a,b)=>b.date.localeCompare(a.date),
+    cols:[['البرنامج',r=>`<b>${esc(courseOf(r.course).title)}</b><div class="small muted">${esc(r.comment)}</div>`],['المدرب',r=>esc(empName(courseOf(r.course).trainer))],['المحتوى',r=>n(r.content)],['المدرب',r=>n(r.trainer)],['العام',r=>n(r.overall)]],
+    meta:r=>[esc(empName(courseOf(r.course).trainer)),'العام '+n(r.overall)],
+    tiles:b=>{ const a=k=>b.length?n(b.reduce((s,r)=>s+r[k],0)/b.length,2):'—'; return [['تقييم المدربين',a('trainer')+' / ٥'],['تقييم المحتوى',a('content')+' / ٥'],['التقييم العام',a('overall')+' / ٥'],['عدد التقييمات',n(b.length)]]; },
+    extra:b=>{ const by={}; b.forEach(r=>{ const t=courseOf(r.course).trainer, x=by[t]=by[t]||{s:0,n:0,c:new Set()}; x.s+=r.trainer; x.n++; x.c.add(r.course); });
+      return `<div class="card" style="margin-top:16px"><h3>ترتيب المدربين</h3>${Object.entries(by).sort((a,c)=>c[1].s/c[1].n-a[1].s/a[1].n).map(([k,x])=>`<div style="margin-bottom:9px"><div class="row between small"><span>${esc(empName(+k))} <span class="muted">· ${n(x.c.size)} برامج · ${n(x.n)} تقييمًا</span></span><b>${n(x.s/x.n,2)}</b></div>${meter(x.s/x.n/5*100,x.s/x.n<3.8?'warn':'good')}</div>`).join('')}</div>`; },
+    stat:()=>'تقييم المدربين '+(S.evals.length?n(S.evals.reduce((s,r)=>s+r.trainer,0)/S.evals.length,2):'—')},
+});
+REG.cases.fields.splice(2,0,{k:'opp',l:'الطرف الآخر (الخصم)',t:'text',priv:1});
+window.findResp=function(id){ const r=S.findings.find(x=>x.id===id), v=($('#rf_resp')||{}).value||''; if(!v.trim()){ toast('اكتب رد الإدارة وخطة المعالجة أولًا'); return; } recSt('audit',id,'قيد المعالجة',{resp:v.trim()}); };
+window.downMaint=function(id){ const r=S.down.find(x=>x.id===id); S.maint.unshift({id:uid(),co:'factory',title:`إصلاح ${r.machine} — ${r.cause}`,site:'المصنع',cat:'أخرى',pri:'عالية',opened:todayI(),cost:0,vendor:'',status:'جديد'}); logAct(`أنشأ طلب صيانة لـ ${r.machine}`); save(); closeModal(); location.hash='facilities'; render(); toast('أُنشئ طلب الصيانة'); };
+window.svComplaint=function(id){ const r=S.surveys.find(x=>x.id===id); S.complaints.unshift({id:uid(),co:'clinic',who:'مراجع — تقييم '+n(r.score)+' من ٥',ch:'منصة تقييم',cat:'جودة الخدمة',pri:'عالية',opened:todayI(),closed:'',desc:r.comment||'تقييم منخفض بعد الزيارة',res:'',status:'جديدة'}); r.followed=true; r.fnote='حُوّل إلى شكوى رسمية.'; logAct('حوّل تقييمًا منخفضًا إلى شكوى'); save(); closeModal(); location.hash='support'; render(); toast('أُنشئت الشكوى'); };
+function conflictHits(name,opp){ const nm=s=>String(s||'').replace(/^(شركة|مؤسسة|مجموعة|مكتب)\s+/,'').trim(), a=nm(name), b=nm(opp), H=[], m=(x,y)=>x&&y&&(x.includes(y)||y.includes(x));
+  S.clients.filter(c=>c.co==='law').forEach(c=>{ if(m(nm(c.name),b)) H.push(`الطرف الآخر «${opp}» عميل حالي للمكتب`); if(m(nm(c.name),a)) H.push(`«${name}» عميل حالي — تحقق من عدم التعارض مع قضاياه`); });
+  S.cases.filter(c=>c.status!=='منتهية').forEach(c=>{ if(m(nm(c.opp),a)) H.push(`«${name}» خصم في القضية ${c.no}`); if(m(nm(c.opp),b)) H.push(`«${opp}» خصم في القضية ${c.no} أيضًا`); });
+  return [...new Set(H)]; }
+
+S.cchk.forEach(r=>{ if(!r._c&&!r.status){ r.hits=conflictHits(r.name,r.opp); r._c=1; } });
+/* ---------- Excel import ---------- */
+const coFrom=v=>{ v=String(v||'').trim(); const c=COMPANIES.find(c=>c.id===v||c.short===v||c.name===v||c.name.includes(v)&&v.length>3); return c?c.id:null; };
+const IMPT={
+  emps:{t:'الموظفون',cols:['الشركة','الاسم','الإدارة','المسمى الوظيفي','الجنسية','الراتب الأساسي','بدل السكن','بدل النقل','تاريخ الالتحاق','البنك'],ex:['النجوم السبعة','سارة محمد الغامدي','التمريض','ممرض أول','سعودي','7600','1900','760','2026-12-01','الراجحي'],
+    row:a=>{ const c=coFrom(a[0]); if(!c) return 'الشركة غير معروفة'; if(!a[1]) return 'الاسم مطلوب'; if(!DEPTS[c].some(d=>d[0]===a[2])) return 'الإدارة غير موجودة في هيكل '+co(c).short; if(!(+a[5]>0)) return 'الراتب الأساسي غير صحيح'; if(a[8]&&!/^\d{4}-\d{2}-\d{2}$/.test(a[8])) return 'التاريخ بصيغة YYYY-MM-DD'; return ''; },
+    add:a=>{ const c=coFrom(a[0]), k=S.emps.filter(e=>e.co===c).length+1; S.emps.push({id:uid(),co:c,no:EPFX[c]+'-'+String(k).padStart(4,'0'),name:a[1],g:'m',nat:a[4]||'سعودي',dept:a[2],title:a[3]||'موظف',grade:4,head:false,basic:+a[5],hous:+a[6]||Math.round(a[5]*.25),trans:+a[7]||Math.round(a[5]*.1),oth:0,join:a[8]||todayI(),status:'على رأس العمل',bank:a[9]||'الأهلي',lb:21,iq:'',cend:'',lic:'',rt:null,rt25:null}); }},
+  invs:{t:'فواتير المبيعات (مسودات)',cols:['الشركة','العميل','البيان','الكمية','سعر الوحدة','تاريخ الإصدار'],ex:['العلامة الكبرى','فندق أبراج الشاطئ','خزائن ملابس — دفعة ٢','20','3400','2026-11-20'],
+    row:a=>!coFrom(a[0])?'الشركة غير معروفة':!a[2]?'البيان مطلوب':!(+a[3]>0&&+a[4]>0)?'الكمية والسعر غير صحيحين':'',
+    add:a=>newInv(coFrom(a[0]),null,a[1],[{d:a[2],q:+a[3],p:+a[4]}],false,/^\d{4}-\d{2}-\d{2}$/.test(a[5]||'')?a[5]:null)},
+  clients:{t:'العملاء',cols:['الشركة','الاسم','النوع','الجوال','المدينة'],ex:['نوليدج','شركة الأفق للتقنية','عميل مؤسسي','055 000 0000','جدة'],
+    row:a=>!coFrom(a[0])?'الشركة غير معروفة':!a[1]?'الاسم مطلوب':S.clients.some(c=>c.name===a[1]&&c.co===coFrom(a[0]))?'العميل موجود مسبقًا':'',
+    add:a=>S.clients.push({id:uid(),co:coFrom(a[0]),name:a[1],kind:a[2]||'عميل',contact:'',phone:a[3]||'',email:'',city:a[4]||'جدة',stage:'محتمل',value:0,bal:0,age:0,renew:'',last:todayI(),notes:'مستورد من Excel',conf:coFrom(a[0])==='law'})},
+  sups:{t:'الموردون',cols:['الشركة','اسم المورد','الفئة','شروط السداد (يوم)','الرقم الضريبي'],ex:['العلامة الكبرى','مؤسسة الأخشاب الحديثة','مواد خام','45','300000000000003'],
+    row:a=>!coFrom(a[0])?'الشركة غير معروفة':!a[1]?'اسم المورد مطلوب':S.sups.some(s=>s.name===a[1]&&s.co===coFrom(a[0]))?'المورد موجود مسبقًا':'',
+    add:a=>S.sups.push({id:uid(),co:coFrom(a[0]),name:a[1],cat:a[2]||'عام',terms:+a[3]||30,vat:a[4]||''})},
+};
+let IMF={t:'emps',txt:''};
+const parseTbl=txt=>txt.replace(/\r/g,'').split('\n').filter(l=>l.trim()).map(l=>l.includes('\t')?l.split('\t'):l.match(/("([^"]|"")*"|[^,]*)(,|$)/g).filter((x,i,a)=>i<a.length-1||x).map(x=>x.replace(/,$/,'').replace(/^"|"$/g,'').replace(/""/g,'"'))).map(r=>r.map(x=>x.trim()));
+function viewImport(){
+  const T=IMPT[IMF.t], rows=parseTbl(IMF.txt), body=rows.length&&rows[0][0]===T.cols[0]?rows.slice(1):rows, chk=body.map(a=>({a,e:T.row(a)})), ok=chk.filter(x=>!x.e).length;
+  return header('استيراد من Excel','انسخ الصفوف من Excel أو Google Sheets والصقها هنا — تُفحص كل الصفوف قبل الإضافة')
+  + `<div class="filters"><div class="seg wrap">${Object.entries(IMPT).map(([k,v])=>`<button class="${IMF.t===k?'on':''}" onclick="IMF.t='${k}';IMF.txt='';render()">${v.t}</button>`).join('')}</div></div>
+    <div class="grid split2"><div class="card"><h3>١. الأعمدة المطلوبة بهذا الترتيب</h3><div class="tbl-x"><table class="stmt"><thead><tr>${T.cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody><tr>${T.ex.map(c=>`<td class="small">${esc(c)}</td>`).join('')}</tr></tbody></table></div>
+      <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" onclick="copyBox('قالب الاستيراد',IMPT[IMF.t].cols.join('\\t')+'\\n'+IMPT[IMF.t].ex.join('\\t'),'الصق القالب في Excel واملأ الصفوف ثم انسخها وأعد لصقها هنا.')">نسخ القالب</button><button class="btn" onclick="IMF.txt=IMPT[IMF.t].cols.join('\\t')+'\\n'+IMPT[IMF.t].ex.join('\\t');render()">تجربة بالمثال</button></div>
+      <div class="small muted" style="margin-top:10px">الشركة تُكتب باسمها المختصر (النجوم السبعة، العلامة الكبرى، المعرفة القانونية، نوليدج). التواريخ بصيغة 2026-12-01. صف العناوين اختياري.</div></div>
+    <div class="card"><h3>٢. الصق الصفوف هنا</h3><textarea rows="8" style="width:100%;font-family:monospace;direction:ltr" placeholder="الصق من Excel…" oninput="IMF.txt=this.value;clearTimeout(window._im);window._im=setTimeout(render,500)">${esc(IMF.txt)}</textarea></div></div>
+    ${chk.length?`<div class="card" style="margin-top:16px"><h3>٣. المعاينة <small>${n(ok)} صالحة · ${n(chk.length-ok)} بها أخطاء</small></h3><div class="tbl-x"><table class="stmt"><thead><tr><th></th>${T.cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${chk.slice(0,50).map(x=>`<tr><td>${x.e?`<span class="pill s-crit" title="${esc(x.e)}">✗ ${esc(x.e)}</span>`:'<span class="pill s-good">✓</span>'}</td>${T.cols.map((_,i)=>`<td class="small">${esc(x.a[i]||'')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="row" style="gap:8px;margin-top:12px"><button class="btn primary" ${ok?'':'disabled'} onclick="runImport()">استيراد ${n(ok)} صفوف صالحة</button><button class="btn" onclick="IMF.txt='';render()">مسح</button></div></div>`:''}`;
+}
+window.runImport=function(){ const T=IMPT[IMF.t], rows=parseTbl(IMF.txt), body=rows.length&&rows[0][0]===T.cols[0]?rows.slice(1):rows, good=body.filter(a=>!T.row(a));
+  if(!['sec','fin','chair'].includes(S.me)&&!good.every(a=>coFrom(a[0])===S.me)){ toast('يستورد ممثل الشركة بيانات شركته فقط'); return; }
+  good.forEach(a=>T.add(a)); logAct(`استورد ${n(good.length)} سجلات (${T.t}) من Excel`); IMF.txt=''; save(); render(); toast(`أُضيف ${n(good.length)} سجلات`); };
+/* ---------- inbox, alerts, board report, search, directory ---------- */
+const _inbox0=inboxItems; inboxItems=function(){ const L=_inbox0(), add=(k,c,t,s,go,q)=>L.push({k,c,t,s,go,q:q||[]});
+  S.findings.filter(r=>inScope(r.co)&&r.status==='مفتوحة'&&(S.me===r.co)).forEach(r=>add('الرقابة',r.co,'ملاحظة مراجعة بانتظار ردك — '+r.title,`خطورة ${r.risk} · المعالجة ${fmtD(r.due)}`,`openRec('audit',${r.id})`));
+  if(auditor()) S.findings.filter(r=>inScope(r.co)&&r.status==='بانتظار التحقق').forEach(r=>add('الرقابة',r.co,'ملاحظة بانتظار التحقق — '+r.title,r.resp||'',`openRec('audit',${r.id})`,[['إغلاق',`recSt('audit',${r.id},'مغلقة',{closed:todayI()})`]]));
+  if(['chair','vice','sec'].includes(S.me)) S.coi.filter(r=>['مقدّم','قيد المراجعة'].includes(r.status)).forEach(r=>add('الرقابة',r.co,'إفصاح بانتظار المراجعة — '+shortName(memberOf(r.member).name),r.type+(r.party?' · '+r.party:''),`openRec('coi',${r.id})`,[['اعتماد',`recSt('coi',${r.id},'معتمد')`]]));
+  if(!S.coi.some(x=>x.member===S.me&&x.type==='إفصاح سنوي'&&x.year==='2026')) add('الرقابة','all','إفصاحك السنوي لعام ٢٠٢٦ لم يُقدّم','مطلوب من كل عضو',`openRec('coi',null,{member:'${S.me}'})`);
+  if(secEdit('clinic')()) S.surveys.filter(r=>r.score<=2&&!r.followed).forEach(r=>add('القطاعات','clinic','تقييم مريض منخفض بحاجة متابعة',`${n(r.score)} من ٥ · ${esc(r.comment||'')}`,`openRec('surveys',${r.id})`));
+  if(S.me==='law') S.cchk.filter(r=>r.hits.length&&!r.status).forEach(r=>add('القطاعات','law','تعارض محتمل — '+r.name,r.hits[0],`openRec('cchk',${r.id})`));
+  return L; };
+const _erpAlerts1=erpAlerts; erpAlerts=function(a){ _erpAlerts1(a);
+  S.findings.filter(r=>inScope(r.co)&&findSt(r)==='متأخرة'&&r.risk==='عالية').forEach(r=>a.push({l:'crit',t:'ملاحظة مراجعة عالية الخطورة متأخرة',s:`${r.title} · ${coName(r.co)}`,go:`openRec('audit',${r.id})`}));
+  S.goals.filter(g=>inScope(g.co)&&gSt(g)==='متأخر').forEach(g=>a.push({l:'warn',t:'هدف استراتيجي متأخر',s:`${g.title} · ${coName(g.co)}`,go:`openRec('goals',${g.id})`}));
+  scopeCos().forEach(c=>{ const F=cashForecast([c.id]), lw=F.close.findIndex(v=>v<0); if(lw>=0) a.push({l:'crit',t:'عجز نقدي متوقع خلال ١٣ أسبوعًا',s:`${c.short} · الأسبوع ${n(lw+1)} (${fmtD(F.ws[lw])})`,go:`CFF.co='${c.id}';location.hash='cashfc'`}); });
+  scopeCos().forEach(c=>{ const ov=DEPTS[c.id].filter(([d])=>budOf(c.id,d)&&budSpent(c.id,d)>budOf(c.id,d)); if(ov.length) a.push({l:'warn',t:`${n(ov.length)} إدارات تجاوزت موازنة الربع`,s:co(c.id).short+' · '+ov.map(x=>x[0]).join('، '),go:`DBF.co='${c.id}';location.hash='dbudget'`}); });
+  if(inScope('factory')){ S.down.filter(r=>r.status==='متوقفة').forEach(r=>a.push({l:'crit',t:'آلة متوقفة عن العمل',s:`${r.machine} · ${r.cause}`,go:`openRec('down',${r.id})`})); S.hse.filter(r=>r.status!=='مغلق'&&r.sev!=='بسيطة').forEach(r=>a.push({l:'warn',t:'بلاغ سلامة مفتوح',s:r.desc,go:`openRec('hse',${r.id})`})); }
+  if(inScope('clinic')){ const f=S.surveys.filter(r=>r.score<=2&&!r.followed); if(f.length) a.push({l:'warn',t:`${n(f.length)} تقييمات مرضى منخفضة بحاجة متابعة`,s:'رضا المرضى',go:"location.hash='surveys'"}); } };
+const _board0=boardData; boardData=function(){ const s=_board0(), fo=S.findings.filter(r=>inScope(r.co)&&r.status!=='مغلقة'), gs=S.goals.filter(g=>inScope(g.co)), F=cashForecast(scopeCos().map(c=>c.id)), low=Math.min(...F.close);
+  s.splice(s.length-1,0,['الرقابة والأهداف وتوقع السيولة',[`ملاحظات المراجعة الداخلية المفتوحة ${n(fo.length)}، منها ${n(fo.filter(r=>r.risk==='عالية').length)} عالية الخطورة و${n(fo.filter(r=>findSt(r)==='متأخرة').length)} متأخرة عن موعد معالجتها.`,`الأهداف الاستراتيجية: ${n(gs.filter(g=>['على المسار','محقق'].includes(gSt(g))).length)} على المسار، ${n(gs.filter(g=>gSt(g)==='معرض للخطر').length)} معرضة للخطر، ${n(gs.filter(g=>gSt(g)==='متأخر').length)} متأخرة${gs.filter(g=>gSt(g)==='متأخر').length?': '+gs.filter(g=>gSt(g)==='متأخر').map(g=>g.title).join('؛ '):''}.`,`توقع السيولة لثلاثة عشر أسبوعًا: أدنى رصيد ${sarK(low)} ريال في الأسبوع ${n(F.close.indexOf(low)+1)}، ${low<F.buffer?'وهو أقل من حد الأمان (رواتب شهر).':'وهو فوق حد الأمان.'}`,`الإفصاحات السنوية: ${n(MEMBERS.length-coiMissing().length)} من ${n(MEMBERS.length)} أعضاء.`]]); return s; };
+const V6REG=['audit','coi','goals','hse','down','surveys','cchk','evals'];
+const _erpSearch1=erpSearch; erpSearch=function(has,q){ return [..._erpSearch1(has,q),...V6REG.filter(k=>!REG[k].only||inScope(REG[k].only)).map(k=>{ const D=REG[k]; return [D.title,S[D.key].filter(r=>regScope(D,r)&&D.text(r).includes(q)).map(r=>({t:D.name(r),s:(D.stOf||(x=>x.status))(r),c:r.co,go:`openRec('${k}',${r.id})`}))]; })]; };
+const _erpCard1=erpCard; erpCard=cid=>_erpCard1(cid)+(cid?goalsCard(cid):'');
+SYS.push(['audit','المراجعة الداخلية','المجلس والإدارة العليا',/الإدارة العليا|الشركاء|الجودة/],['coi','تعارض المصالح','أعضاء المجلس',/الإدارة العليا|الشركاء/],['goals','الأهداف الاستراتيجية','الإدارة العليا',/الإدارة العليا|الشركاء/],['cashfc','توقع السيولة ١٣ أسبوعًا','المالية',/مالي|محاسب/],['dbudget','موازنات الإدارات','المالية وكل الإدارات',/./],['hse','السلامة المهنية','الإنتاج والصيانة',/الإنتاج|التشطيب|الصيانة|المستودعات|النقل/],['down','توقف الآلات','الإنتاج والصيانة',/الإنتاج|الصيانة|التشطيب/],['surveys','رضا المرضى','الجودة والاستقبال',/الجودة|الاستقبال/],['cchk','فحص تعارض المصالح','التقاضي والعقود',/التقاضي|العقود والشركات|الاستشارات/],['evals','تقييم المدربين','التدريب',/التدريب والتنفيذ|تصميم البرامج/],['import','استيراد من Excel','كل الأنظمة',/موارد|مالي|محاسب/],['trail','سجل التغييرات','المجلس والمراجعة',/الإدارة العليا|الشركاء/]);
+Object.assign(ICON,{
+  audit:'<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5M8 10.5l2 2 3.5-3.5"/>',
+  coi:'<path d="M12 3v18M5 7h14M5 7l-2.5 6a3 3 0 0 0 5 0zM19 7l-2.5 6a3 3 0 0 0 5 0z"/>',
+  goal:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+  cashfc:'<path d="M3 20h18M6 16v-3M10 16V9M14 16v-5M18 16V6"/><path d="M5 9l4-3 4 2 6-5"/>',
+  budget:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 13h3M8 16h6M15 13h1"/>',
+  hse:'<path d="M4 15a8 8 0 0 1 16 0z"/><path d="M12 7V5M3 15h18v3H3z"/>',
+  down:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><path d="M4 4l16 16"/>',
+  smile:'<circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.5c1 1.3 2.1 2 3.5 2s2.5-.7 3.5-2M9 9.5h.01M15 9.5h.01"/>',
+  cchk:'<circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c.7-3 2.6-4.5 5-4.5s4.3 1.5 5 4.5M11 19c.7-3 2.6-4.5 5-4.5s4.3 1.5 5 4.5"/>',
+  star:'<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>',
+  import:'<path d="M12 3v12M7.5 10.5L12 15l4.5-4.5M4 15v4h16v-4"/>',
+  trail:'<path d="M4 6h10M4 12h7M4 18h10"/><circle cx="18" cy="12" r="3"/><path d="M18 10.5V12l1 .8"/>',
+});
+Object.assign(NAVI,{audit:'audit',coi:'coi',goals:'goal',cashfc:'cashfc',dbudget:'budget',hse:'hse',down:'down',surveys:'smile',cchk:'cchk',evals:'star',import:'import',trail:'trail'});
+/* ---------- English interface ---------- */
+window.setLang=function(){ try{ localStorage.setItem('majlis-lang',EN?'ar':'en'); }catch(e){} location.reload(); };
+const ENW={'لوحة المجلس':'Council dashboard','بانتظار إجرائي':'Awaiting my action','بانتظاري':'My inbox','الإدارات والأنظمة':'Departments & systems','الشركات':'Companies','أنظمة القطاعات':'Sector systems','الموارد البشرية':'Human resources','المالية والمحاسبة':'Finance & accounting','العمليات والإدارات':'Operations','الدورة الشهرية للمجلس':'Monthly council cycle','الأعمال':'Business','الحوكمة':'Governance','الرواتب':'Payroll','المجلس':'Council','الرقابة':'Oversight','القطاعات':'Sectors','المالية':'Finance','العمليات':'Operations','الشركات':'Companies','مسير رواتب':'Payroll run','الحوكمة والرقابة':'Governance & oversight','التقارير':'Reports','النظام':'System',
+  'النجوم السبعة':'Seven Stars','العلامة الكبرى':'Al-Alama Al-Kubra','المعرفة القانونية':'Al-Maarifa Law','نوليدج':'Knowledge','مشترك':'Shared','الموحّد':'Consolidated',
+  'شؤون الموظفين':'Employees','مسير الرواتب':'Payroll','الإجازات والحضور':'Leave & attendance','بوابة الموظف':'Employee portal','السلف والقروض':'Advances & loans','الخطابات الرسمية':'HR letters','التوظيف':'Recruitment','التدريب والتطوير':'Training',
+  'القيود ودليل الحسابات':'Journal & chart of accounts','الفواتير والتحصيل':'Invoices & collection','الموردون والمدفوعات':'Suppliers & payables','عروض الأسعار':'Quotations','الفواتير المتكررة':'Recurring invoices','الصندوق والعهد النقدية':'Petty cash','المعاملات بين الشركات':'Intercompany','المصروفات والعُهد':'Expense claims','البنوك والخزينة':'Banks & treasury','الأصول الثابتة':'Fixed assets','القوائم المالية والضريبة':'Financial statements & tax','الموازنة والتوقعات':'Budget & forecast','الخدمات المشتركة':'Shared services','توقع السيولة ١٣ أسبوعًا':'13-week cash forecast','توقع السيولة — ١٣ أسبوعًا':'13-week cash forecast','موازنات الإدارات':'Department budgets',
+  'المشتريات':'Procurement','المخزون والمستودعات':'Inventory','تقنية المعلومات':'IT support','العقود':'Contracts','التراخيص والامتثال':'Licences & compliance','خدمة العملاء والشكاوى':'Customer complaints','التسويق والحملات':'Marketing','المرافق والصيانة':'Facilities',
+  'المواعيد والأطباء':'Appointments & doctors','مطالبات التأمين الطبي':'Insurance claims','رضا المرضى':'Patient satisfaction','أوامر الإنتاج والجودة':'Production & quality','السلامة المهنية':'Health & safety','توقف الآلات':'Machine downtime','القضايا والجلسات':'Cases & hearings','ساعات العمل والأتعاب':'Timesheets & fees','فحص تعارض المصالح':'Conflict check','البرامج والدورات':'Courses','المتدربون والرسوم':'Trainees & fees','تقييم المدربين والبرامج':'Trainer ratings',
+  'التقارير الشهرية':'Monthly reports','محاضر الاجتماعات':'Minutes','التصويت بالتمرير':'Circular votes','طلبات الاعتماد':'Approval requests','حزمة الاجتماع':'Meeting pack','العملاء':'Clients','المستندات':'Documents','المهام والمتابعة':'Tasks','التقويم':'Calendar',
+  'سجل القرارات':'Decisions log','الاجتماعات والنصاب':'Meetings & quorum','سجل المخاطر':'Risk register','مستويات الصلاحيات':'Authority levels','خطة ٩٠ يومًا':'90-day plan','أعضاء المجلس':'Council members','ملخص القوى العاملة':'Workforce summary','تقييم المجلس':'Council evaluation','المراجعة الداخلية':'Internal audit','تعارض المصالح':'Conflicts of interest','الأهداف الاستراتيجية':'Strategic goals',
+  'التقارير والاتجاهات':'Reports & trends','إعداد المؤشرات':'KPI settings','سجل النشاط':'Activity log','الإعدادات':'Settings','استيراد من Excel':'Import from Excel','سجل التغييرات':'Change history',
+  'اللوحة':'Home','الموظفون':'Employees','الإدارات':'Departments','المزيد':'More','بحث':'Search','بيانات تجريبية':'Demo data','تعمل الآن بصفة':'Acting as',
+  'حفظ':'Save','إغلاق':'Close','إلغاء':'Cancel','حذف':'Delete','فتح':'Open','تعديل':'Edit','اعتماد':'Approve','رفض':'Reject','إصدار':'Issue','صرف':'Pay out','سداد':'Pay','نسخ CSV':'Copy CSV','الكل':'All','كل الشركات':'All companies','عرض المزيد':'Show more','نسخ':'Copy',
+  'الشركة':'Company','الحالة':'Status','التاريخ':'Date','المبلغ':'Amount','الموظف':'Employee','الإدارة':'Department','النوع':'Type','البيان':'Description','العميل':'Client','المورد':'Supplier','الإجمالي':'Total','القيمة':'Value','الكمية':'Qty','الرسوم':'Fee','الفترة':'Period','الأيام':'Days','المسؤول':'Owner','الأولوية':'Priority','التصنيف':'Category','الاستحقاق':'Due','المتبقي':'Remaining','المدفوع':'Paid','الحضور':'Attendance','الطبيب':'Doctor','المريض':'Patient','الموعد':'Appointment','الدفع':'Payment','القضية':'Case','المحكمة':'Court','المحامي':'Lawyer','الجلسة القادمة':'Next hearing','الوكالة':'Power of attorney','الأتعاب':'Fees','البرنامج':'Course','المدرب':'Trainer','الإشغال':'Occupancy','الإيراد':'Revenue','المتدرب':'Trainee','الأمر':'Order','التسليم':'Delivery','الجودة':'Quality','الملاحظة':'Finding','الخطورة':'Risk','موعد المعالجة':'Due date','رد الإدارة':'Management response','العضو':'Member','الهدف':'Goal','الحالي':'Current','التقدم':'Progress','المبادرات':'Initiatives','الوقت':'Time','النظام':'System','السجل':'Record','التغيير':'Change','التقييم':'Rating','الآلة':'Machine','السبب':'Cause','الساعات':'Hours','الحساب':'Account','مدين':'Debit','دائن':'Credit','الرصيد':'Balance','البند':'Item','المدير':'Manager','التوطين':'Saudization',
+  'قائمة الدخل':'Income statement','المركز المالي':'Balance sheet','التدفقات النقدية':'Cash flow','ميزان المراجعة':'Trial balance','الضريبة والزكاة':'VAT & zakat','مراكز التكلفة':'Cost centres','الاتجاهات':'Trends','تقرير المجلس الشهري':'Monthly board report','نظرة عامة':'Overview','دليل الموظفين':'Directory','الوثائق والانتهاءات':'Documents & expiries','التوطين ونطاقات':'Saudization & Nitaqat','تقييم الأداء':'Performance','القيود اليومية':'Journal entries','دليل الحسابات':'Chart of accounts','دفتر الأستاذ':'General ledger','فواتير الموردين':'Supplier bills',
+  'مسودة':'Draft','مصدرة':'Issued','مدفوعة':'Paid','مدفوعة جزئيًا':'Partly paid','متأخرة':'Overdue','ملغاة':'Void','بانتظار الاعتماد':'Pending approval','معتمدة':'Approved','معتمد':'Approved','مرفوضة':'Rejected','مرفوض':'Rejected','مصروفة':'Paid out','مصروف':'Disbursed','مقدّمة':'Submitted','مقدّم':'Submitted','مسدد':'Repaid','مطلوب':'Requested','صادر':'Issued','قائمة':'Open','مسددة':'Settled','مرسل':'Sent','مقبول':'Accepted','منتهٍ':'Expired','مفوتر':'Invoiced','مستحقة':'Due','مجدولة':'Scheduled','موقوفة':'Paused','تعزيز':'Top-up',
+  'محجوز':'Booked','حضر':'Attended','لم يحضر':'No-show','ملغى':'Cancelled','قيد الإعداد':'Preparing','مرسلة':'Sent','تمت التسوية':'Settled','مخطط':'Planned','قيد التنفيذ':'In progress','فحص الجودة':'Quality check','مكتمل':'Completed','قيد الدراسة':'Under review','منظورة':'In court','محجوزة للحكم':'Awaiting judgment','صدر الحكم':'Judgment issued','استئناف':'Appeal','منتهية':'Closed','غير مفوترة':'Unbilled','مفوترة':'Billed','مفتوح للتسجيل':'Open for enrolment','جارٍ':'Running','عليه أقساط':'Instalments due','حاصل على الشهادة':'Certified','منسحب':'Withdrawn',
+  'مفتوحة':'Open','قيد المعالجة':'In progress','بانتظار التحقق':'Awaiting verification','مغلقة':'Closed','قيد المراجعة':'Under review','يتطلب إجراء':'Action needed','على المسار':'On track','معرض للخطر':'At risk','متأخر':'Late','محقق':'Achieved','مفتوح':'Open','مغلق':'Closed','متوقفة':'Down','عادت للعمل':'Running again','بحاجة متابعة':'Needs follow-up','تمت المتابعة':'Followed up','لا يحتاج':'No action','لا تعارض':'No conflict','تعارض محتمل':'Possible conflict','ممتاز':'Excellent','جيد':'Good','يحتاج تحسين':'Needs improvement',
+  'على رأس العمل':'Active','في إجازة':'On leave','تحت التجربة':'Probation','منتهي الخدمة':'Left','ساري':'Active','ينتهي قريبًا':'Expiring soon','سارية':'Valid','تنتهي قريبًا':'Expiring soon','متوفر':'In stock','منخفض':'Low','نافد':'Out of stock','جديدة':'New','جديد':'New','محلولة':'Resolved','منجز':'Done','مستلم':'Received','أمر شراء':'Purchase order','قيد الإجراء':'In progress','عالية':'High','متوسطة':'Medium','منخفضة':'Low',
+  'يونيو':'Jun','يوليو':'Jul','أغسطس':'Aug','سبتمبر':'Sep','أكتوبر':'Oct','نوفمبر':'Nov','ديسمبر':'Dec','يناير':'Jan','فبراير':'Feb'};
+const ENT=[[/ريال/g,'SAR'],[/ مليون/g,'M'],[/ ألف/g,'K'],[/يومًا|أيام/g,'days'],[/ساعة/g,'h'],[/موظفًا/g,'employees']];
+function trEN(root){ if(!EN||!root) return; const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); let x; const L=[]; while((x=w.nextNode())) L.push(x);
+  L.forEach(t=>{ const s=t.nodeValue, k=s.trim(), p=t.parentNode; if(!k||!/[؀-ۿ]/.test(k)) return; if(p&&(p.nodeName==='OPTION'&&!p.hasAttribute('value')||p.nodeName==='TEXTAREA')) return; let v=ENW[k]; if(!v&&k.startsWith('+ ')&&ENW[k.slice(2)]) v='+ '+ENW[k.slice(2)]; if(v){ t.nodeValue=s.replace(k,v); return; } let y=s; ENT.forEach(([re,r])=>y=y.replace(re,r)); if(y!==s) t.nodeValue=y; });
+  root.querySelectorAll&&root.querySelectorAll('input[placeholder]').forEach(i=>{ if(/[؀-ۿ]/.test(i.placeholder)) i.placeholder='Search…'; }); }
+{ const o=openModal; openModal=function(h,w){ o(h,w); trEN($('#modalBox')); }; }
+
 /* ================= Router ================= */
 function render(){
   const route=(location.hash||'#dashboard').slice(1);
   renderNav(route); renderTabbar(route);
   const p=route.startsWith('company-')?'company':route, arg=route.slice(8);
-  const v={dashboard:viewDashboard,company:()=>viewCompany(arg),decisions:viewDecisions,meetings:viewMeetings,authority:viewAuthority,plan:viewPlan,members:viewMembers,clients:viewClients,files:viewFiles,tasks:viewTasks,calendar:viewCalendar,risks:viewRisks,activity:viewActivity,settings:viewSettings,reports:viewReports,minutes:viewMinutes,votes:viewVotes,requests:viewRequests,pack:viewPack,finance:viewFinance,services:viewServices,people:viewPeople,kpiset:viewKpiSet,evaluation:viewEval,hr:viewHR,payroll:viewPayroll,recruit:viewRecruit,ledger:viewLedger,ar:viewAR,ap:viewAP,banks:viewBanks,statements:viewStatements,depts:viewDepts,inbox:viewInbox,ess:viewESS,trends:viewTrends,...Object.fromEntries(Object.keys(REG).map(k=>[k,()=>viewReg(k)]))}[p]||viewDashboard;
+  const v={dashboard:viewDashboard,company:()=>viewCompany(arg),decisions:viewDecisions,meetings:viewMeetings,authority:viewAuthority,plan:viewPlan,members:viewMembers,clients:viewClients,files:viewFiles,tasks:viewTasks,calendar:viewCalendar,risks:viewRisks,activity:viewActivity,settings:viewSettings,reports:viewReports,minutes:viewMinutes,votes:viewVotes,requests:viewRequests,pack:viewPack,finance:viewFinance,services:viewServices,people:viewPeople,kpiset:viewKpiSet,evaluation:viewEval,hr:viewHR,payroll:viewPayroll,recruit:viewRecruit,ledger:viewLedger,ar:viewAR,ap:viewAP,banks:viewBanks,statements:viewStatements,depts:viewDepts,trail:viewTrail,dbudget:viewBudgets,cashfc:viewCashFc,import:viewImport,inbox:viewInbox,ess:viewESS,trends:viewTrends,...Object.fromEntries(Object.keys(REG).map(k=>[k,()=>viewReg(k)]))}[p]||viewDashboard;
   const y=window.scrollY; $('#main').innerHTML=v()+`<footer class="credit"><span class="credit-mark"></span>صُمّم وطُوّر بواسطة <a href="https://wa.me/966570091554?text=%D9%85%D8%B1%D8%AD%D8%A8%D9%8B%D8%A7%20%D8%B1%D9%88%D9%91%D8%A7%D8%AF%D8%8C%20%D8%B4%D8%A7%D9%87%D8%AF%D8%AA%20%D9%85%D9%86%D8%B5%D9%91%D8%A9%20%D8%A7%D9%84%D9%85%D8%AC%D9%84%D8%B3%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84" target="_blank" rel="noopener" title="تواصل مع روّاد عبر واتساب">روّاد</a></footer>`; if(render._last===route) window.scrollTo(0,y); else window.scrollTo(0,0);
   render._last=route;
   toggleMenu(false);
+  if(EN){ document.documentElement.dir='ltr'; document.documentElement.lang='en'; trEN(document.body); }
 }
 window.addEventListener('hashchange',render);
 let _w=innerWidth; window.addEventListener('resize',()=>{ if((innerWidth<640)!==(_w<640)){ _w=innerWidth; render(); } });
