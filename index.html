@@ -398,6 +398,12 @@ a.chip:hover{border-color:var(--gold);color:var(--head)}
 .mv:disabled{opacity:.35;cursor:default}
 @media (max-width:980px){ .kanban[style]{grid-template-columns:repeat(2,minmax(0,1fr))!important} }
 @media (max-width:640px){ .kanban[style]{grid-template-columns:minmax(0,1fr)!important} .jl{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 32px!important} .jl>:first-child{grid-column:1/-1} .tot{justify-self:stretch} }
+.ibx{display:grid;gap:10px}
+.ibx .it{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.ibx .it .tx{min-width:0;flex:1 1 260px;display:grid;gap:2px}
+.ibx .it .ac{display:flex;gap:6px;flex-wrap:wrap}
+.brep h4{font-size:15px;color:var(--head);margin:18px 0 6px}
+.brep ul{margin:0;padding-inline-start:20px;display:grid;gap:5px;line-height:1.75}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
@@ -700,6 +706,89 @@ function erpSeed(o){
   return {emps,leaves,jobs,cands,training,att,payruns,sups,bills,invs,assets,journal,jseq,banks,claims,preqs,items,tickets,contracts,licenses,complaints,campaigns,maint,coinfo,deps:{'clinic-2026-10':1,'factory-2026-10':1,'law-2026-10':1,'edu-2026-10':1}};
 }
 
+/* ================= v5 reference data: sector modules, employee services, finance additions ================= */
+ACCTS.splice(ACCTS.findIndex(a=>a[0]==='1210'),0,['1170','مستحق من شركات شقيقة','A']);
+ACCTS.splice(ACCTS.findIndex(a=>a[0]==='2210'),0,['2160','مستحق لشركات شقيقة','L']);
+const INSURERS=['بوبا العربية','التعاونية','ميدغلف','تكافل الراجحي','ملاذ','الدرع العربي'];
+const REJR=['ترميز تشخيصي غير مطابق','خدمة خارج التغطية','نقص الموافقة المسبقة','تكرار المطالبة','تجاوز حد الوثيقة'];
+const PRODUCTS={'باب خشب زان مصمت':{bom:[['WD-001',.08],['PT-020',.3],['HW-031',3],['HW-036',1]],hrs:6,price:1850},
+  'خزانة مطبخ — وحدة سفلية':{bom:[['WD-010',3],['PT-022',.4],['HW-031',4],['HW-036',2]],hrs:4,price:1350},
+  'طاولة اجتماعات بلوط':{bom:[['WD-004',.25],['PT-020',.6]],hrs:14,price:7800},
+  'مكتب إداري':{bom:[['WD-010',4],['PT-020',.3],['HW-036',3]],hrs:5,price:2100},
+  'خزانة ملابس ببابين':{bom:[['WD-010',6],['PT-022',.8],['HW-031',6],['HW-036',4]],hrs:7,price:3400}};
+const COURTS=['المحكمة التجارية بجدة','المحكمة العمالية بجدة','المحكمة العامة بجدة','المحكمة الإدارية بجدة','محكمة الاستئناف بمنطقة مكة المكرمة','محكمة الأحوال الشخصية بجدة'];
+const CASET={'تجاري':0,'عمالي':1,'عقاري':2,'إداري':3,'أحوال شخصية':5};
+const CSTAGES=['قيد الدراسة','منظورة','محجوزة للحكم','صدر الحكم','استئناف','منتهية'];
+const LTRT=['تعريف بالراتب','تعريف بدون راتب','شهادة خبرة','خطاب للسفارة','إخلاء طرف'];
+const PETTY_LIM={clinic:8000,factory:10000,law:5000,edu:5000};
+const FREQM={'شهري':1,'ربع سنوي':3,'سنوي':12};
+function v5Seed(o){
+  const R=PRNG(20261113), pick=a=>a[Math.floor(R()*a.length)], rint=(a,b)=>a+Math.floor(R()*(b-a+1));
+  const dI=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const D0=pD('2026-11-13'), dd=k=>{ const d=new Date(D0); d.setDate(d.getDate()+k); return dI(d); };
+  let id=17001; const nid=()=>id++;
+  const E=(c,re,ex)=>o.emps.filter(e=>e.co===c&&e.status!=='منتهي الخدمة'&&re.test(e.dept)&&!(ex&&ex.test(e.title)));
+  const person=()=>R()<.5?pick(FN_F)+' '+pick(FN_M)+' '+pick(FAM):pick(FN_M)+' '+pick(FN_M)+' '+pick(FAM);
+  const J=(c,d,memo,src,lines,ic)=>{ o.jseq[c]++; o.journal.push({id:nid(),co:c,d,ref:`JV-${EPFX[c]}-${String(o.jseq[c]).padStart(4,'0')}`,memo,src,lines:lines.map(l=>[l[0],Math.round(l[1]*100)/100,Math.round(l[2]*100)/100]),rec:false,ic:!!ic}); };
+  // clinic: appointments
+  const docs=E('clinic',/الطب العام|الأسنان|الجلدية/,/مساعد|فني/), slots=['09:00','09:30','10:00','10:30','11:00','11:30','16:00','16:30','17:00','17:30','18:00','19:00','19:30','20:00','20:30'];
+  const appts=[];
+  for(let k=-5;k<=7;k++){ const d=dd(k), wd=pD(d).getDay(); if(wd===5) continue;
+    const cnt=k===0?9:rint(4,7), used={};
+    for(let i=0;i<cnt;i++){ const doc=pick(docs), t=pick(slots); if(used[doc.id+t]) continue; used[doc.id+t]=1;
+      const type=pick(['كشف جديد','متابعة','متابعة','إجراء']), ins=R()<.7, fee=type==='كشف جديد'?250:type==='متابعة'?150:rint(6,15)*100;
+      const st=k<0?(R()<.82?'حضر':R()<.6?'لم يحضر':'ملغى'):k===0?(t<'12:00'?(R()<.85?'حضر':'لم يحضر'):'محجوز'):(R()<.06?'ملغى':'محجوز');
+      appts.push({id:nid(),co:'clinic',pat:person(),phone:'05'+rint(10000000,99999999),doc:doc.id,date:d,time:t,type,pay:ins?'تأمين':'نقدي',ins:ins?pick(INSURERS.slice(0,4)):'—',fee,note:'',inv:'',status:st}); } }
+  // clinic: insurance claim batches
+  const insclaims=[]; ['2026-08','2026-09','2026-10','2026-11'].forEach((m,mi)=>INSURERS.slice(0,4).forEach((ins,ii)=>{
+    const amt=Math.round((ii===0?180:ii===1?140:ii===2?95:70)*(0.9+R()*.25))*1000, cases=Math.round(amt/430);
+    const st=mi<2?'مدفوعة':mi===2?(ii<2?'تمت التسوية':'مرسلة'):'قيد الإعداد', rr=ii===2?.12+R()*.05:.04+R()*.06;
+    const appr=['مدفوعة','تمت التسوية'].includes(st)?Math.round(amt*(1-rr)/100)*100:0;
+    insclaims.push({id:nid(),co:'clinic',ins,month:m,cases,amt,appr,reason:appr?pick(REJR):'—',note:'',sent:mi<3?m.slice(0,5)+String(+m.slice(5)+1).padStart(2,'0')+'-0'+rint(3,8):'',paidOn:st==='مدفوعة'?(mi===0?'2026-10-'+rint(10,25):'2026-11-'+String(rint(2,11)).padStart(2,'0')):'',status:st}); }));
+  // factory: production orders
+  const custs=['مجموعة ركائز العقارية','فندق أبراج الشاطئ','مدارس الرواد الأهلية','شركة نماء للمقاولات','عميل أفراد — حي الشاطئ','مكاتب واجهة الأعمال'];
+  const mos=[], prods=Object.keys(PRODUCTS);
+  [['مكتمل',-30,-8],['مكتمل',-24,-4],['مكتمل',-18,-1],['قيد التنفيذ',-12,-2],['قيد التنفيذ',-9,3],['قيد التنفيذ',-6,8],['قيد التنفيذ',-3,12],['فحص الجودة',-14,1],['مخطط',2,18],['مخطط',5,25]].forEach(([st,s,d],i)=>{
+    const prod=prods[i%prods.length], qty=prod.includes('طاولة')?rint(2,6):rint(12,60);
+    mos.push({id:nid(),co:'factory',no:'MO-AK-'+(301+i),prod,qty,cust:pick(custs),start:dd(s),due:dd(d),pass:st==='مكتمل'?rint(91,99):0,done:st==='مكتمل'?dd(d-rint(0,2)):'',mat:0,note:'',status:st}); });
+  // law: cases & timesheets
+  const lw=E('law',/التقاضي|الاستشارات|العقود/,/متدرب|باحث/), lcl=o.clients.filter(c=>c.co==='law');
+  const SUBJ=[['مطالبة بقيمة توريدات غير مسددة','تجاري'],['نزاع على عقد إيجار تجاري','عقاري'],['دعوى عمالية — مستحقات نهاية الخدمة','عمالي'],['تعويض عن إخلال بعقد مقاولة','تجاري'],['التظلم من قرار إداري بإلغاء ترخيص','إداري'],['فسخ عقد شراكة وتصفية','تجاري'],['مطالبة بأتعاب استشارية','تجاري'],['نزاع ملكية أرض سكنية','عقاري'],['تنفيذ حكم تجاري نهائي','تجاري'],['قسمة تركة','أحوال شخصية'],['دعوى عمالية — فصل تعسفي','عمالي'],['مطالبة بغرامات تأخير توريد','تجاري'],['إخلاء عين مؤجرة','عقاري'],['حضانة ونفقة','أحوال شخصية']];
+  const cases=SUBJ.map(([subj,type],i)=>{ const stage=CSTAGES[[1,1,1,2,0,1,3,1,4,1,0,1,5,2][i]];
+    const next=['منظورة','استئناف'].includes(stage)?dd(rint(1,35)):stage==='محجوزة للحكم'?dd(rint(4,20)):'', fee=pick(['مقطوعة','مقطوعة','بالساعة','نسبة من المحكوم به']);
+    return {id:nid(),co:'law',no:'LQ-2026-'+(101+i),subj,cl:pick(lcl).id,type,court:COURTS[CASET[type]],lawyer:pick(lw).id,next,poa:dd(i===3?-4:i===7?18:i===10?26:rint(40,320)),fee,val:rint(4,45)*10000,claim:rint(2,60)*50000,note:'',status:stage}; });
+  const hours=[]; for(let i=0;i<46;i++){ const c=pick(cases.filter(x=>x.status!=='منتهية')), l=o.emps.find(e=>e.id===c.lawyer), k=-rint(0,24);
+    hours.push({id:nid(),co:'law',case:c.id,lawyer:R()<.7?c.lawyer:pick(lw).id,date:dd(k),hrs:rint(2,12)/2,rate:l&&l.grade>=6?1200:850,desc:pick(['إعداد مذكرة جوابية','حضور جلسة','دراسة المستندات','اجتماع مع العميل','صياغة لائحة دعوى','مراجعة عقد','بحث قانوني']),status:k<-14?'مفوترة':'غير مفوترة'}); }
+  // education: courses & enrolments
+  const tr=E('edu',/التدريب/,/منسق/);
+  const CRS=[['دبلوم إدارة المشاريع الاحترافية PMP','مدمج',-40,20,25,6500,120,'عام'],['برنامج القيادة للمشرفين الجدد','حضوري',-20,-6,20,3800,24,'مجموعة المرافئ اللوجستية'],['مهارات خدمة العملاء المتميزة','حضوري',-9,-7,24,1800,12,'عام'],['تحليل البيانات باستخدام Power BI','عن بُعد',-3,25,30,3200,30,'عام'],['الإسعافات الأولية والسلامة المهنية','حضوري',3,4,20,1200,12,'عيادات النجوم السبعة'],['اللغة الإنجليزية لبيئة العمل','مدمج',10,70,25,4200,60,'عام'],['التسويق الرقمي وإدارة الحملات','عن بُعد',17,38,30,2900,24,'عام'],['إعداد المدربين المعتمد TOT','حضوري',24,30,18,5400,40,'عام']];
+  const courses=CRS.map(([title,mode,s,e,seats,price,hrs,client])=>({id:nid(),co:'edu',title,trainer:pick(tr).id,mode,start:dd(s),end:dd(e),seats,price,hrs,client}));
+  const enrol=[]; courses.forEach(c=>{ const started=c.start<=dd(0), ended=c.end<dd(0), cnt=Math.round(c.seats*(c.client!=='عام'?.9:started?.7+R()*.25:.3+R()*.35));
+    for(let i=0;i<cnt;i++){ const inst=c.price>=4000?pick([2,3]):1, paid=ended||R()<.55?c.price:inst>1?Math.round(c.price/inst)*rint(0,inst-1):0, att=started?rint(ended?62:70,100):0;
+      enrol.push({id:nid(),co:'edu',name:person(),course:c.id,fee:c.price,paid,inst,att,cert:ended&&att>=75&&paid>=c.price&&R()<.7,pays:paid?[{d:dd(Math.min(-1,(pD(c.start)-D0)/864e5|0)),a:paid}]:[],note:'',status:R()<.04?'منسحب':'مسجّل'}); } });
+  // employee loans & letters
+  const pickE=c=>pick(o.emps.filter(e=>e.co===c&&e.status!=='منتهي الخدمة'&&!e.head));
+  const LN=[['clinic','سلفة راتب',4000,2,'مقدّم',''],['factory','قرض شخصي',9000,6,'مقدّم',''],['factory','سلفة راتب',2500,1,'معتمد',''],['edu','قرض شخصي',12000,8,'مصروف','2026-10'],['clinic','سلفة راتب',3000,3,'مصروف','2026-11'],['law','قرض شخصي',15000,10,'مصروف','2026-09']];
+  const loans=LN.map(([c,type,amt,n,st,start])=>{ const e=pickE(c); return {id:nid(),co:c,emp:e.id,type,amt,n,start:start||'2026-12',paidM:start==='2026-10'?['2026-10']:start==='2026-09'?['2026-09','2026-10']:[],reason:pick(['ظروف عائلية','رسوم دراسية','إصلاح سيارة','تجهيز سكن']),date:st==='مقدّم'?dd(-rint(0,3)):dd(-rint(20,60)),status:st}; });
+  const letters=[['clinic','تعريف بالراتب','البنك الأهلي السعودي','طلب تمويل','مطلوب'],['factory','خطاب للسفارة','سفارة جمهورية الهند','تأشيرة زيارة عائلية','مطلوب'],['edu','تعريف بدون راتب','إلى من يهمه الأمر','','مطلوب'],['law','شهادة خبرة','إلى من يهمه الأمر','','صادر'],['clinic','تعريف بالراتب','شركة الكهرباء السعودية','عقد خدمة','صادر']].map(([c,type,to,purpose,st],i)=>({id:nid(),co:c,emp:pickE(c).id,type,to,purpose,date:dd(-rint(0,6)),ref:st==='صادر'?'HR-'+EPFX[c]+'-26'+String(40+i):'',issued:st==='صادر'?dd(-rint(1,9)):'',status:st}));
+  // quotations & recurring invoices
+  const quotes=[['factory','مجموعة ركائز العقارية','أبواب خشب زان مصمت — مشروع فلل الياقوت',120,1850,'مرسل',8],['factory','فندق أبراج الشاطئ','خزائن ملابس لغرف الفندق — المرحلة الثانية',64,3400,'مقبول',12],['factory','شركة نماء للمقاولات','مطابخ خشبية لعمارة سكنية',36,6200,'مسودة',20],['factory','مكاتب واجهة الأعمال','أثاث مكتبي — ٢٥ مكتبًا وطاولتي اجتماعات',1,68000,'مرفوض',-5],['factory','عميل أفراد — حي الشاطئ','مطبخ وخزائن جدارية',1,42000,'مرسل',-2],['edu','مجموعة المرافئ اللوجستية','برنامج القيادة — الدفعة الثانية',20,3600,'مرسل',10],['edu','هيئة تطوير منطقة مكة — عرض تنافسي','برنامج تحليل البيانات لموظفي الإدارة',30,3000,'مسودة',25],['clinic','مجموعة المرافئ اللوجستية','فحص طبي دوري لـ ١٨٠ موظفًا',180,320,'مقبول',6],['edu','مدارس الرواد الأهلية','تدريب المعلمين على التعليم المدمج',40,1500,'مفوتر',-10]].map(([c,cname,desc,qty,price,st,v],i)=>({id:nid(),co:c,no:'QT-'+EPFX[c]+'-26'+String(210+i),cname,desc,qty,price,valid:dd(v),note:'',sent:st!=='مسودة'?dd(-rint(2,12)):'',inv:st==='مفوتر'?'INV-'+EPFX[c]+'-2026-00'+(18+i):'',status:st}));
+  const recur=[...lcl.slice(0,4).map((c,i)=>({id:nid(),co:'law',cl:c.id,cname:'',desc:'أتعاب احتفاظ قانوني شهرية',amt:[25000,18000,40000,15000][i],freq:'شهري',next:dd([-2,4,9,17][i]),active:'نعم',made:rint(3,14)})),
+    {id:nid(),co:'edu',cl:null,cname:'مجموعة المرافئ اللوجستية',desc:'اشتراك منصة التعلم الإلكتروني للموظفين',amt:36000,freq:'ربع سنوي',next:dd(19),active:'نعم',made:3},
+    {id:nid(),co:'clinic',cl:null,cname:'مجموعة المرافئ اللوجستية',desc:'باقة الرعاية الصحية للموظفين',amt:22000,freq:'شهري',next:dd(-1),active:'نعم',made:7},
+    {id:nid(),co:'factory',cl:null,cname:'فندق أبراج الشاطئ',desc:'عقد صيانة الأثاث الخشبي',amt:9500,freq:'شهري',next:dd(24),active:'لا',made:5}];
+  // petty cash & intercompany — posted to the books in November
+  const petty=[];
+  COMPANIES.forEach(c=>{ const lim=PETTY_LIM[c.id]; petty.push({id:nid(),co:c.id,kind:'تعزيز',cat:'مستلزمات مكتبية',amt:lim,date:'2026-11-02',desc:'تعزيز العهدة النقدية لشهر نوفمبر',by:'أمين الصندوق'}); J(c.id,'2026-11-02','تعزيز الصندوق النقدي — نوفمبر','petty',[['1110',lim,0],['1120',0,lim]]);
+    [['ضيافة','ضيافة اجتماع العملاء',rint(2,6)*60],['وقود','وقود سيارة المراسل',rint(3,8)*50],['رسوم حكومية','رسوم تصديق مستندات',rint(2,5)*100],['مستلزمات مكتبية','أحبار طابعة وقرطاسية',rint(3,9)*40]].slice(0,rint(2,4)).forEach(([cat,desc,amt],i)=>{ const d='2026-11-'+String(4+i*2).padStart(2,'0');
+      petty.push({id:nid(),co:c.id,kind:'صرف',cat,amt,date:d,desc,by:pick(['المراسل','السكرتارية','أمين الصندوق'])}); J(c.id,d,'صرف من الصندوق — '+desc,'petty',[[cat==='رسوم حكومية'?'5950':'5900',amt,0],['1110',0,amt]]); }); });
+  const ics=[['law','factory','استشارات قانونية لعقود التوريد — نوفمبر',18000,'2026-11-05','قائمة'],['edu','clinic','برنامج الإسعافات الأولية لفريق الاستقبال',12500,'2026-11-08','قائمة'],['law','clinic','مراجعة عقود التأمين الطبي',9000,'2026-11-03','مسددة'],['factory','edu','تصنيع منصات عرض لمعرض التعليم',22000,'2026-11-06','قائمة']].map(([c,to,desc,amt,d,st])=>{
+    J(c,d,`خدمات لـ ${COMPANIES.find(x=>x.id===to).short} — ${desc}`,'ic',[['1170',amt,0],['4200',0,amt]],1); J(to,d,`خدمات من ${COMPANIES.find(x=>x.id===c).short} — ${desc}`,'ic',[['5800',amt,0],['2160',0,amt]],1);
+    if(st==='مسددة'){ J(c,'2026-11-10','تسوية مستحق من شركة شقيقة — '+desc,'ic',[['1120',amt,0],['1170',0,amt]],1); J(to,'2026-11-10','تسوية مستحق لشركة شقيقة — '+desc,'ic',[['2160',amt,0],['1120',0,amt]],1); }
+    return {id:nid(),co:c,to,desc,amt,date:d,status:st}; });
+  o.journal.sort((a,b)=>a.d.localeCompare(b.d)||a.id-b.id);
+  return {appts,insclaims,mos,cases,hours,courses,enrol,loans,letters,quotes,recur,petty,ics};
+}
 function seed(){
   const o={
     fin:{
@@ -852,7 +941,8 @@ function seed(){
     },
     evals:{'2026-Q4':{chair:[4,4,3,4,3,4,4,3],sec:[4,3,3,4,2,4,3,3],fin:[3,4,3,3,3,4,3,2]}},
   };
-  return Object.assign(o, erpSeed(o));
+  Object.assign(o, erpSeed(o));
+  return Object.assign(o, v5Seed(o));
 }
 const KEY='majlis-platform-v1';
 let S;
@@ -1001,7 +1091,7 @@ const ICON = {
 function renderTabbar(route){
   const late = S.decisions.filter(d=>inScope(d.co)&&effStatus(d)==='متأخر').length;
   const t=(h,ic,lbl,extra='')=>`<a href="#${h}" class="${route===h?'on':''}"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${lbl}${extra}</a>`;
-  $('#tabbar').innerHTML = t('dashboard','dash','اللوحة') + t('decisions','dec','القرارات', late?`<span class="badge">${n(late)}</span>`:'') + t('hr','hr','الموظفون') + t('depts','dept','الإدارات')
+  $('#tabbar').innerHTML = t('dashboard','dash','اللوحة') + t('inbox','inbox','بانتظاري', (x=>x?`<span class="badge">${n(x)}</span>`:'')(inboxItems().length)) + t('hr','hr','الموظفون') + t('depts','dept','الإدارات')
     + `<button type="button" onclick="toggleMenu(true)"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>المزيد</button>`;
 }
 window.toggleMenu=open=>{ $('#aside').classList.toggle('open',open); $('#scrim').classList.toggle('open',open); };
@@ -1017,16 +1107,18 @@ function renderNav(route){
   const sc=k=>S[REG[k].key].filter(r=>inScope(r.co));
   const G=[
     ['cos','الشركات',COMPANIES.filter(c=>inScope(c.id)).map(c=>['company-'+c.id,`<a href="#company-${c.id}" class="${route==='company-'+c.id?'on':''}"><i class="dot" style="background:${c.hex}"></i>${c.short}</a>`,0])],
-    ['hr','الموارد البشرية',[a('hr','hr','شؤون الموظفين',docs),a('payroll','pay','مسير الرواتب',myPay),a('leave','leave','الإجازات والحضور',myLeave),a('recruit','recruit','التوظيف'),a('training','train','التدريب والتطوير')]],
-    ['fin','المالية والمحاسبة',[a('ledger','ledger','القيود ودليل الحسابات'),a('ar','ar','الفواتير والتحصيل',odInv),a('ap','ap','الموردون والمدفوعات',bills),a('claims','claim','المصروفات والعُهد',sc('claims').filter(r=>r.status==='مقدّمة').length),a('banks','bank','البنوك والخزينة'),a('assets','asset','الأصول الثابتة'),a('statements','stmt','القوائم المالية والضريبة'),a('finance','fin','الموازنة والتوقعات'),a('services','svc','الخدمات المشتركة')]],
+    ['sector','أنظمة القطاعات',[...(inScope('clinic')?[a('appts','appt','المواعيد والأطباء'),a('insclaims','shield','مطالبات التأمين الطبي',S.insclaims.filter(r=>r.status==='قيد الإعداد'&&r.month<m).length)]:[]),...(inScope('factory')?[a('mos','gear','أوامر الإنتاج والجودة',S.mos.filter(moLate).length)]:[]),...(inScope('law')?[a('cases','gavel','القضايا والجلسات',S.cases.filter(r=>r.next&&daysTo(r.next)>=0&&daysTo(r.next)<=2).length),a('hours','clock','ساعات العمل والأتعاب')]:[]),...(inScope('edu')?[a('courses','course','البرامج والدورات'),a('enrol','student','المتدربون والرسوم')]:[])]],
+    ['hr','الموارد البشرية',[a('hr','hr','شؤون الموظفين',docs),a('payroll','pay','مسير الرواتب',myPay),a('leave','leave','الإجازات والحضور',myLeave),a('ess','ess','بوابة الموظف'),a('loans','loan','السلف والقروض',sc('loans').filter(r=>(r.status==='مقدّم'&&canHR(r.co))||(r.status==='معتمد'&&canFin(r.co))).length),a('letters','letter','الخطابات الرسمية',sc('letters').filter(r=>r.status==='مطلوب'&&canHR(r.co)).length),a('recruit','recruit','التوظيف'),a('training','train','التدريب والتطوير')]],
+    ['fin','المالية والمحاسبة',[a('ledger','ledger','القيود ودليل الحسابات'),a('ar','ar','الفواتير والتحصيل',odInv),a('ap','ap','الموردون والمدفوعات',bills),a('quotes','quote','عروض الأسعار'),a('recur','recur','الفواتير المتكررة',sc('recur').filter(r=>recSt2(r)==='مستحقة').length),a('petty','petty','الصندوق والعهد النقدية'),a('ic','ic','المعاملات بين الشركات'),a('claims','claim','المصروفات والعُهد',sc('claims').filter(r=>r.status==='مقدّمة').length),a('banks','bank','البنوك والخزينة'),a('assets','asset','الأصول الثابتة'),a('statements','stmt','القوائم المالية والضريبة'),a('finance','fin','الموازنة والتوقعات'),a('services','svc','الخدمات المشتركة')]],
     ['ops','العمليات والإدارات',[a('procure','proc','المشتريات',sc('procure').filter(r=>r.status==='بانتظار الاعتماد').length),a('inventory','inv','المخزون والمستودعات',sc('inventory').filter(r=>r.qty<=0).length),a('it','it','تقنية المعلومات',sc('it').filter(r=>slaBreach(r,'مغلقة')).length),a('contracts','contract','العقود',sc('contracts').filter(r=>conSt(r)==='ينتهي قريبًا').length),a('compliance','lic','التراخيص والامتثال',sc('compliance').filter(r=>licSt(r)!=='سارية').length),a('support','support','خدمة العملاء والشكاوى',sc('support').filter(r=>slaBreach(r,'محلولة')).length),a('marketing','mkt','التسويق والحملات'),a('facilities','fac','المرافق والصيانة')]],
     ['cycle','الدورة الشهرية للمجلس',[a('reports','reports','التقارير الشهرية',pendS),a('minutes','minutes','محاضر الاجتماعات'),a('votes','vote','التصويت بالتمرير',myVotes),a('requests','req','طلبات الاعتماد',myReq),a('pack','pack','حزمة الاجتماع')]],
     ['biz','الأعمال',[a('clients','clients','العملاء'),a('files','files','المستندات'),a('tasks','tasks','المهام والمتابعة',lateT),a('calendar','cal','التقويم')]],
     ['gov','الحوكمة',[a('decisions','dec','سجل القرارات',late),a('meetings','meet','الاجتماعات والنصاب'),a('risks','risk','سجل المخاطر'),a('authority','auth','مستويات الصلاحيات'),a('plan','plan','خطة ٩٠ يومًا'),a('members','team','أعضاء المجلس'),a('people','team','ملخص القوى العاملة'),a('evaluation','eval','تقييم المجلس')]],
+    ['rep','التقارير',[a('trends','trend','التقارير والاتجاهات')]],
     ['sys','النظام',[a('kpiset','kpi','إعداد المؤشرات'),a('activity','log','سجل النشاط'),a('settings','cog','الإعدادات')]],
   ];
-  const DEF={cos:1,hr:1,fin:1,ops:1};
-  $('#nav').innerHTML = a('dashboard','dash','لوحة المجلس')[1] + a('depts','dept','الإدارات والأنظمة')[1]
+  const DEF={cos:1,sector:1,hr:1,fin:1,ops:1,rep:1};
+  $('#nav').innerHTML = a('dashboard','dash','لوحة المجلس')[1] + a('inbox','inbox','بانتظار إجرائي',inboxItems().length)[1] + a('depts','dept','الإدارات والأنظمة')[1]
     + G.map(([k,t,items])=>{ const here=items.some(i=>i[0]===route), open=here||(NAVC[k]!==undefined?NAVC[k]:!!DEF[k]), cnt=items.reduce((s,i)=>s+i[2],0);
       return `<button type="button" class="navgrp ${open?'':'closed'}" onclick="navToggle('${k}',${open})" aria-expanded="${open}"><span>${t}</span><span class="row" style="gap:6px">${!open&&cnt?`<span class="badge">${n(cnt)}</span>`:''}<i aria-hidden="true">▾</i></span></button><div class="navitems" ${open?'':'hidden'}>${items.map(i=>i[1]).join('')}</div>`; }).join('');
   $('#roleBox').innerHTML = `<label>تعمل الآن بصفة<select onchange="setRole(this.value)">${MEMBERS.map(m=>`<option value="${m.key}" ${S.me===m.key?'selected':''}>${shortName(m.name)} — ${m.role}</option>`).join('')}</select></label>`;
@@ -2230,12 +2322,13 @@ const cosOf=x=>x==='all'?scopeCos().map(c=>c.id):[x];
 /* ---------- generic register engine (procurement, inventory, IT, contracts…) ---------- */
 const GF={};
 function viewReg(id){
-  const D=REG[id], f=GF[id]=GF[id]||{co:'',st:'',q:''}, all=S[D.key].filter(r=>inScope(r.co));
+  const D=REG[id], f=GF[id]=GF[id]||{co:'',st:'',q:''}, all=S[D.key].filter(r=>regScope(D,r));
+  if(D.only&&!inScope(D.only)) return header(D.title,D.sub)+`<div class="card empty">هذا النظام خاص بـ ${co(D.only).name}.</div>`;
   const base=f.co?all.filter(r=>r.co===f.co):all, stOf=D.stOf||(r=>r.status);
   const rows=base.filter(r=>(!f.st||stOf(r)===f.st)&&(!f.q||D.text(r).includes(f.q))).sort(D.sort||((a,b)=>b.id-a.id));
   const stp=r=>`<span class="pill ${D.cls[stOf(r)]||'s-idle'}">${stOf(r)}</span>`;
-  return header(D.title,D.sub,(D.tools?D.tools():'')+(D.add===false?'':`<button class="btn primary" onclick="openRec('${id}')">+ ${D.one}</button>`))
-  + `<div class="filters"><select onchange="GF.${id}.co=this.value;render()" aria-label="الشركة"><option value="">كل الشركات</option>${coOpts(f.co,false)}</select>
+  return header(D.title,D.sub,csvBtn+(D.tools?D.tools():'')+(D.add===false||(D.canEdit&&!D.canEdit({}))?'':`<button class="btn primary" onclick="openRec('${id}')">+ ${D.one}</button>`))
+  + `<div class="filters">${D.only?'':`<select onchange="GF.${id}.co=this.value;render()" aria-label="الشركة"><option value="">كل الشركات</option>${coOpts(f.co,false)}</select>`}
       <div class="seg">${['',...D.states].map(s=>`<button class="${f.st===s?'on':''}" onclick="GF.${id}.st='${s}';render()">${s||'الكل'}</button>`).join('')}</div>
       ${sbox('GF.'+id,f.q,D.ph||'بحث')}</div>
     <div class="grid tiles">${D.tiles(base).map(t=>tile(...t)).join('')}</div>
@@ -2254,15 +2347,16 @@ window.openRec=function(id,rid,preset){
     else if(x.t==='area') h=`<textarea id="rf_${x.k}" rows="3">${esc(v)}</textarea>`;
     else if(x.t==='emp') h=`<select id="rf_${x.k}">${empOpts(v,r.co)}</select>`;
     else if(x.t==='num') h=`<input type="number" step="any" id="rf_${x.k}" value="${v}">`;
+    else if(x.t==='opt') h=`<select id="rf_${x.k}">${x.o(r).map(([ov,ol])=>`<option value="${ov}" ${String(ov)===String(v)?'selected':''}>${esc(ol)}</option>`).join('')}</select>`;
     else h=`<input type="${x.t==='date'?'date':'text'}" id="rf_${x.k}" value="${esc(v)}">`;
     return field(x.l,h,x.full); };
-  const acts=rid&&D.acts&&inScope(r.co)?D.acts(r):[];
-  openModal(mhead(rid?esc(D.name(r)):D.newT)+`<div class="body">${rid?`<div class="full row" style="gap:8px;flex-wrap:wrap"><span class="pill ${D.cls[stOf(r)]||'s-idle'}">${stOf(r)}</span>${D.info?D.info(r):''}</div>`:''}${D.fields.map(fld).join('')}${rid&&D.more?D.more(r):''}<div class="err" id="rf_err"></div></div>
-    <footer style="flex-wrap:wrap"><button class="btn primary" onclick="saveRec('${id}',${rid||'null'})">حفظ</button>${acts.map(([l,fn,cls])=>`<button class="btn ${cls||''}" onclick="${fn}">${l}</button>`).join('')}${rid&&D.del!==false?`<button class="btn" style="color:var(--crit)" onclick="delRec('${id}',${rid})">حذف</button>`:''}<button class="btn" onclick="closeModal()">إغلاق</button></footer>`);
+  const acts=rid&&D.acts&&regScope(D,r)?D.acts(r):[], canSave=!(rid&&D.ro)&&!(D.canEdit&&!D.canEdit(r));
+  openModal(mhead(rid?esc(D.name(r)):D.newT)+`<div class="body">${rid?`<div class="full row" style="gap:8px;flex-wrap:wrap"><span class="pill ${D.cls[stOf(r)]||'s-idle'}">${stOf(r)}</span>${D.info?D.info(r):''}</div>`:''}${D.fields.filter(x=>!x.priv||!D.only||S.me===D.only).map(fld).join('')}${rid&&D.more?D.more(r):''}<div class="err" id="rf_err"></div></div>
+    <footer style="flex-wrap:wrap">${canSave?`<button class="btn primary" onclick="saveRec('${id}',${rid||'null'})">حفظ</button>`:''}${acts.map(([l,fn,cls])=>`<button class="btn ${cls||''}" onclick="${fn}">${l}</button>`).join('')}${rid&&D.del!==false?`<button class="btn" style="color:var(--crit)" onclick="delRec('${id}',${rid})">حذف</button>`:''}<button class="btn" onclick="closeModal()">إغلاق</button></footer>`);
 };
 window.saveRec=function(id,rid){
   const D=REG[id], v={};
-  for(const x of D.fields){ const el=$('#rf_'+x.k); if(!el) continue; let val=el.value; if(x.t==='num') val=+val||0; if(x.t==='emp') val=+val||null; if(typeof val==='string') val=val.trim();
+  for(const x of D.fields){ const el=$('#rf_'+x.k); if(!el) continue; let val=el.value; if(x.t==='num') val=+val||0; if(x.t==='emp') val=+val||null; if(x.t==='opt'&&/^\d+$/.test(val)) val=+val; if(typeof val==='string') val=val.trim();
     if(x.req&&!val){ const e=$('#rf_err'); e.style.display='block'; e.textContent='أكمل الحقل: '+x.l; return; } v[x.k]=val; }
   const msg=D.check&&D.check(v,rid); if(msg){ const e=$('#rf_err'); e.style.display='block'; e.textContent=msg; return; }
   let r; if(rid){ r=S[D.key].find(x=>x.id===rid); Object.assign(r,v); } else { r=Object.assign(D.blank(),v,{id:uid()}); S[D.key].unshift(r); D.onNew&&D.onNew(r); }
@@ -2536,7 +2630,7 @@ const PSTEPS=[['draft','مسودة'],['reviewed','اعتماد الموارد ا
 const PSTL={draft:'مسودة',reviewed:'معتمد من الموارد البشرية',approved:'معتمد ماليًا ومقيّد',paid:'مصروف'}, PSCLS={draft:'s-idle',reviewed:'s-info',approved:'s-warn',paid:'s-good'};
 const runOf=(c,m)=>S.payruns.find(r=>r.co===c&&r.month===m);
 const runEmps=(c,m)=>S.emps.filter(e=>e.co===c&&e.join.slice(0,7)<=m&&(isAct(e)||(e.left||'')>m+'-31'));
-const runLines=r=>runEmps(r.co,r.month).map(e=>({e,...payLine(e,r.adj[e.id])}));
+const runLines=r=>runEmps(r.co,r.month).map(e=>({e,...payLine(e,withLoan(e,r.month,r.adj[e.id]))}));
 function viewPayroll(){
   PF.co=fixCo(PF.co||scopeCos()[0].id,false); const c=PF.co, m=todayI().slice(0,7);
   let r=runOf(c,m); if(!r){ r={id:uid(),co:c,month:m,status:'draft',adj:{},steps:[]}; S.payruns.push(r); save(); }
@@ -2568,7 +2662,7 @@ window.payStep=function(c,st){ const m=todayI().slice(0,7), r=runOf(c,m), t=payT
   ask(L[st],`${co(c).short} · ${monthName(m)} · صافي ${SAR(t.net)} ريال لعدد ${n(t.n)} موظفًا.${st==='approved'?' سيُقيّد استحقاق الرواتب والتأمينات في الدفاتر.':st==='paid'?' سيُقيّد الصرف من حساب البنك.':''}`,'تأكيد',()=>{
     r.status=st; r.steps.push({who:S.me,act:L[st],d:todayI()});
     if(st==='approved'){ r.tot=t; postJ(c,todayI(),`مسير رواتب ${monthName(m)} — استحقاق`,'payroll',jPayAcc(t)); }
-    if(st==='paid'){ r.tot=r.tot||t; postJ(c,todayI(),`مسير رواتب ${monthName(m)} — صرف عبر نظام حماية الأجور`,'paypay',jPayPay(r.tot)); }
+    if(st==='paid'){ loanSettle(r); r.tot=r.tot||t; postJ(c,todayI(),`مسير رواتب ${monthName(m)} — صرف عبر نظام حماية الأجور`,'paypay',jPayPay(r.tot)); }
     logAct(`${L[st]} لمسير رواتب ${co(c).short} — ${monthName(m)}`); save(); render(); toast('تم'); }); };
 window.wpsFile=function(c){ if(!seePay(c)){ toast('ملف الرواتب متاح لمن يملك صلاحية الاطلاع على الرواتب'); return; }
   const r=runOf(c,todayI().slice(0,7)), lines=runLines(r);
@@ -2613,7 +2707,7 @@ const jeAmt=j=>j.lines.reduce((s,l)=>s+l[1],0);
 function viewLedger(){
   const cos=LF.co?[LF.co]:scopeCos().map(c=>c.id), js=S.journal.filter(j=>cos.includes(j.co));
   const dr=js.reduce((s,j)=>s+jeAmt(j),0), cr=js.reduce((s,j)=>s+j.lines.reduce((a,l)=>a+l[2],0),0), ok=Math.abs(dr-cr)<1;
-  const top=header('القيود ودليل الحسابات','نظام القيد المزدوج: كل عملية في المنصة تُنشئ قيدها آليًا',`<button class="btn primary" onclick="openJE()">+ قيد يدوي</button>`)
+  const top=header('القيود ودليل الحسابات','نظام القيد المزدوج: كل عملية في المنصة تُنشئ قيدها آليًا',csvBtn+`<button class="btn primary" onclick="openJE()">+ قيد يدوي</button>`)
     + `<div class="filters"><select onchange="LF.co=this.value;render()" aria-label="الشركة"><option value="">كل الشركات</option>${coOpts(LF.co,false)}</select></div>`
     + `<div class="grid tiles">${tile('عدد القيود',n(js.length))}${tile('إجمالي المدين',sarK(dr))}${tile('إجمالي الدائن',sarK(cr))}${tile('ميزان المراجعة',ok?'متوازن':'غير متوازن',ok?'المدين = الدائن':'فرق '+SAR(dr-cr),ok?'good':'crit')}</div>`
     + `<div style="margin-top:16px">${tabs('LF.tab',LF.tab,[['je','القيود اليومية'],['coa','دليل الحسابات'],['gl','دفتر الأستاذ']])}</div>`;
@@ -2660,7 +2754,7 @@ function viewAR(){
   const m=todayI().slice(0,7), coll=live.reduce((s,i)=>s+i.pays.filter(p=>p.d.slice(0,7)===m).reduce((a,p)=>a+p.a,0),0);
   const B=[['غير مستحقة',i=>daysTo(i.due)>=0,'var(--good)'],['متأخرة ١ – ٣٠',i=>daysTo(i.due)<0&&daysTo(i.due)>=-30,'var(--info)'],['٣١ – ٦٠',i=>daysTo(i.due)<-30&&daysTo(i.due)>=-60,'var(--warn)'],['٦١ – ٩٠',i=>daysTo(i.due)<-60&&daysTo(i.due)>=-90,'var(--crit)'],['أكثر من ٩٠',i=>daysTo(i.due)<-90,'var(--crit)']].map(([l,f,col])=>({l,col,v:live.filter(i=>invBal(i)>0&&f(i)).reduce((s,i)=>s+invBal(i),0)}));
   const bt=B.reduce((s,b)=>s+b.v,0)||1;
-  return header('الفواتير والتحصيل','فواتير ضريبية بنسبة ١٥٪ · أعمار الديون · تسجيل التحصيل مع القيد الآلي',`<button class="btn primary" onclick="openInvEdit()">+ فاتورة جديدة</button>`)
+  return header('الفواتير والتحصيل','فواتير ضريبية بنسبة ١٥٪ · أعمار الديون · تسجيل التحصيل مع القيد الآلي',csvBtn+`<button class="btn primary" onclick="openInvEdit()">+ فاتورة جديدة</button>`)
   + `<div class="filters"><select onchange="AF2.co=this.value;render()" aria-label="الشركة"><option value="">كل الشركات</option>${coOpts(AF2.co,false)}</select><div class="seg">${['','مسودة','مصدرة','مدفوعة جزئيًا','متأخرة','مدفوعة'].map(s=>`<button class="${AF2.st===s?'on':''}" onclick="AF2.st='${s}';render()">${s||'الكل'}</button>`).join('')}</div>${sbox('AF2',AF2.q,'بحث برقم الفاتورة أو العميل')}</div>
     <div class="grid tiles">${tile('الذمم القائمة',sarK(out),'شاملة الضريبة · ريال')}${tile('فواتير متأخرة',n(od.length),sarK(od.reduce((s,i)=>s+invBal(i),0))+' ريال',od.length?'crit':'')}${tile('المحصّل هذا الشهر',sarK(coll))}${tile('مسودات لم تُصدر',n(base.filter(i=>i.status==='draft').length))}</div>
     <div class="card" style="margin-top:16px"><h3>أعمار الذمم المدينة <small>${sarK(out)} ريال</small></h3><div class="hbar" style="height:14px;margin-bottom:12px">${B.filter(b=>b.v).map(b=>`<i title="${b.l}" style="flex:${b.v};background:${b.col}"></i>`).join('')}</div>
@@ -2709,7 +2803,7 @@ const BCLS={'بانتظار الاعتماد':'s-warn','معتمدة':'s-info','
 const supName=id=>(S.sups.find(s=>s.id===id)||{name:'—'}).name;
 function viewAP(){
   const all=S.bills.filter(b=>inScope(b.co)), base=BF.co?all.filter(b=>b.co===BF.co):all, unp=base.filter(b=>b.status!=='paid');
-  const top=header('الموردون والمدفوعات','فواتير الموردين: استلام ← اعتماد ← سداد · مع ضريبة المدخلات والقيد الآلي',`<button class="btn" onclick="openSup()">+ مورد</button><button class="btn primary" onclick="openBill()">+ فاتورة مورد</button>`)
+  const top=header('الموردون والمدفوعات','فواتير الموردين: استلام ← اعتماد ← سداد · مع ضريبة المدخلات والقيد الآلي',csvBtn+`<button class="btn" onclick="openSup()">+ مورد</button><button class="btn primary" onclick="openBill()">+ فاتورة مورد</button>`)
     + `<div class="filters"><select onchange="BF.co=this.value;render()" aria-label="الشركة"><option value="">كل الشركات</option>${coOpts(BF.co,false)}</select></div>`
     + `<div class="grid tiles">${tile('مستحق للموردين',sarK(unp.reduce((s,b)=>s+billTot(b),0)),'شامل الضريبة · ريال')}${tile('يستحق خلال ٧ أيام',sarK(unp.filter(b=>daysTo(b.due)>=0&&daysTo(b.due)<=7).reduce((s,b)=>s+billTot(b),0)))}${tile('متأخرة السداد',n(unp.filter(b=>daysTo(b.due)<0).length),sarK(unp.filter(b=>daysTo(b.due)<0).reduce((s,b)=>s+billTot(b),0))+' ريال',unp.some(b=>daysTo(b.due)<0)?'crit':'')}${tile('بانتظار الاعتماد',n(base.filter(b=>b.status==='received').length))}</div>`
     + `<div style="margin-top:16px">${tabs('BF.tab',BF.tab,[['bills','فواتير الموردين'],['sups','الموردون']])}</div>`;
@@ -2762,7 +2856,7 @@ function viewBanks(){
 let SF={co:'',per:'m10',tab:'is'};
 const PERS={m10:['أكتوبر ٢٠٢٦','2026-10-01','2026-10-31'],m11:['نوفمبر ٢٠٢٦ حتى تاريخه','2026-11-01','2026-11-30'],q4:['الربع الرابع حتى تاريخه','2026-10-01','2026-12-31']};
 function viewStatements(){
-  SF.co=fixCo(SF.co,true); const cos=cosOf(SF.co), [pl,from,to]=PERS[SF.per];
+  SF.co=fixCo(SF.co,true); ELIM=SF.co==='all'; const cos=cosOf(SF.co), [pl,from,to]=PERS[SF.per];
   const sum=(type,f,t)=>ACCTS.filter(a=>a[2]===type).map(a=>({a,v:bal(a[0],cos,f,t)})).filter(x=>Math.abs(x.v)>.5);
   const rows=(list,neg)=>list.map(x=>`<tr><td>${x.a[0]} · ${x.a[1]}</td><td>${SAR(neg?-x.v:x.v)}</td></tr>`).join('');
   const T=l=>l.reduce((s,x)=>s+x.v,0);
@@ -2779,7 +2873,7 @@ function viewStatements(){
       <tr class="grp"><td colspan="2">حقوق الملكية</td></tr>${rows(E)}<tr><td>صافي ربح الفترة منذ أكتوبر</td><td>${SAR(pr)}</td></tr><tr class="sum"><td>إجمالي حقوق الملكية</td><td>${SAR(te)}</td></tr>
       <tr class="sum"><td>الخصوم وحقوق الملكية</td><td>${SAR(tl+te)} ${Math.abs(ta-tl-te)<1?'<span class="pill s-good">متوازنة</span>':'<span class="pill s-crit">غير متوازنة</span>'}</td></tr></tbody></table></div>
       <div class="grid tiles" style="margin-top:14px">${tile('نسبة التداول',n((bal('1120',cos)+bal('1130',cos)+bal('1140',cos)+bal('1150',cos)+bal('1160',cos))/Math.max(1,bal('2110',cos)+bal('2120',cos)+bal('2130',cos)+bal('2140',cos)+bal('2150',cos)),2),'الأصول المتداولة ÷ الخصوم المتداولة')}${tile('نسبة المديونية',n(tl/Math.max(1,ta)*100,1)+'٪','الخصوم ÷ الأصول')}${tile('النقد',sarK(bal('1120',cos)+bal('1110',cos)))}</div>`; }
-  if(SF.tab==='tb'){ let td=0,tc=0; const r=ACCTS.map(a=>{ let d=0,c=0; S.journal.forEach(j=>{ if(cos.includes(j.co)) j.lines.forEach(l=>{ if(l[0]===a[0]){ d+=l[1]; c+=l[2]; } }); }); const net=d-c; td+=net>0?net:0; tc+=net<0?-net:0; return {a,net}; }).filter(x=>Math.abs(x.net)>.5);
+  if(SF.tab==='tb'){ let td=0,tc=0; const r=ACCTS.map(a=>{ let d=0,c=0; S.journal.forEach(j=>{ if(cos.includes(j.co)&&!(ELIM&&j.ic)) j.lines.forEach(l=>{ if(l[0]===a[0]){ d+=l[1]; c+=l[2]; } }); }); const net=d-c; td+=net>0?net:0; tc+=net<0?-net:0; return {a,net}; }).filter(x=>Math.abs(x.net)>.5);
     body=`<div class="tbl-x"><table class="stmt"><thead><tr><th>ميزان المراجعة — كما في ${fmtD(todayI())}</th><th>مدين</th><th>دائن</th></tr></thead><tbody>${r.map(x=>`<tr><td>${x.a[0]} · ${x.a[1]}</td><td>${x.net>0?SAR(x.net):''}</td><td>${x.net<0?SAR(-x.net):''}</td></tr>`).join('')}<tr class="sum"><td>الإجمالي ${Math.abs(td-tc)<1?'<span class="pill s-good">متوازن</span>':''}</td><td>${SAR(td)}</td><td>${SAR(tc)}</td></tr></tbody></table></div>`; }
   if(SF.tab==='vat'){ const qf='2026-10-01', qt='2026-12-31'; let out=0,inp=0; S.journal.forEach(j=>{ if(!cos.includes(j.co)||j.d<qf||j.d>qt) return; j.lines.forEach(l=>{ if(l[0]==='2120') out+=l[2]-l[1]; if(l[0]==='1160') inp+=l[1]-l[2]; }); });
     const prof=c=>ACCTS.filter(a=>a[2]==='R').reduce((s,a)=>s+bal(a[0],[c]),0)-ACCTS.filter(a=>a[2]==='X').reduce((s,a)=>s+bal(a[0],[c]),0);
@@ -2789,9 +2883,10 @@ function viewStatements(){
       <tr class="sum"><td>صافي الضريبة المستحقة</td><td></td><td class="${out-inp>=0?'down':'up'}">${SAR(out-inp)}</td></tr></tbody></table></div>
       <div class="small muted" style="margin-top:10px">آخر موعد للتقديم والسداد: ٣١ يناير ٢٠٢٧ (بعد نهاية الربع بشهر).</div></div>
       <div class="card"><h3>الزكاة — تقدير أولي</h3><div class="kvs"><div><div class="small">الوعاء الزكوي التقديري</div><b>${SAR(zb)}</b></div><div><div class="small">الزكاة ٢٫٥٪ (سنوي)</div><b>${SAR(zb*.025)}</b></div></div><div class="small muted" style="margin-top:10px">حقوق الملكية والمخصصات والقروض ناقصًا الأصول الثابتة، مضافًا إليها صافي الربح. تقدير للمتابعة فقط — الإقرار النهائي يُعدّ مع المحاسب القانوني وفق لائحة جباية الزكاة.</div></div></div>`; }
-  return header('القوائم المالية والضريبة','قائمة الدخل والمركز المالي وميزان المراجعة وإقرار ضريبة القيمة المضافة — من الدفاتر مباشرة')
-  + `<div class="filters">${coSeg('SF.co',SF.co,true)}${['is'].includes(SF.tab)?`<div class="seg">${Object.entries(PERS).map(([k,v])=>`<button class="${SF.per===k?'on':''}" onclick="SF.per='${k}';render()">${v[0]}</button>`).join('')}</div>`:''}</div>
-    ${tabs('SF.tab',SF.tab,[['is','قائمة الدخل'],['bs','المركز المالي'],['tb','ميزان المراجعة'],['vat','الضريبة والزكاة']])}${SF.co==='all'?'<div class="notice" style="margin-bottom:12px">قوائم موحّدة بالجمع المباشر. تُستبعد المعاملات بين الشركات (الخدمات المشتركة) عند إعداد القوائم الموحدة النهائية.</div>':''}${body}`;
+  if(SF.tab==='cf') body=stmtCF(cos,from,to,pl); if(SF.tab==='cc') body=stmtCC(cos); ELIM=false;
+  return header('القوائم المالية والضريبة','قائمة الدخل والمركز المالي والتدفقات النقدية وميزان المراجعة والضريبة ومراكز التكلفة — من الدفاتر مباشرة',csvBtn)
+  + `<div class="filters">${coSeg('SF.co',SF.co,true)}${['is','cf'].includes(SF.tab)?`<div class="seg">${Object.entries(PERS).map(([k,v])=>`<button class="${SF.per===k?'on':''}" onclick="SF.per='${k}';render()">${v[0]}</button>`).join('')}</div>`:''}</div>
+    ${tabs('SF.tab',SF.tab,[['is','قائمة الدخل'],['bs','المركز المالي'],['cf','التدفقات النقدية'],['tb','ميزان المراجعة'],['vat','الضريبة والزكاة'],['cc','مراكز التكلفة']])}${SF.co==='all'?`<div class="notice" style="margin-bottom:12px">قوائم موحّدة: استُبعدت المعاملات بين الشركات (${SAR(icElim(cos))} ريال) من الإيرادات والمصروفات والأرصدة المتبادلة. <a class="more-link" href="#ic">المعاملات بين الشركات ←</a></div>`:''}${body}`;
 }
 /* ---------- Departments & systems directory ---------- */
 const SYS=[['hr','شؤون الموظفين','الموارد البشرية',/موارد|إدارة العليا|الإدارة والشركاء/],['payroll','مسير الرواتب','الموارد البشرية والمالية',/موارد|مالي/],['leave','الإجازات والحضور','كل الإدارات',/./],['recruit','التوظيف','الموارد البشرية',/موارد/],['training','التدريب والتطوير','الموارد البشرية',/موارد|تدريب|تمريض/],
@@ -2893,12 +2988,458 @@ const NAVI={hr:'hr',payroll:'pay',leave:'leave',recruit:'recruit',training:'trai
 let NAVC=(()=>{ try{ return JSON.parse(localStorage.getItem('majlis-nav'))||{}; }catch(e){ return {}; } })();
 window.navToggle=(g,cur)=>{ NAVC[g]=!cur; try{ localStorage.setItem('majlis-nav',JSON.stringify(NAVC)); }catch(e){} render(); };
 
+
+/* ================= v5: sector systems, employee portal, approvals inbox, finance additions, reports ================= */
+Object.assign(SRCL,{ic:'بين الشركات',petty:'صندوق نقدي',insc:'مطالبات تأمين',edufee:'رسوم تدريب',loan:'سلف موظفين',mo:'أوامر إنتاج'});
+// consolidated statements exclude intercompany entries (both sides) while ELIM is on
+let ELIM=false;
+const _bal0=bal;
+bal=function(a,cos,from,to){ if(!ELIM) return _bal0(a,cos,from,to); let d=0,c=0; S.journal.forEach(j=>{ if(j.ic||!cos.includes(j.co)) return; if(from&&j.d<from) return; if(to&&j.d>to) return; j.lines.forEach(l=>{ if(l[0]===a){ d+=l[1]; c+=l[2]; } }); }); return 'AX'.includes(acctType(a))?d-c:c-d; };
+const regScope=(D,r)=>D.scope?D.scope(r):inScope(r.co);
+const isoAdd=(s,days)=>{ const d=parseD(s); d.setDate(d.getDate()+days); return iso(d); };
+const addM=(s,m)=>{ const d=parseD(s); d.setMonth(d.getMonth()+m); return iso(d); };
+const fmtDY=s=>s?new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{day:'numeric',month:'long',year:'numeric'}).format(parseD(s)):'—';
+const clientLbl=r=>{ const c=r.cl&&S.clients.find(x=>x.id===r.cl); return c?clName(c):(r.cname||'—'); };
+const meter=(v,col)=>`<div class="meter"><i style="width:${Math.max(0,Math.min(100,v))}%;background:var(--${col||'gold'})"></i></div>`;
+const secEdit=c=>()=>S.me===c||S.me==='sec';
+function newInv(c,cl,cname,lines,issue,date){
+  const k=Math.max(0,...S.invs.filter(x=>x.co===c).map(x=>+String(x.no).split('-').pop()||0))+1, d=date||todayI();
+  const i={id:uid(),co:c,no:`INV-${EPFX[c]}-2026-${String(k).padStart(4,'0')}`,cl:cl||null,cname:cname||'',date:d,due:isoAdd(d,30),lines,vr:VAT,status:'draft',pays:[]};
+  S.invs.unshift(i); if(issue){ i.status='issued'; postJ(c,d,`فاتورة ${i.no}`,'inv',jInv(i)); } return i; }
+window.copyTable=function(){ const t=document.querySelector('#main table'); if(!t){ toast('لا يوجد جدول في هذه الصفحة'); return; }
+  const rows=[...t.rows].map(r=>[...r.cells].map(c=>(c.innerText||c.textContent).replace(/\s+/g,' ').trim()));
+  copyBox('نسخ الجدول بصيغة CSV',csv(rows[0],rows.slice(1)),'الصق النص في Excel أو Google Sheets، أو احفظه في ملف بامتداد ‎.csv'); };
+const csvBtn='<button class="btn" onclick="copyTable()">نسخ CSV</button>';
+
+/* ---------- clinic ---------- */
+const doctors=()=>S.emps.filter(e=>e.co==='clinic'&&isAct(e)&&/الطب العام|الأسنان|الجلدية/.test(e.dept)&&!/مساعد|فني/.test(e.title));
+const SLOTS=['08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'];
+const insRej=r=>r.appr?r.amt-r.appr:0;
+window.apptInv=function(id){ const r=S.appts.find(x=>x.id===id); if(!canFin('clinic')&&S.me!=='sec'){ toast('يصدر الفاتورة ممثل العيادات أو الممثل المالي'); return; }
+  const i=newInv('clinic',null,r.pat,[{d:`${r.type} — ${(emp(r.doc)||{}).dept||''}`,q:1,p:r.fee}],true); i.pays.push({d:todayI(),a:invTot(i)}); postJ('clinic',todayI(),`تحصيل نقدي — ${i.no}`,'rcpt',jRcpt(invTot(i)));
+  r.inv=i.no; logAct(`أصدر فاتورة نقدية ${i.no} للمريض ${r.pat}`); save(); closeModal(); render(); toast('صدرت الفاتورة وسُجّل التحصيل'); };
+window.insSettle=function(id){ const r=S.insclaims.find(x=>x.id===id), a=+$('#rf_appr').value||0;
+  if(!(a>0)||a>r.amt){ toast('اكتب المبلغ المقبول بعد التدقيق (لا يتجاوز المطالب به)'); return; }
+  r.appr=a; r.reason=$('#rf_reason').value; recSt('insclaims',id,'تمت التسوية'); };
+/* ---------- factory ---------- */
+const itemOf=sku=>S.items.find(i=>i.co==='factory'&&i.sku===sku)||{name:sku,unit:'',cost:0,qty:0};
+const moUnit=p=>(PRODUCTS[p]?PRODUCTS[p].bom:[]).reduce((s,[k,q])=>s+q*itemOf(k).cost,0);
+const moLate=r=>r.status!=='مكتمل'&&r.due<todayI();
+window.moStart=function(id){ const r=S.mos.find(x=>x.id===id), bom=PRODUCTS[r.prod].bom;
+  const short=bom.filter(([k,q])=>itemOf(k).qty<q*r.qty);
+  if(short.length){ toast('المواد غير كافية: '+short.map(([k,q])=>itemOf(k).name+' (المطلوب '+n(q*r.qty,1)+' والمتوفر '+n(itemOf(k).qty,1)+')').join('، ')); return; }
+  let cost=0; bom.forEach(([k,q])=>{ const it=itemOf(k), need=Math.round(q*r.qty*100)/100; it.qty=Math.round((it.qty-need)*100)/100; cost+=need*it.cost; (it.mv=it.mv||[]).unshift({d:todayI(),q:-need,note:'أمر الإنتاج '+r.no}); });
+  cost=Math.round(cost); postJ('factory',todayI(),`صرف مواد أمر الإنتاج ${r.no} — ${r.prod}`,'mo',[['5100',cost,0],['1140',0,cost]]);
+  recSt('mos',id,'قيد التنفيذ',{start:todayI(),mat:cost}); };
+window.moDone=function(id){ const p=+$('#rf_pass').value||0; if(!(p>0&&p<=100)){ toast('اكتب نسبة المطابقة في فحص الجودة (١ – ١٠٠)'); return; }
+  recSt('mos',id,'مكتمل',{pass:p,done:todayI()}); if(p<90) toast('سُجّل الإغلاق — نسبة المطابقة أقل من ٩٠٪ وتُحتسب إعادة عمل'); };
+/* ---------- law ---------- */
+const lawyers=()=>S.emps.filter(e=>e.co==='law'&&isAct(e)&&/التقاضي|الاستشارات|العقود|الإدارة والشركاء/.test(e.dept)&&!/سكرتير|مدير المكتب/.test(e.title));
+const lawSee=()=>S.me==='law';
+const caseOf=id=>S.cases.find(c=>c.id===id)||{no:'—',subj:'',type:''};
+const caseLbl=c=>c.no+' · '+(lawSee()?c.subj:c.type);
+window.billHours=function(){ if(!canFin('law')){ toast('يفوتر الساعات ممثل المعرفة القانونية أو الممثل المالي'); return; }
+  const un=S.hours.filter(h=>h.status==='غير مفوترة'), by={}; un.forEach(h=>(by[h.case]=by[h.case]||[]).push(h));
+  const ks=Object.keys(by); if(!ks.length){ toast('لا ساعات غير مفوترة'); return; }
+  ask('فوترة الساعات',`ستُنشأ ${n(ks.length)} مسودات فواتير لـ ${n(un.reduce((s,h)=>s+h.hrs,0),1)} ساعة غير مفوترة، تراجعها المالية قبل الإصدار.`,'إنشاء المسودات',()=>{
+    ks.forEach(k=>{ const c=caseOf(+k), rates={}; by[k].forEach(h=>rates[h.rate]=(rates[h.rate]||0)+h.hrs);
+      const i=newInv('law',c.cl,'',Object.entries(rates).map(([p,q])=>({d:`أتعاب مهنية بالساعة — القضية ${c.no}`,q,p:+p})),false); by[k].forEach(h=>{ h.status='مفوترة'; h.inv=i.no; }); });
+    logAct(`أنشأ ${n(ks.length)} مسودات فواتير من ساعات العمل`); save(); AF2.co='law'; AF2.st='مسودة'; location.hash='ar'; render(); toast('أُنشئت مسودات الفواتير'); }); };
+/* ---------- education ---------- */
+const courseOf=id=>S.courses.find(c=>c.id===id)||{title:'—',start:'',end:'',seats:0,price:0};
+const crsSt=r=>r.start>todayI()?'مفتوح للتسجيل':r.end<todayI()?'منتهٍ':'جارٍ';
+const enrBal=r=>Math.max(0,r.fee-r.paid);
+const enrSt=r=>r.status==='منسحب'?'منسحب':r.cert?'حاصل على الشهادة':enrBal(r)>0?'عليه أقساط':'مسدد';
+const crsEn=c=>S.enrol.filter(e=>e.course===c.id&&e.status!=='منسحب');
+window.enrolPay=function(id){ const r=S.enrol.find(x=>x.id===id); if(!canFin('edu')){ toast('يسجّل التحصيل ممثل نوليدج أو الممثل المالي'); return; }
+  const a=Math.min(enrBal(r),Math.ceil(r.fee/Math.max(1,r.inst))); r.paid+=a; (r.pays=r.pays||[]).push({d:todayI(),a});
+  postJ('edu',todayI(),`رسوم تدريب — ${r.name} · ${courseOf(r.course).title}`,'edufee',[['1120',a,0],['4100',0,a]]);
+  logAct(`حصّل ${SAR(a)} ريال من المتدرب ${r.name}`); save(); closeModal(); render(); toast('سُجّل التحصيل وقُيّد'); };
+window.enrolCert=function(id){ const r=S.enrol.find(x=>x.id===id), c=courseOf(r.course);
+  if(!r.cert){ r.cert=true; r.certNo='KN-C-26'+String(r.id).slice(-4); logAct(`أصدر شهادة إتمام للمتدرب ${r.name}`); save(); render(); }
+  copyBox('شهادة إتمام برنامج تدريبي',[co('edu').name,'','شهادة إتمام','',`تشهد ${co('edu').name} بأن`,r.name,`قد أتمّ بنجاح البرنامج التدريبي «${c.title}»`,`المنعقد خلال الفترة من ${fmtDY(c.start)} إلى ${fmtDY(c.end)} بواقع ${n(c.hrs||0)} ساعة تدريبية،`,`وبنسبة حضور ${n(r.att)}٪.`,'',`رقم الشهادة: ${r.certNo||'KN-C-26'+String(r.id).slice(-4)}`,`تاريخ الإصدار: ${fmtDY(todayI())}`].join('\n'),'في النسخة الخادمية تُصدر الشهادة بصيغة PDF مع رمز تحقق.'); };
+/* ---------- employee loans, payroll deduction, letters ---------- */
+const loanInst=(e,m)=>S.loans.filter(l=>l.emp===e.id&&l.start&&l.start<=m&&(((l.paidM||[]).includes(m))||(l.status==='مصروف'&&(l.paidM||[]).length<l.n))).reduce((s,l)=>s+Math.round(l.amt/l.n),0);
+function withLoan(e,m,adj){ const li=loanInst(e,m); return li?Object.assign({},adj||{},{ded:((adj&&adj.ded)||0)+li}):adj; }
+function loanSettle(r){ S.loans.filter(l=>l.co===r.co&&l.status==='مصروف'&&l.start<=r.month&&!(l.paidM||[]).includes(r.month)).forEach(l=>{ (l.paidM=l.paidM||[]).push(r.month); if(l.paidM.length>=l.n) l.status='مسدد'; }); }
+const loanOut=l=>['مصروف'].includes(l.status)?l.amt-Math.round(l.amt/l.n)*(l.paidM||[]).length:0;
+const monOpts=()=>{ const b=todayI(); return [0,1,2,3].map(k=>{ const m=addM(b.slice(0,7)+'-01',k).slice(0,7); return [m,monthName(m)]; }); };
+const gx=(e,m,f)=>e&&e.g==='f'?f:m;
+function letterText(r){ const e=emp(r.emp), c=co(r.co), g=(m,f)=>gx(e,m,f), act=isAct(e), to=r.to||'إلى من يهمه الأمر';
+  const intro=`تشهد ${c.name} بأن ${g('السيد','السيدة')} / ${e.name}، ${e.nat} الجنسية، ${act?g('يعمل','تعمل'):g('عمل','عملت')} لديها بوظيفة «${e.title}» في ${e.dept} منذ ${fmtDY(e.join)}${act?`، ولا ${g('يزال','تزال')} على رأس العمل حتى تاريخه`:` حتى ${fmtDY(e.left||todayI())}`}`;
+  const sal=`، ${g('ويتقاضى','وتتقاضى')} راتبًا شهريًا إجماليًا قدره ${SAR(pkg(e))} ريال (الأساسي ${SAR(e.basic)} ريال، وبدل السكن ${SAR(e.hous)} ريال، وبدل النقل ${SAR(e.trans)} ريال)`;
+  const owe=S.loans.filter(l=>l.emp===e.id&&loanOut(l)>0).reduce((s,l)=>s+loanOut(l),0);
+  const body={'تعريف بالراتب':intro+sal+'.','تعريف بدون راتب':intro+'.','شهادة خبرة':intro+`، وقد عُرف ${g('عنه','عنها')} خلال فترة عمله حسن الأداء والالتزام والسلوك.`,
+    'خطاب للسفارة':intro+sal+`. ولا مانع لدى الشركة من سفر${g('ه','ها')} خلال إجازت${g('ه','ها')} السنوية، على أن ${g('يعود','تعود')} لمباشرة عمل${g('ه','ها')} بعد انتهائها.`,
+    'إخلاء طرف':intro+(owe?`. وتفيد الشركة بأن على ${g('الموظف','الموظفة')} سلفة قائمة بمبلغ ${SAR(owe)} ريال تُسوّى من مستحقات${g('ه','ها')}.`:`. وتفيد الشركة بأنه لا توجد على ${g('الموظف','الموظفة')} أي التزامات مالية أو عُهد لديها.`)}[r.type];
+  return [to,'','السلام عليكم ورحمة الله وبركاته،','',body,'',`وقد أُعطي هذا الخطاب بناءً على طلب${g('ه','ها')}${r.purpose?' لغرض '+r.purpose:''}، دون أدنى مسؤولية على الشركة تجاه الغير.`,'',`رقم الخطاب: ${r.ref||'—'}`,`التاريخ: ${fmtDY(r.issued||todayI())}`,'','إدارة الموارد البشرية',c.name].join('\n'); }
+window.letterIssue=function(id){ const r=S.letters.find(x=>x.id===id); const k=S.letters.filter(x=>x.co===r.co&&x.ref).length+41;
+  recSt('letters',id,'صادر',{ref:'HR-'+EPFX[r.co]+'-26'+k,issued:todayI()}); letterView(id); };
+window.letterView=id=>{ const r=S.letters.find(x=>x.id===id); copyBox(r.type+' — '+empName(r.emp),letterText(r),'انسخ النص إلى ورق الشركة الرسمي. في النسخة الخادمية يُصدر الخطاب بصيغة PDF مع الختم ورمز التحقق.'); };
+/* ---------- intercompany, quotations, recurring invoices ---------- */
+function icPost(r){ const a=r.amt; postJ(r.co,r.date,`خدمات لـ ${co(r.to).short} — ${r.desc}`,'ic',[['1170',a,0],['4200',0,a]]).ic=true; postJ(r.to,r.date,`خدمات من ${co(r.co).short} — ${r.desc}`,'ic',[['5800',a,0],['2160',0,a]]).ic=true; }
+window.icSettle=function(id){ const r=S.ics.find(x=>x.id===id);
+  ask('تسوية نقدية',`سيُحوَّل ${SAR(r.amt)} ريال من حساب ${co(r.to).short} إلى ${co(r.co).short} وتُقفل الأرصدة المتبادلة.`,'تسوية',()=>{
+    postJ(r.co,todayI(),'تسوية مستحق من شركة شقيقة — '+r.desc,'ic',[['1120',r.amt,0],['1170',0,r.amt]]).ic=true; postJ(r.to,todayI(),'تسوية مستحق لشركة شقيقة — '+r.desc,'ic',[['2160',r.amt,0],['1120',0,r.amt]]).ic=true;
+    recSt('ic',id,'مسددة'); }); };
+const icElim=cos=>S.ics.filter(r=>cos.includes(r.co)&&cos.includes(r.to)).reduce((s,r)=>s+r.amt,0);
+const qSt=r=>r.status==='مرسل'&&r.valid<todayI()?'منتهٍ':r.status;
+window.quoteInv=function(id){ const r=S.quotes.find(x=>x.id===id), i=newInv(r.co,null,r.cname,[{d:r.desc,q:r.qty,p:r.price}],false); recSt('quotes',id,'مفوتر',{inv:i.no}); openInv(i.id); };
+window.quoteText=id=>{ const r=S.quotes.find(x=>x.id===id), sub=r.qty*r.price; copyBox('نص عرض السعر',[`السادة ${r.cname}`,'تحية طيبة وبعد،',`يسرّ ${co(r.co).name} تقديم عرض السعر رقم ${r.no}:`,`${r.desc} — الكمية ${n(r.qty)} × ${SAR(r.price)} ريال`,`الإجمالي قبل الضريبة: ${SAR(sub)} ريال`,`ضريبة القيمة المضافة ١٥٪: ${SAR(sub*VAT)} ريال`,`الإجمالي شامل الضريبة: ${SAR(sub*(1+VAT))} ريال`,`العرض صالح حتى ${fmtDY(r.valid)}.`,'',co(r.co).name].join('\n'),'انسخ النص وأرسله للعميل.'); };
+const recSt2=r=>r.active==='لا'?'موقوفة':r.next<=todayI()?'مستحقة':'مجدولة';
+const mrr=r=>r.active==='لا'?0:r.amt/(FREQM[r.freq]||1);
+window.recurRun=function(id){ const list=(id?S.recur.filter(r=>r.id===id):S.recur.filter(r=>inScope(r.co)&&canFin(r.co))).filter(r=>recSt2(r)==='مستحقة'&&canFin(r.co));
+  if(!list.length){ toast(id?'يصدر الفواتير ممثل الشركة أو الممثل المالي':'لا فواتير مستحقة الإصدار'); return; } let k=0;
+  list.forEach(r=>{ let g=0; while(r.next<=todayI()&&g++<3){ newInv(r.co,r.cl,r.cname,[{d:`${r.desc} — ${monthName(r.next.slice(0,7))}`,q:1,p:r.amt}],true); r.next=addM(r.next,FREQM[r.freq]||1); r.made=(r.made||0)+1; k++; } });
+  logAct(`أصدر ${n(k)} فواتير متكررة`); save(); closeModal(); render(); toast(`صدرت ${n(k)} فواتير وقُيّدت`); };
+/* ---------- petty cash ---------- */
+const pettyCos=()=>GF.petty&&GF.petty.co?[GF.petty.co]:scopeCos().map(c=>c.id);
+const pettyBal=cos=>cos.reduce((s,c)=>s+bal('1110',[c]),0);
+
+Object.assign(REG,{
+  appts:{key:'appts',only:'clinic',canEdit:secEdit('clinic'),title:'المواعيد والأطباء',one:'موعد',newT:'حجز موعد جديد',sub:'حجز مواعيد المرضى وجداول الأطباء ونسب الحضور — عيادات النجوم السبعة',ph:'بحث باسم المريض أو الطبيب',
+    states:['محجوز','حضر','لم يحضر','ملغى'],cls:{'محجوز':'s-info','حضر':'s-good','لم يحضر':'s-crit','ملغى':'s-idle'},
+    fields:[{k:'pat',l:'اسم المريض',t:'text',req:1},{k:'phone',l:'الجوال',t:'text'},{k:'doc',l:'الطبيب',t:'opt',o:()=>doctors().map(e=>[e.id,e.name+' — '+e.dept])},{k:'type',l:'نوع الزيارة',t:'sel',o:['كشف جديد','متابعة','إجراء']},{k:'date',l:'التاريخ',t:'date',req:1},{k:'time',l:'الوقت',t:'sel',o:SLOTS},{k:'pay',l:'الدفع',t:'sel',o:['تأمين','نقدي']},{k:'ins',l:'شركة التأمين',t:'sel',o:['—',...INSURERS]},{k:'fee',l:'الرسوم (ريال)',t:'num'},{k:'note',l:'ملاحظات',t:'area',full:1}],
+    blank:()=>({co:'clinic',pat:'',phone:'',doc:(doctors()[0]||{}).id,type:'كشف جديد',date:todayI(),time:'17:00',pay:'تأمين',ins:INSURERS[0],fee:250,note:'',inv:'',status:'محجوز'}),
+    check:(v,rid)=>S.appts.some(a=>a.id!==rid&&a.doc===v.doc&&a.date===v.date&&a.time===v.time&&a.status!=='ملغى')?'لدى الطبيب موعد آخر في نفس الوقت — اختر وقتًا مختلفًا.':'',
+    name:r=>r.pat+' — '+fmtD(r.date)+' '+r.time, text:r=>r.pat+' '+empName(r.doc)+' '+r.ins+' '+r.phone,
+    sort:(a,b)=>(b.date+b.time).localeCompare(a.date+a.time),
+    cols:[['المريض',r=>`<b>${esc(r.pat)}</b><div class="small muted">${esc(r.phone)}</div>`],['الطبيب',r=>`${esc(empName(r.doc))}<div class="small muted">${esc((emp(r.doc)||{}).dept||'')}</div>`],['الموعد',r=>`${fmtD(r.date)} · ${r.time}${r.date===todayI()?' <span class="pill s-warn">اليوم</span>':''}`],['النوع',r=>r.type],['الدفع',r=>r.pay==='تأمين'?esc(r.ins):'نقدي'+(r.inv?` <span class="small muted">${r.inv}</span>`:'')],['الرسوم',r=>SAR(r.fee)]],
+    meta:r=>[esc(empName(r.doc)),fmtD(r.date)+' '+r.time,r.pay==='تأمين'?esc(r.ins):'نقدي'],
+    acts:r=>!secEdit('clinic')()?[]:r.status==='محجوز'?[['تسجيل الحضور',`recSt('appts',${r.id},'حضر')`,'gold'],['لم يحضر',`recSt('appts',${r.id},'لم يحضر')`],['إلغاء الموعد',`recSt('appts',${r.id},'ملغى')`]]:r.status==='حضر'&&r.pay==='نقدي'&&!r.inv?[['إصدار فاتورة نقدية وتحصيلها',`apptInv(${r.id})`,'gold']]:[],
+    tiles:b=>{ const t=b.filter(r=>r.date===todayI()), past=b.filter(r=>r.date<=todayI()&&['حضر','لم يحضر'].includes(r.status)), ns=past.filter(r=>r.status==='لم يحضر').length, wk=b.filter(r=>r.date>todayI()&&r.date<=isoAdd(todayI(),7)&&r.status==='محجوز');
+      return [['مواعيد اليوم',n(t.length),n(t.filter(r=>r.status==='حضر').length)+' حضروا'],['نسبة الحضور',past.length?n((past.length-ns)/past.length*100,1)+'٪':'—','عدم الحضور '+n(ns),past.length&&ns/past.length>.12?'warn':''],['محجوز للأيام السبعة القادمة',n(wk.length)],['حصة التأمين',b.length?n(b.filter(r=>r.pay==='تأمين').length/b.length*100)+'٪':'—','من إجمالي المواعيد']]; },
+    extra:b=>{ const ds=doctors().map(d=>{ const x=b.filter(r=>r.doc===d.id&&r.status!=='ملغى'); return {d,today:x.filter(r=>r.date===todayI()).length,wk:x.filter(r=>r.date>=todayI()&&r.date<=isoAdd(todayI(),6)).length,ns:x.filter(r=>r.status==='لم يحضر').length}; }).filter(x=>x.today||x.wk).sort((a,b)=>b.wk-a.wk);
+      return `<div class="card" style="margin-top:16px"><h3>جدول الأطباء — الأسبوع الحالي <small>السعة ١٢ موعدًا يوميًا لكل طبيب</small></h3><div class="tbl-x"><table class="stmt"><thead><tr><th>الطبيب</th><th>القسم</th><th>اليوم</th><th>الأيام السبعة القادمة</th><th>الإشغال</th><th>عدم حضور</th></tr></thead><tbody>${ds.map(x=>`<tr><td><b>${esc(x.d.name)}</b><div class="small muted">${esc(x.d.title)}</div></td><td>${esc(x.d.dept)}</td><td>${n(x.today)}</td><td>${n(x.wk)}</td><td style="min-width:120px">${n(x.wk/60*100)}٪${meter(x.wk/60*100,x.wk/60<.5?'warn':'good')}</td><td>${n(x.ns)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا مواعيد هذا الأسبوع.</td></tr>'}</tbody></table></div></div>`; },
+    stat:()=>n(S.appts.filter(r=>r.date===todayI()).length)+' مواعيد اليوم'},
+  insclaims:{key:'insclaims',only:'clinic',canEdit:secEdit('clinic'),title:'مطالبات التأمين الطبي',one:'دفعة مطالبات',newT:'دفعة مطالبات جديدة',sub:'دفعات المطالبات الشهرية لشركات التأمين: إعداد ← إرسال ← تدقيق وتسوية ← سداد، مع تحليل المرفوضات',ph:'بحث بشركة التأمين',
+    states:['قيد الإعداد','مرسلة','تمت التسوية','مدفوعة'],cls:{'قيد الإعداد':'s-idle','مرسلة':'s-info','تمت التسوية':'s-warn','مدفوعة':'s-good'},
+    fields:[{k:'ins',l:'شركة التأمين',t:'sel',o:INSURERS},{k:'month',l:'شهر الخدمة',t:'opt',o:()=>['2026-08','2026-09','2026-10','2026-11','2026-12'].map(m=>[m,monthName(m)])},{k:'cases',l:'عدد الحالات',t:'num'},{k:'amt',l:'المبلغ المطالب به (ريال)',t:'num',req:1},{k:'appr',l:'المبلغ المقبول بعد التدقيق (ريال)',t:'num'},{k:'reason',l:'السبب الرئيسي للرفض',t:'sel',o:['—',...REJR]},{k:'note',l:'ملاحظات',t:'area',full:1}],
+    blank:()=>({co:'clinic',ins:INSURERS[0],month:todayI().slice(0,7),cases:0,amt:0,appr:0,reason:'—',note:'',sent:'',paidOn:'',status:'قيد الإعداد'}),
+    name:r=>r.ins+' — '+monthName(r.month), text:r=>r.ins+' '+monthName(r.month)+' '+r.reason, sort:(a,b)=>b.month.localeCompare(a.month)||b.amt-a.amt,
+    cols:[['شركة التأمين',r=>`<b>${esc(r.ins)}</b><div class="small muted">${monthName(r.month)} · ${n(r.cases)} حالة</div>`],['المطالب به',r=>SAR(r.amt)],['المقبول',r=>r.appr?SAR(r.appr):'—'],['المرفوض',r=>r.appr?`${SAR(insRej(r))} <span class="pill ${insRej(r)/r.amt>.1?'s-crit':'s-idle'}">${n(insRej(r)/r.amt*100,1)}٪</span><div class="small muted">${esc(r.reason)}</div>`:'—'],['أُرسلت',r=>r.sent?fmtD(r.sent)+(r.status!=='مدفوعة'?` <span class="small muted">· ${n(ageD(r.sent))} يومًا</span>`:''):'—']],
+    meta:r=>[monthName(r.month),SAR(r.amt)+' ريال',r.appr?'مرفوض '+n(insRej(r)/r.amt*100,1)+'٪':''],
+    acts:r=>!secEdit('clinic')()&&!canFin('clinic')?[]:r.status==='قيد الإعداد'?[['إرسال لشركة التأمين',`recSt('insclaims',${r.id},'مرسلة',{sent:todayI()})`,'gold']]:r.status==='مرسلة'?[['تسجيل نتيجة التدقيق',`insSettle(${r.id})`,'gold']]:r.status==='تمت التسوية'&&canFin('clinic')?[['تسجيل السداد وقيده',`recSt('insclaims',${r.id},'مدفوعة',{paidOn:todayI()})`,'gold']]:[],
+    info:r=>r.status==='مرسلة'?'<span class="small muted">اكتب المبلغ المقبول وسبب الرفض الرئيسي ثم اضغط «تسجيل نتيجة التدقيق».</span>':'',
+    on:(r,st)=>{ if(st==='مدفوعة') postJ('clinic',todayI(),`سداد مطالبات ${r.ins} — ${monthName(r.month)}`,'insc',[['1120',r.appr,0],['4100',0,r.appr]]); },
+    tiles:b=>{ const open=b.filter(r=>['مرسلة','تمت التسوية'].includes(r.status)), dec=b.filter(r=>r.appr), rej=dec.reduce((s,r)=>s+insRej(r),0), am=dec.reduce((s,r)=>s+r.amt,0), pd=b.filter(r=>r.paidOn&&r.sent);
+      return [['مطالبات قائمة لدى شركات التأمين',sarK(open.reduce((s,r)=>s+(r.appr||r.amt),0)),n(open.length)+' دفعات'],['نسبة الرفض',am?n(rej/am*100,1)+'٪':'—',sarK(rej)+' ريال مرفوض',am&&rej/am>.08?'warn':''],['متوسط مدة السداد',pd.length?n(pd.reduce((s,r)=>s+(parseD(r.paidOn)-parseD(r.sent))/864e5,0)/pd.length)+' يومًا':'—','من الإرسال حتى السداد'],['دفعات بانتظار الإرسال',n(b.filter(r=>r.status==='قيد الإعداد').length)]]; },
+    extra:b=>{ const dec=b.filter(r=>r.appr), byR={}, byI={}; dec.forEach(r=>{ byR[r.reason]=(byR[r.reason]||0)+insRej(r); const x=byI[r.ins]=byI[r.ins]||{a:0,r:0}; x.a+=r.amt; x.r+=insRej(r); }); const mx=Math.max(1,...Object.values(byR));
+      return `<div class="grid split2" style="margin-top:16px"><div class="card"><h3>المرفوضات بحسب السبب</h3>${Object.entries(byR).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="margin-bottom:10px"><div class="row between small"><span>${esc(k)}</span><b>${SAR(v)}</b></div>${meter(v/mx*100,'crit')}</div>`).join('')}</div>
+        <div class="card"><h3>نسبة الرفض بحسب شركة التأمين</h3>${Object.entries(byI).sort((a,b)=>b[1].r/b[1].a-a[1].r/a[1].a).map(([k,x])=>`<div class="mini" style="cursor:default"><b>${esc(k)}</b><span class="row" style="gap:8px"><span class="small muted">${sarK(x.a)} مطالب</span><span class="pill ${x.r/x.a>.1?'s-crit':'s-good'}">${n(x.r/x.a*100,1)}٪</span></span></div>`).join('')}<div class="small muted" style="margin-top:8px">نسبة رفض أعلى من ١٠٪ تستدعي مراجعة الترميز والموافقات المسبقة مع الشركة.</div></div></div>`; },
+    stat:()=>sarK(S.insclaims.filter(r=>['مرسلة','تمت التسوية'].includes(r.status)).reduce((s,r)=>s+(r.appr||r.amt),0))+' لدى شركات التأمين'},
+  mos:{key:'mos',only:'factory',canEdit:secEdit('factory'),title:'أوامر الإنتاج والجودة',one:'أمر إنتاج',newT:'أمر إنتاج جديد',sub:'تخطيط ← تنفيذ وصرف المواد آليًا من المخزون ← فحص الجودة ← تسليم، مع قوائم المواد وتكلفة الوحدة',ph:'بحث برقم الأمر أو المنتج أو العميل',
+    states:['مخطط','قيد التنفيذ','فحص الجودة','مكتمل'],cls:{'مخطط':'s-idle','قيد التنفيذ':'s-info','فحص الجودة':'s-warn','مكتمل':'s-good'},
+    fields:[{k:'prod',l:'المنتج',t:'sel',o:Object.keys(PRODUCTS)},{k:'qty',l:'الكمية',t:'num',req:1},{k:'cust',l:'العميل أو المشروع',t:'text'},{k:'due',l:'موعد التسليم',t:'date',req:1},{k:'pass',l:'نسبة المطابقة في فحص الجودة ٪',t:'num'},{k:'note',l:'ملاحظات',t:'area',full:1}],
+    blank:()=>({co:'factory',no:'',prod:Object.keys(PRODUCTS)[0],qty:10,cust:'',start:'',due:isoAdd(todayI(),14),pass:0,mat:0,done:'',note:'',status:'مخطط'}),
+    onNew:r=>{ r.no='MO-AK-'+(Math.max(300,...S.mos.map(x=>+String(x.no).split('-').pop()||0))+1); },
+    name:r=>(r.no?r.no+' — ':'')+r.prod, text:r=>r.no+' '+r.prod+' '+r.cust, sort:(a,b)=>(a.status==='مكتمل')-(b.status==='مكتمل')||a.due.localeCompare(b.due),
+    cols:[['الأمر',r=>`<b>${esc(r.prod)}</b><div class="small muted">${r.no}</div>`],['العميل',r=>esc(r.cust)||'—'],['الكمية',r=>n(r.qty)],['تكلفة المواد',r=>SAR(r.mat||moUnit(r.prod)*r.qty)+`<div class="small muted">${SAR(moUnit(r.prod))} للوحدة</div>`],['قيمة البيع',r=>SAR((PRODUCTS[r.prod]||{price:0}).price*r.qty)],['التسليم',r=>fmtD(r.due)+(moLate(r)?` <span class="pill s-crit">متأخر ${n(-daysTo(r.due))} يومًا</span>`:'')],['الجودة',r=>r.pass?`<span class="pill ${r.pass>=95?'s-good':r.pass>=90?'s-warn':'s-crit'}">${n(r.pass)}٪</span>`:'—']],
+    meta:r=>[r.no,n(r.qty)+' وحدة','التسليم '+fmtD(r.due)+(moLate(r)?' · متأخر':'')],
+    more:r=>{ const bom=(PRODUCTS[r.prod]||{bom:[]}).bom; return `<div class="full sec-title">المواد المطلوبة لهذا الأمر</div><div class="full">${bom.map(([k,q])=>{ const it=itemOf(k), need=q*r.qty, ok=r.status!=='مخطط'||it.qty>=need; return `<div class="mini" style="cursor:default"><span>${esc(it.name)} <span class="small muted">${k}</span></span><span class="row small" style="gap:8px"><span>${n(need,1)} ${esc(it.unit)}</span>${r.status==='مخطط'?`<span class="pill ${ok?'s-good':'s-crit'}">المتوفر ${n(it.qty,1)}</span>`:'<span class="pill s-idle">صُرفت</span>'}</span></div>`; }).join('')}</div>`; },
+    acts:r=>!secEdit('factory')()?[]:r.status==='مخطط'?[['بدء التنفيذ وصرف المواد',`moStart(${r.id})`,'gold']]:r.status==='قيد التنفيذ'?[['إرسال لفحص الجودة',`recSt('mos',${r.id},'فحص الجودة')`,'gold']]:r.status==='فحص الجودة'?[['اعتماد الجودة وإغلاق الأمر',`moDone(${r.id})`,'gold']]:[],
+    info:r=>r.status==='فحص الجودة'?'<span class="small muted">اكتب نسبة المطابقة ثم اعتمد الجودة.</span>':'',
+    tiles:b=>{ const op=b.filter(r=>r.status!=='مكتمل'), dn=b.filter(r=>r.status==='مكتمل'), m=todayI().slice(0,7), late=op.filter(moLate), ontime=dn.filter(r=>r.done<=r.due).length;
+      return [['أوامر مفتوحة',n(op.length),n(op.reduce((s,r)=>s+r.qty,0))+' وحدة'],['متأخرة عن التسليم',n(late.length),'',late.length?'crit':''],['التسليم في الموعد',dn.length?n(ontime/dn.length*100)+'٪':'—','من الأوامر المكتملة'],['متوسط نسبة المطابقة',dn.length?n(dn.reduce((s,r)=>s+r.pass,0)/dn.length,1)+'٪':'—','فحص الجودة']]; },
+    extra:()=>`<div class="card" style="margin-top:16px"><h3>قوائم المواد وتكلفة الوحدة <small>بأسعار المخزون الحالية</small></h3><div class="tbl-x"><table class="stmt"><thead><tr><th>المنتج</th><th>المواد</th><th>تكلفة المواد</th><th>سعر البيع</th><th>هامش المواد</th></tr></thead><tbody>${Object.entries(PRODUCTS).map(([p,x])=>{ const u=moUnit(p); return `<tr><td><b>${esc(p)}</b><div class="small muted">${n(x.hrs)} ساعات عمل للوحدة</div></td><td class="small">${x.bom.map(([k,q])=>`${n(q,2)} ${esc(itemOf(k).unit)} ${esc(itemOf(k).name)}`).join('<br>')}</td><td>${SAR(u)}</td><td>${SAR(x.price)}</td><td>${n((x.price-u)/x.price*100)}٪</td></tr>`; }).join('')}</tbody></table></div></div>`,
+    stat:()=>n(S.mos.filter(moLate).length)+' أوامر متأخرة'},
+  cases:{key:'cases',only:'law',canEdit:()=>S.me==='law',title:'القضايا والجلسات',one:'قضية',newT:'قضية جديدة',sub:'ملفات القضايا والمحاكم وجدول الجلسات والوكالات · موضوعات القضايا وأسماء العملاء لا تظهر إلا للمكتب',ph:'بحث برقم القضية أو المحكمة',
+    states:CSTAGES,cls:{'قيد الدراسة':'s-idle','منظورة':'s-info','محجوزة للحكم':'s-warn','صدر الحكم':'s-good','استئناف':'s-warn','منتهية':'s-idle'},
+    fields:[{k:'subj',l:'موضوع القضية',t:'text',req:1,full:1,priv:1},{k:'cl',l:'العميل',t:'opt',o:()=>S.clients.filter(c=>c.co==='law').map(c=>[c.id,clName(c)]),priv:1},{k:'type',l:'النوع',t:'sel',o:Object.keys(CASET)},{k:'court',l:'المحكمة',t:'sel',o:COURTS},{k:'lawyer',l:'المحامي المسؤول',t:'opt',o:()=>lawyers().map(e=>[e.id,e.name+' — '+e.title])},{k:'next',l:'الجلسة القادمة',t:'date'},{k:'poa',l:'انتهاء الوكالة',t:'date'},{k:'fee',l:'نوع الأتعاب',t:'sel',o:['مقطوعة','بالساعة','نسبة من المحكوم به']},{k:'val',l:'الأتعاب المتفق عليها (ريال)',t:'num'},{k:'claim',l:'قيمة المطالبة (ريال)',t:'num'},{k:'note',l:'ملاحظات آخر جلسة',t:'area',full:1,priv:1}],
+    blank:()=>({co:'law',no:'',subj:'',cl:(S.clients.find(c=>c.co==='law')||{}).id,type:'تجاري',court:COURTS[0],lawyer:(lawyers()[0]||{}).id,next:'',poa:addY(todayI(),1),fee:'مقطوعة',val:0,claim:0,note:'',status:'قيد الدراسة'}),
+    onNew:r=>{ r.no='LQ-2026-'+(Math.max(100,...S.cases.map(x=>+String(x.no).split('-').pop()||0))+1); },
+    name:r=>r.no+' — '+(lawSee()?r.subj:r.type), text:r=>r.no+' '+r.type+' '+r.court+' '+empName(r.lawyer)+(lawSee()?' '+r.subj:''), sort:(a,b)=>(a.next||'9999').localeCompare(b.next||'9999'),
+    cols:[['القضية',r=>`<b>${lawSee()?esc(r.subj):'قضية '+r.type}</b><div class="small muted">${r.no}</div>`],['العميل',r=>esc(clientLbl(r))],['المحكمة',r=>esc(r.court)],['المحامي',r=>esc(empName(r.lawyer))],['الجلسة القادمة',r=>r.next?`${fmtD(r.next)}${daysTo(r.next)>=0&&daysTo(r.next)<=7?` <span class="pill s-warn">بعد ${n(daysTo(r.next))} يوم</span>`:''}`:'—'],['الوكالة',r=>expPill(r.poa)],['الأتعاب',r=>sarK(r.val)+`<div class="small muted">${r.fee}</div>`]],
+    meta:r=>[esc(r.court),r.next?'الجلسة '+fmtD(r.next):'',esc(empName(r.lawyer))],
+    acts:r=>{ if(!lawSee()) return []; const i=CSTAGES.indexOf(r.status), nx=CSTAGES[i+1]; return [...(nx?[['نقل إلى «'+nx+'»',`recSt('cases',${r.id},'${nx}')`,'gold']]:[]),['تجديد الوكالة لسنة',`recSt('cases',${r.id},'${r.status}',{poa:addY(S.cases.find(x=>x.id===${r.id}).poa<todayI()?todayI():S.cases.find(x=>x.id===${r.id}).poa,1)})`]]; },
+    info:r=>lawSee()?'':'<span class="small muted">تفاصيل القضية وموضوعها واسم العميل سرّية ويطّلع عليها مكتب المعرفة القانونية فقط.</span>',
+    tiles:b=>{ const act=b.filter(r=>r.status!=='منتهية'), wk=act.filter(r=>r.next&&daysTo(r.next)>=0&&daysTo(r.next)<=7), poa=b.filter(r=>r.status!=='منتهية'&&daysTo(r.poa)<=30);
+      return [['قضايا نشطة',n(act.length),n(act.filter(r=>r.status==='منظورة').length)+' منظورة أمام المحاكم'],['جلسات خلال ٧ أيام',n(wk.length),'',wk.length?'warn':''],['وكالات تنتهي خلال ٣٠ يومًا',n(poa.length),'',poa.some(r=>daysTo(r.poa)<0)?'crit':poa.length?'warn':''],['أتعاب القضايا النشطة',sarK(act.reduce((s,r)=>s+r.val,0))+' ريال']]; },
+    extra:b=>{ const up=b.filter(r=>r.next&&daysTo(r.next)>=0&&daysTo(r.next)<=21).sort((a,c)=>a.next.localeCompare(c.next));
+      return `<div class="card" style="margin-top:16px"><h3>جدول الجلسات — الأسابيع الثلاثة القادمة</h3>${up.map(r=>`<div class="mini" onclick="openRec('cases',${r.id})"><span class="row" style="gap:10px"><b style="min-width:92px">${fmtD(r.next)}</b><span>${lawSee()?esc(r.subj):'قضية '+r.type} <span class="small muted">· ${esc(r.court)}</span></span></span><span class="small muted">${esc(empName(r.lawyer))}</span></div>`).join('')||'<div class="small muted">لا جلسات مجدولة.</div>'}</div>`; },
+    stat:()=>n(S.cases.filter(r=>r.next&&daysTo(r.next)>=0&&daysTo(r.next)<=7).length)+' جلسات هذا الأسبوع'},
+  hours:{key:'hours',only:'law',canEdit:()=>S.me==='law',title:'ساعات العمل والأتعاب',one:'تسجيل ساعات',newT:'تسجيل ساعات عمل',sub:'ساعات المحامين على القضايا وتحويل غير المفوتر منها إلى فواتير بنقرة',ph:'بحث بالمحامي أو القضية',
+    states:['غير مفوترة','مفوترة'],cls:{'غير مفوترة':'s-warn','مفوترة':'s-good'},
+    fields:[{k:'case',l:'القضية',t:'opt',o:()=>S.cases.filter(c=>c.status!=='منتهية').map(c=>[c.id,caseLbl(c)])},{k:'lawyer',l:'المحامي',t:'opt',o:()=>lawyers().map(e=>[e.id,e.name])},{k:'date',l:'التاريخ',t:'date'},{k:'hrs',l:'الساعات',t:'num',req:1},{k:'rate',l:'السعر للساعة (ريال)',t:'num'},{k:'desc',l:'العمل المنجز',t:'text',full:1,priv:1}],
+    blank:()=>({co:'law',case:(S.cases[0]||{}).id,lawyer:(lawyers()[0]||{}).id,date:todayI(),hrs:1,rate:850,desc:'',status:'غير مفوترة'}),
+    name:r=>empName(r.lawyer)+' — '+n(r.hrs,1)+' ساعة', text:r=>empName(r.lawyer)+' '+caseOf(r.case).no+(lawSee()?' '+r.desc:''), sort:(a,b)=>b.date.localeCompare(a.date),
+    cols:[['المحامي',r=>`<b>${esc(empName(r.lawyer))}</b><div class="small muted">${lawSee()?esc(r.desc):''}</div>`],['القضية',r=>esc(caseLbl(caseOf(r.case)))],['التاريخ',r=>fmtD(r.date)],['الساعات',r=>n(r.hrs,1)],['القيمة',r=>SAR(r.hrs*r.rate)+`<div class="small muted">${SAR(r.rate)} للساعة${r.inv?' · '+r.inv:''}</div>`]],
+    meta:r=>[caseOf(r.case).no,n(r.hrs,1)+' ساعة',SAR(r.hrs*r.rate)+' ريال'],
+    tools:()=>canFin('law')?`<button class="btn gold" onclick="billHours()">فوترة الساعات غير المفوترة</button>`:'',
+    tiles:b=>{ const m=todayI().slice(0,7), mm=b.filter(r=>r.date.slice(0,7)===m), un=b.filter(r=>r.status==='غير مفوترة'), ls=new Set(mm.map(r=>r.lawyer)).size||1;
+      return [['ساعات هذا الشهر',n(mm.reduce((s,r)=>s+r.hrs,0),1),sarK(mm.reduce((s,r)=>s+r.hrs*r.rate,0))+' ريال'],['غير مفوترة',sarK(un.reduce((s,r)=>s+r.hrs*r.rate,0))+' ريال',n(un.reduce((s,r)=>s+r.hrs,0),1)+' ساعة',un.length?'warn':''],['متوسط الساعات لكل محامٍ',n(mm.reduce((s,r)=>s+r.hrs,0)/ls,1),'هذا الشهر · المستهدف ١٢٠ ساعة'],['مفوترة هذا الشهر',sarK(mm.filter(r=>r.status==='مفوترة').reduce((s,r)=>s+r.hrs*r.rate,0))+' ريال']]; },
+    extra:b=>{ const m=todayI().slice(0,7), by={}; b.forEach(r=>{ const x=by[r.lawyer]=by[r.lawyer]||{h:0,u:0,m:0}; x.h+=r.hrs; if(r.status==='غير مفوترة') x.u+=r.hrs*r.rate; if(r.date.slice(0,7)===m) x.m+=r.hrs; });
+      return `<div class="card" style="margin-top:16px"><h3>إنتاجية المحامين <small>المستهدف ١٢٠ ساعة قابلة للفوترة شهريًا</small></h3><div class="tbl-x"><table class="stmt"><thead><tr><th>المحامي</th><th>ساعات الشهر</th><th>نسبة المستهدف</th><th>قيمة غير مفوترة</th></tr></thead><tbody>${Object.entries(by).sort((a,c)=>c[1].m-a[1].m).map(([k,x])=>`<tr><td><b>${esc(empName(+k))}</b></td><td>${n(x.m,1)}</td><td style="min-width:120px">${n(x.m/120*100)}٪${meter(x.m/120*100)}</td><td>${SAR(x.u)}</td></tr>`).join('')}</tbody></table></div></div>`; },
+    stat:()=>sarK(S.hours.filter(r=>r.status==='غير مفوترة').reduce((s,r)=>s+r.hrs*r.rate,0))+' غير مفوترة'},
+  courses:{key:'courses',only:'edu',canEdit:secEdit('edu'),title:'البرامج والدورات',one:'برنامج',newT:'برنامج تدريبي جديد',sub:'البرامج والمدربون والمقاعد ونسب الإشغال وإيراداتها — نوليدج للتعليم',ph:'بحث باسم البرنامج',
+    states:['مفتوح للتسجيل','جارٍ','منتهٍ'],stOf:crsSt,cls:{'مفتوح للتسجيل':'s-info','جارٍ':'s-warn','منتهٍ':'s-good'},
+    fields:[{k:'title',l:'اسم البرنامج',t:'text',req:1,full:1},{k:'trainer',l:'المدرب',t:'opt',o:()=>S.emps.filter(e=>e.co==='edu'&&isAct(e)&&/التدريب|تصميم/.test(e.dept)).map(e=>[e.id,e.name+' — '+e.title])},{k:'client',l:'الجهة (عام أو عميل مؤسسي)',t:'text'},{k:'mode',l:'طريقة التنفيذ',t:'sel',o:['حضوري','عن بُعد','مدمج']},{k:'start',l:'البداية',t:'date',req:1},{k:'end',l:'النهاية',t:'date',req:1},{k:'seats',l:'المقاعد',t:'num'},{k:'price',l:'الرسوم للمتدرب (ريال)',t:'num'},{k:'hrs',l:'الساعات التدريبية',t:'num'}],
+    blank:()=>({co:'edu',title:'',trainer:null,client:'عام',mode:'حضوري',start:isoAdd(todayI(),14),end:isoAdd(todayI(),18),seats:20,price:2500,hrs:16}),
+    check:v=>v.end<v.start?'تاريخ النهاية قبل البداية.':'',
+    name:r=>r.title, text:r=>r.title+' '+r.client+' '+empName(r.trainer), sort:(a,b)=>a.start.localeCompare(b.start),
+    cols:[['البرنامج',r=>`<b>${esc(r.title)}</b><div class="small muted">${r.mode} · ${n(r.hrs)} ساعة${r.client&&r.client!=='عام'?' · '+esc(r.client):''}</div>`],['المدرب',r=>esc(empName(r.trainer))],['الفترة',r=>`${fmtD(r.start)} – ${fmtD(r.end)}`],['الإشغال',r=>{ const k=crsEn(r).length; return `${n(k)} / ${n(r.seats)}${meter(k/Math.max(1,r.seats)*100,k/r.seats<.5?'warn':'good')}`; }],['الرسوم',r=>SAR(r.price)],['الإيراد',r=>{ const x=crsEn(r); return SAR(x.reduce((s,e)=>s+e.fee,0))+`<div class="small muted">محصّل ${n(x.reduce((s,e)=>s+e.paid,0)/Math.max(1,x.reduce((s,e)=>s+e.fee,0))*100)}٪</div>`; }]],
+    meta:r=>[fmtD(r.start)+' – '+fmtD(r.end),n(crsEn(r).length)+' / '+n(r.seats)+' مقعدًا'],
+    more:r=>`<div class="full sec-title">المتدربون المسجلون (${n(crsEn(r).length)})</div><div class="full">${crsEn(r).slice(0,12).map(e=>`<div class="mini" onclick="closeModal();openRec('enrol',${e.id})"><span>${esc(e.name)}</span><span class="pill ${REG.enrol.cls[enrSt(e)]}">${enrSt(e)}</span></div>`).join('')||'<div class="small muted">لا متدربين بعد.</div>'}${crsEn(r).length>12?`<div class="small muted">و${n(crsEn(r).length-12)} آخرون — في «المتدربون والرسوم».</div>`:''}</div>`,
+    acts:r=>secEdit('edu')()&&crsSt(r)!=='منتهٍ'&&crsEn(r).length<r.seats?[['تسجيل متدرب',`closeModal();openRec('enrol',null,{course:${r.id},fee:${r.price},inst:${r.price>=4000?2:1}})`,'gold']]:[],
+    tiles:b=>{ const run=b.filter(r=>crsSt(r)!=='منتهٍ'), seats=run.reduce((s,r)=>s+r.seats,0), occ=run.reduce((s,r)=>s+crsEn(r).length,0), en=S.enrol.filter(e=>e.status!=='منسحب'), fee=en.reduce((s,e)=>s+e.fee,0);
+      return [['برامج جارية وقادمة',n(run.length),n(b.filter(r=>crsSt(r)==='جارٍ').length)+' جارية الآن'],['إشغال المقاعد',seats?n(occ/seats*100)+'٪':'—',n(occ)+' من '+n(seats)+' مقعدًا',seats&&occ/seats<.6?'warn':''],['إيرادات البرامج',sarK(fee)+' ريال'],['نسبة التحصيل',fee?n(en.reduce((s,e)=>s+e.paid,0)/fee*100)+'٪':'—']]; },
+    stat:()=>n(S.courses.filter(r=>crsSt(r)==='جارٍ').length)+' برامج جارية'},
+  enrol:{key:'enrol',only:'edu',canEdit:secEdit('edu'),title:'المتدربون والرسوم',one:'تسجيل',newT:'تسجيل متدرب',sub:'التسجيل والأقساط والحضور وإصدار الشهادات',ph:'بحث باسم المتدرب',
+    states:['عليه أقساط','مسدد','حاصل على الشهادة','منسحب'],stOf:enrSt,cls:{'عليه أقساط':'s-warn','مسدد':'s-info','حاصل على الشهادة':'s-good','منسحب':'s-idle'},
+    fields:[{k:'name',l:'اسم المتدرب',t:'text',req:1},{k:'course',l:'البرنامج',t:'opt',o:()=>S.courses.map(c=>[c.id,c.title+' — '+fmtD(c.start)])},{k:'fee',l:'الرسوم (ريال)',t:'num'},{k:'inst',l:'عدد الأقساط',t:'num'},{k:'att',l:'نسبة الحضور ٪',t:'num'},{k:'note',l:'ملاحظات',t:'area',full:1}],
+    blank:()=>({co:'edu',name:'',course:(S.courses[0]||{}).id,fee:0,paid:0,inst:1,att:0,cert:false,pays:[],note:'',status:'مسجّل'}),
+    check:v=>v.inst<1||v.inst>6?'عدد الأقساط من ١ إلى ٦.':v.att<0||v.att>100?'نسبة الحضور بين ٠ و١٠٠.':'',
+    name:r=>r.name, text:r=>r.name+' '+courseOf(r.course).title,
+    cols:[['المتدرب',r=>`<b>${esc(r.name)}</b><div class="small muted">${esc(courseOf(r.course).title)}</div>`],['الرسوم',r=>SAR(r.fee)+`<div class="small muted">${n(r.inst)} ${r.inst>1?'أقساط':'دفعة'}</div>`],['المدفوع',r=>SAR(r.paid)],['المتبقي',r=>enrBal(r)?`<b>${SAR(enrBal(r))}</b>`:'—'],['الحضور',r=>crsSt(courseOf(r.course))==='مفتوح للتسجيل'?'—':`<span class="${r.att<75?'down':''}">${n(r.att)}٪</span>`]],
+    meta:r=>[esc(courseOf(r.course).title),'متبقٍ '+SAR(enrBal(r))],
+    acts:r=>{ if(!secEdit('edu')()&&!canFin('edu')) return []; if(r.status==='منسحب') return []; const c=courseOf(r.course), L=[];
+      if(enrBal(r)>0) L.push(['تحصيل قسط ('+SAR(Math.min(enrBal(r),Math.ceil(r.fee/Math.max(1,r.inst))))+' ريال)',`enrolPay(${r.id})`,'gold']);
+      if(r.cert) L.push(['عرض الشهادة',`enrolCert(${r.id})`]); else if(crsSt(c)==='منتهٍ'&&r.att>=75&&!enrBal(r)) L.push(['إصدار الشهادة',`enrolCert(${r.id})`,'gold']);
+      L.push(['انسحاب',`recSt('enrol',${r.id},'منسحب')`]); return L; },
+    info:r=>{ const c=courseOf(r.course); return r.cert?'':crsSt(c)==='منتهٍ'&&r.att<75?'<span class="small muted">لا تُصدر الشهادة: الحضور أقل من ٧٥٪.</span>':crsSt(c)==='منتهٍ'&&enrBal(r)?'<span class="small muted">تُصدر الشهادة بعد سداد الرسوم.</span>':''; },
+    tiles:b=>{ const a=b.filter(r=>r.status!=='منسحب'), st=a.filter(r=>crsSt(courseOf(r.course))!=='مفتوح للتسجيل');
+      return [['متدربون مسجلون',n(a.length)],['رسوم متبقية',sarK(a.reduce((s,r)=>s+enrBal(r),0))+' ريال',n(a.filter(r=>enrBal(r)>0).length)+' متدربًا عليهم أقساط','warn'],['متوسط الحضور',st.length?n(st.reduce((s,r)=>s+r.att,0)/st.length,1)+'٪':'—',n(st.filter(r=>r.att<75).length)+' دون ٧٥٪'],['شهادات صادرة',n(a.filter(r=>r.cert).length)]]; }},
+});
+
+Object.assign(REG,{
+  loans:{key:'loans',title:'السلف والقروض',one:'طلب سلفة',newT:'طلب سلفة أو قرض',sub:'طلب ← اعتماد الموارد البشرية ← صرف مالي ← استقطاع آلي من مسير الرواتب حتى السداد',ph:'بحث باسم الموظف',
+    states:['مقدّم','معتمد','مصروف','مسدد','مرفوض'],cls:{'مقدّم':'s-warn','معتمد':'s-info','مصروف':'s-info','مسدد':'s-good','مرفوض':'s-crit'},
+    fields:[{k:'co',l:'الشركة',t:'co'},{k:'emp',l:'الموظف',t:'emp',req:1},{k:'type',l:'النوع',t:'sel',o:['سلفة راتب','قرض شخصي']},{k:'amt',l:'المبلغ (ريال)',t:'num',req:1},{k:'n',l:'عدد الأقساط الشهرية',t:'num',req:1},{k:'start',l:'بداية الاستقطاع',t:'opt',o:monOpts},{k:'reason',l:'السبب',t:'area',full:1}],
+    blank:()=>({co:defCo(),emp:null,type:'سلفة راتب',amt:0,n:1,start:monOpts()[+(+todayI().slice(8)>20)][0],paidM:[],reason:'',date:todayI(),status:'مقدّم'}),
+    check:(v,rid)=>{ const e=emp(v.emp); if(!e) return 'اختر الموظف.'; if(!(v.amt>0)) return 'اكتب المبلغ.'; if(v.n<1||v.n>24) return 'عدد الأقساط من ١ إلى ٢٤.';
+      if(v.type==='سلفة راتب'&&v.amt>pkg(e)) return `سلفة الراتب لا تتجاوز راتب شهر واحد (${SAR(pkg(e))} ريال).`; if(v.amt/v.n>pkg(e)*.5) return 'القسط الشهري يتجاوز نصف الراتب — زد عدد الأقساط.';
+      if(!rid&&S.loans.some(l=>l.emp===v.emp&&['مقدّم','معتمد','مصروف'].includes(l.status))) return 'لدى الموظف سلفة قائمة لم تُسدد بعد.'; },
+    name:r=>empName(r.emp)+' — '+r.type, text:r=>empName(r.emp)+' '+r.type+' '+r.reason, sort:(a,b)=>b.date.localeCompare(a.date),
+    cols:[['الموظف',r=>`<b>${esc(empName(r.emp))}</b><div class="small muted">${esc((emp(r.emp)||{}).dept||'')}</div>`],['الشركة',r=>coCell(r.co)],['النوع',r=>r.type],['المبلغ',r=>SAR(r.amt)],['القسط',r=>`${SAR(r.amt/r.n)} × ${n(r.n)}`],['السداد',r=>`${n((r.paidM||[]).length)} / ${n(r.n)}${meter((r.paidM||[]).length/r.n*100,'good')}`],['يبدأ',r=>monthName(r.start)]],
+    meta:r=>[r.type,SAR(r.amt)+' ريال',n((r.paidM||[]).length)+'/'+n(r.n)+' أقساط'],
+    info:r=>{ const e=emp(r.emp); return e?`<span class="small muted">القسط ${SAR(r.amt/r.n)} ريال = ${n(r.amt/r.n/pkg(e)*100,1)}٪ من الراتب. يُراعى الحد النظامي لما يُستقطع من الأجر لسداد القروض (المادة ٩٢ من نظام العمل).</span>`:''; },
+    acts:r=>r.status==='مقدّم'&&canHR(r.co)?[['اعتماد',`recSt('loans',${r.id},'معتمد')`,'gold'],['رفض',`recSt('loans',${r.id},'مرفوض')`]]:r.status==='معتمد'&&canFin(r.co)?[['صرف المبلغ وقيده',`recSt('loans',${r.id},'مصروف')`,'gold']]:[],
+    on:(r,st)=>{ if(st==='مصروف') postJ(r.co,todayI(),`صرف ${r.type} — ${empName(r.emp)}`,'loan',[['1150',r.amt,0],['1120',0,r.amt]]); },
+    tiles:b=>{ const m=todayI().slice(0,7); return [['بانتظار الاعتماد',n(b.filter(r=>r.status==='مقدّم').length)],['أرصدة السلف القائمة',sarK(b.reduce((s,r)=>s+loanOut(r),0))+' ريال'],['استقطاع مسير '+monthName(m),sarK(S.emps.filter(e=>b.some(l=>l.emp===e.id)).reduce((s,e)=>s+loanInst(e,m),0))+' ريال','يُخصم آليًا في المسير'],['مسددة بالكامل',n(b.filter(r=>r.status==='مسدد').length)]]; },
+    stat:()=>n(S.loans.filter(r=>inScope(r.co)&&r.status==='مقدّم').length)+' طلبات بانتظار الاعتماد'},
+  letters:{key:'letters',title:'الخطابات الرسمية',one:'طلب خطاب',newT:'طلب خطاب رسمي',sub:'خطابات التعريف وشهادات الخبرة وإخلاء الطرف تُولّد آليًا من ملف الموظف',ph:'بحث باسم الموظف',
+    states:['مطلوب','صادر','مرفوض'],cls:{'مطلوب':'s-warn','صادر':'s-good','مرفوض':'s-crit'},
+    fields:[{k:'co',l:'الشركة',t:'co'},{k:'emp',l:'الموظف',t:'emp',req:1},{k:'type',l:'نوع الخطاب',t:'sel',o:LTRT},{k:'to',l:'موجّه إلى',t:'text'},{k:'purpose',l:'الغرض',t:'text',full:1}],
+    blank:()=>({co:defCo(),emp:null,type:'تعريف بالراتب',to:'إلى من يهمه الأمر',purpose:'',date:todayI(),ref:'',issued:'',status:'مطلوب'}),
+    name:r=>r.type+' — '+empName(r.emp), text:r=>empName(r.emp)+' '+r.type+' '+r.to, sort:(a,b)=>(a.status!=='مطلوب')-(b.status!=='مطلوب')||b.date.localeCompare(a.date),
+    cols:[['الموظف',r=>`<b>${esc(empName(r.emp))}</b><div class="small muted">${esc((emp(r.emp)||{}).title||'')}</div>`],['الشركة',r=>coCell(r.co)],['الخطاب',r=>r.type],['موجّه إلى',r=>esc(r.to)],['الطلب',r=>fmtD(r.date)],['الرقم',r=>r.ref||'—']],
+    meta:r=>[r.type,esc(r.to),fmtD(r.date)],
+    acts:r=>r.status==='مطلوب'&&canHR(r.co)?[['إصدار الخطاب',`letterIssue(${r.id})`,'gold'],['رفض',`recSt('letters',${r.id},'مرفوض')`]]:r.status==='صادر'?[['عرض نص الخطاب',`letterView(${r.id})`,'gold']]:[],
+    tiles:b=>[['بانتظار الإصدار',n(b.filter(r=>r.status==='مطلوب').length),'',b.some(r=>r.status==='مطلوب')?'warn':''],['صدرت هذا الشهر',n(b.filter(r=>r.status==='صادر'&&(r.issued||'').slice(0,7)===todayI().slice(0,7)).length)],['خطابات التعريف بالراتب',n(b.filter(r=>r.type==='تعريف بالراتب').length)],['إجمالي الطلبات',n(b.length)]],
+    stat:()=>n(S.letters.filter(r=>inScope(r.co)&&r.status==='مطلوب').length)+' بانتظار الإصدار'},
+  ic:{key:'ics',title:'المعاملات بين الشركات',one:'معاملة',newT:'معاملة بين الشركات',sub:'خدمات وتوريدات بين الشركات الأربع تُقيّد على الطرفين آليًا وتُستبعد من القوائم الموحّدة',ph:'بحث بالبيان',ro:true,del:false,
+    scope:r=>inScope(r.co)||inScope(r.to),
+    states:['قائمة','مسددة'],cls:{'قائمة':'s-warn','مسددة':'s-good'},
+    fields:[{k:'co',l:'الشركة المقدِّمة للخدمة',t:'co'},{k:'to',l:'الشركة المستفيدة',t:'opt',o:()=>COMPANIES.map(c=>[c.id,c.short])},{k:'desc',l:'البيان',t:'text',req:1,full:1},{k:'amt',l:'المبلغ (ريال)',t:'num',req:1},{k:'date',l:'التاريخ',t:'date'}],
+    blank:()=>({co:defCo(),to:defCo()==='law'?'factory':'law',desc:'',amt:0,date:todayI(),status:'قائمة'}),
+    check:v=>v.to===v.co?'اختر شركة مستفيدة غير الشركة المقدِّمة.':!canFin(v.co)?'يسجّل المعاملة ممثل الشركة المقدِّمة أو الممثل المالي.':!(v.amt>0)?'اكتب المبلغ.':'',
+    onNew:r=>icPost(r), name:r=>r.desc, text:r=>r.desc+' '+coName(r.co)+' '+coName(r.to), sort:(a,b)=>b.date.localeCompare(a.date),
+    cols:[['البيان',r=>`<b>${esc(r.desc)}</b><div class="small muted">${fmtD(r.date)}</div>`],['المقدِّمة',r=>coCell(r.co)],['المستفيدة',r=>coCell(r.to)],['المبلغ',r=>SAR(r.amt)]],
+    meta:r=>['من '+coName(r.co)+' إلى '+coName(r.to),SAR(r.amt)+' ريال'],
+    info:()=>'<span class="small muted">قُيّدت على الطرفين: إيراد ومستحق لدى المقدِّمة، ومصروف خدمات مشتركة ومستحق لدى المستفيدة.</span>',
+    acts:r=>r.status==='قائمة'&&(canFin(r.co)||canFin(r.to))?[['تسوية نقدية بين الشركتين',`icSettle(${r.id})`,'gold']]:[],
+    tiles:b=>{ const o=b.filter(r=>r.status==='قائمة'); return [['معاملات قائمة',n(o.length),sarK(o.reduce((s,r)=>s+r.amt,0))+' ريال غير مسدد'],['حجم التعامل هذا الربع',sarK(b.filter(r=>r.date>='2026-10-01').reduce((s,r)=>s+r.amt,0))+' ريال'],['يُستبعد من القوائم الموحّدة',sarK(icElim(COMPANIES.map(c=>c.id)))+' ريال','إيرادات ومصروفات متقابلة'],['عدد المعاملات',n(b.length)]]; },
+    extra:b=>{ const cs=COMPANIES, m={}; b.filter(r=>r.status==='قائمة').forEach(r=>{ m[r.to+r.co]=(m[r.to+r.co]||0)+r.amt; });
+      return `<div class="card" style="margin-top:16px"><h3>المستحق بين الشركات <small>الصف مدين للعمود</small></h3><div class="tbl-x"><table class="stmt"><thead><tr><th>المدين \\ الدائن</th>${cs.map(c=>`<th>${c.short}</th>`).join('')}</tr></thead><tbody>${cs.map(a=>`<tr><td><b>${a.short}</b></td>${cs.map(c=>`<td>${a.id===c.id?'<span class="muted">—</span>':m[a.id+c.id]?SAR(m[a.id+c.id]):'<span class="muted">٠</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`; }},
+  quotes:{key:'quotes',title:'عروض الأسعار',one:'عرض سعر',newT:'عرض سعر جديد',sub:'عرض ← إرسال ← قبول العميل ← تحويل إلى فاتورة بنقرة',ph:'بحث بالعميل أو البيان',
+    states:['مسودة','مرسل','مقبول','مرفوض','منتهٍ','مفوتر'],stOf:qSt,cls:{'مسودة':'s-idle','مرسل':'s-info','مقبول':'s-warn','مرفوض':'s-crit','منتهٍ':'s-idle','مفوتر':'s-good'},
+    fields:[{k:'co',l:'الشركة',t:'co'},{k:'cname',l:'العميل',t:'text',req:1},{k:'desc',l:'البيان',t:'text',req:1,full:1},{k:'qty',l:'الكمية',t:'num'},{k:'price',l:'سعر الوحدة قبل الضريبة (ريال)',t:'num',req:1},{k:'valid',l:'صالح حتى',t:'date'},{k:'note',l:'الشروط',t:'area',full:1}],
+    blank:()=>({co:defCo(),no:'',cname:'',desc:'',qty:1,price:0,valid:isoAdd(todayI(),15),note:'',sent:'',inv:'',status:'مسودة'}),
+    onNew:r=>{ r.no='QT-'+EPFX[r.co]+'-26'+(Math.max(200,...S.quotes.map(x=>+String(x.no).slice(-3)||0))+1); },
+    name:r=>r.desc, text:r=>r.desc+' '+r.cname+' '+r.no, sort:(a,b)=>b.id-a.id,
+    cols:[['العرض',r=>`<b>${esc(r.desc)}</b><div class="small muted">${r.no}${r.inv?' · '+r.inv:''}</div>`],['العميل',r=>esc(r.cname)],['الشركة',r=>coCell(r.co)],['القيمة',r=>SAR(r.qty*r.price)+`<div class="small muted">${SAR(r.qty*r.price*(1+VAT))} شامل الضريبة</div>`],['صالح حتى',r=>fmtD(r.valid)]],
+    meta:r=>[esc(r.cname),SAR(r.qty*r.price)+' ريال','حتى '+fmtD(r.valid)],
+    acts:r=>{ const s=qSt(r), c=canFin(r.co); return s==='مسودة'?[['إرسال للعميل',`recSt('quotes',${r.id},'مرسل',{sent:todayI()})`,'gold'],['نص العرض',`quoteText(${r.id})`]]:s==='مرسل'?[['قبول العميل',`recSt('quotes',${r.id},'مقبول')`,'gold'],['رفض العميل',`recSt('quotes',${r.id},'مرفوض')`],['نص العرض',`quoteText(${r.id})`]]:s==='منتهٍ'?[['تمديد ١٥ يومًا',`recSt('quotes',${r.id},'مرسل',{valid:isoAdd(todayI(),15)})`]]:s==='مقبول'&&c?[['تحويل إلى فاتورة',`quoteInv(${r.id})`,'gold']]:[]; },
+    tiles:b=>{ const op=b.filter(r=>['مسودة','مرسل'].includes(qSt(r))), dec=b.filter(r=>['مقبول','مرفوض','مفوتر'].includes(qSt(r))), won=dec.filter(r=>r.status!=='مرفوض');
+      return [['عروض مفتوحة',sarK(op.reduce((s,r)=>s+r.qty*r.price,0))+' ريال',n(op.length)+' عروض'],['نسبة الفوز',dec.length?n(won.length/dec.length*100)+'٪':'—','من العروض المحسومة'],['مقبولة لم تُفوتر',n(b.filter(r=>r.status==='مقبول').length),sarK(b.filter(r=>r.status==='مقبول').reduce((s,r)=>s+r.qty*r.price,0))+' ريال',b.some(r=>r.status==='مقبول')?'warn':''],['عروض منتهية الصلاحية',n(b.filter(r=>qSt(r)==='منتهٍ').length)]]; }},
+  recur:{key:'recur',title:'الفواتير المتكررة',one:'فاتورة متكررة',newT:'فاتورة متكررة جديدة',sub:'أتعاب الاحتفاظ والاشتراكات وعقود الخدمة تُصدر آليًا في موعدها وتُقيّد',ph:'بحث بالعميل أو البيان',
+    states:['مستحقة','مجدولة','موقوفة'],stOf:recSt2,cls:{'مستحقة':'s-warn','مجدولة':'s-info','موقوفة':'s-idle'},
+    fields:[{k:'co',l:'الشركة',t:'co'},{k:'cname',l:'العميل',t:'text'},{k:'desc',l:'البيان',t:'text',req:1,full:1},{k:'amt',l:'المبلغ قبل الضريبة (ريال)',t:'num',req:1},{k:'freq',l:'التكرار',t:'sel',o:Object.keys(FREQM)},{k:'next',l:'الإصدار القادم',t:'date',req:1},{k:'active',l:'مفعّلة',t:'sel',o:['نعم','لا']}],
+    blank:()=>({co:defCo(),cl:null,cname:'',desc:'',amt:0,freq:'شهري',next:todayI(),active:'نعم',made:0}),
+    name:r=>r.desc+' — '+clientLbl(r), text:r=>r.desc+' '+clientLbl(r), sort:(a,b)=>a.next.localeCompare(b.next),
+    cols:[['البيان',r=>`<b>${esc(r.desc)}</b><div class="small muted">${esc(clientLbl(r))}</div>`],['الشركة',r=>coCell(r.co)],['المبلغ',r=>SAR(r.amt)+`<div class="small muted">${r.freq}</div>`],['الإصدار القادم',r=>fmtD(r.next)],['صدر منها',r=>n(r.made||0)]],
+    meta:r=>[esc(clientLbl(r)),SAR(r.amt)+' · '+r.freq,'القادمة '+fmtD(r.next)],
+    tools:()=>`<button class="btn gold" onclick="recurRun()">إصدار المستحق الآن</button>`,
+    acts:r=>[...(recSt2(r)==='مستحقة'&&canFin(r.co)?[['إصدار الآن وقيدها',`recurRun(${r.id})`,'gold']]:[]),...(canFin(r.co)?[[r.active==='نعم'?'إيقاف':'تفعيل',`recSt('recur',${r.id},'',{active:'${r.active==='نعم'?'لا':'نعم'}'})`]]:[])],
+    tiles:b=>[['اشتراكات نشطة',n(b.filter(r=>r.active==='نعم').length)],['الإيراد الشهري المتكرر',sarK(b.reduce((s,r)=>s+mrr(r),0))+' ريال','قبل الضريبة'],['مستحقة الإصدار الآن',n(b.filter(r=>recSt2(r)==='مستحقة').length),'',b.some(r=>recSt2(r)==='مستحقة')?'warn':''],['الإصدار القادم',(()=>{ const x=b.filter(r=>recSt2(r)==='مجدولة').sort((a,c)=>a.next.localeCompare(c.next))[0]; return x?fmtD(x.next):'—'; })()]],
+    stat:()=>n(S.recur.filter(r=>inScope(r.co)&&recSt2(r)==='مستحقة').length)+' مستحقة الإصدار'},
+  petty:{key:'petty',title:'الصندوق والعهد النقدية',one:'حركة صندوق',newT:'حركة صندوق نقدي',sub:'صرف نقدي حتى ١٬٠٠٠ ريال للعملية وتعزيز العهدة من البنك — كل حركة تُقيّد آليًا',ph:'بحث بالبيان',ro:true,del:false,
+    states:['صرف','تعزيز'],stOf:r=>r.kind,cls:{'صرف':'s-info','تعزيز':'s-good'},
+    fields:[{k:'co',l:'الشركة',t:'co'},{k:'kind',l:'الحركة',t:'sel',o:['صرف','تعزيز']},{k:'cat',l:'البند',t:'sel',o:Object.keys(CLAIMACC)},{k:'amt',l:'المبلغ (ريال)',t:'num',req:1},{k:'date',l:'التاريخ',t:'date'},{k:'by',l:'المستلم',t:'text'},{k:'desc',l:'البيان',t:'text',req:1,full:1}],
+    blank:()=>({co:defCo(),kind:'صرف',cat:'ضيافة',amt:0,date:todayI(),by:'',desc:''}),
+    check:v=>!canFin(v.co)&&!canHR(v.co)?'يسجّل حركات الصندوق ممثل الشركة أو أمين المجلس أو الممثل المالي.':!(v.amt>0)?'اكتب المبلغ.':v.kind==='صرف'&&v.amt>1000?'الصرف النقدي حتى ١٬٠٠٠ ريال للعملية — ما زاد يُصرف بمطالبة مصروف أو فاتورة مورد.':v.kind==='صرف'&&v.amt>bal('1110',[v.co])?`رصيد الصندوق ${SAR(bal('1110',[v.co]))} ريال لا يكفي — سجّل تعزيزًا أولًا.`:'',
+    onNew:r=>postJ(r.co,r.date,(r.kind==='صرف'?'صرف من الصندوق — ':'تعزيز الصندوق النقدي — ')+r.desc,'petty',r.kind==='صرف'?[[CLAIMACC[r.cat]||'5900',r.amt,0],['1110',0,r.amt]]:[['1110',r.amt,0],['1120',0,r.amt]]),
+    name:r=>r.desc, text:r=>r.desc+' '+r.cat+' '+r.by, sort:(a,b)=>b.date.localeCompare(a.date)||b.id-a.id,
+    cols:[['البيان',r=>`<b>${esc(r.desc)}</b><div class="small muted">${r.kind==='صرف'?esc(r.cat):'من الحساب البنكي'}${r.by?' · '+esc(r.by):''}</div>`],['الشركة',r=>coCell(r.co)],['التاريخ',r=>fmtD(r.date)],['المبلغ',r=>`<span class="${r.kind==='صرف'?'down':'up'}">${r.kind==='صرف'?'−':'+'}${SAR(r.amt)}</span>`]],
+    meta:r=>[fmtD(r.date),(r.kind==='صرف'?'−':'+')+SAR(r.amt)+' ريال'],
+    tiles:b=>{ const cs=pettyCos(), bl=pettyBal(cs), lim=cs.reduce((s,c)=>s+PETTY_LIM[c],0), m=todayI().slice(0,7);
+      return [['رصيد الصندوق',SAR(bl)+' ريال','من حساب النقدية بالصندوق ١١١٠'],['سقف العهدة',SAR(lim)+' ريال'],['المصروف هذا الشهر',SAR(b.filter(r=>r.kind==='صرف'&&r.date.slice(0,7)===m).reduce((s,r)=>s+r.amt,0))+' ريال'],['التعزيز المقترح',SAR(Math.max(0,lim-bl))+' ريال','لإعادة الصندوق إلى سقفه',bl<lim*.3?'warn':'']]; }},
+});
+/* ---------- employee self-service portal ---------- */
+let ESF={emp:null};
+function viewESS(){
+  const es=actEmps(); if(!ESF.emp||!es.some(e=>e.id===ESF.emp)) ESF.emp=(es.find(e=>S.loans.some(l=>l.emp===e.id))||es[0]||{}).id;
+  const e=emp(ESF.emp), top=header('بوابة الموظف','الخدمة الذاتية: قسيمة الراتب ورصيد الإجازات والطلبات والخطابات في مكان واحد');
+  if(!e) return top+'<div class="empty">لا موظفين.</div>';
+  const m=todayI().slice(0,7), r=runOf(e.co,m), pl=payLine(e,withLoan(e,m,r?r.adj[e.id]:null)), sp=seePay(e.co), kv=(l,v)=>`<div><div class="small">${l}</div><b>${v}</b></div>`;
+  const reqs=[...S.leaves.filter(x=>x.emp===e.id).map(x=>({d:x.from,t:'إجازة '+x.type,s:fmtD(x.from)+' – '+fmtD(x.to),st:x.status,cls:REG.leave.cls[x.status],go:`openRec('leave',${x.id})`})),
+    ...S.loans.filter(x=>x.emp===e.id).map(x=>({d:x.date,t:x.type+' '+SAR(x.amt)+' ريال',s:n((x.paidM||[]).length)+' من '+n(x.n)+' أقساط',st:x.status,cls:REG.loans.cls[x.status],go:`openRec('loans',${x.id})`})),
+    ...S.letters.filter(x=>x.emp===e.id).map(x=>({d:x.date,t:'خطاب '+x.type,s:x.to,st:x.status,cls:REG.letters.cls[x.status],go:`openRec('letters',${x.id})`})),
+    ...S.claims.filter(x=>x.emp===e.id).map(x=>({d:x.date,t:'مطالبة مصروف — '+x.desc,s:SAR(x.amt)+' ريال',st:x.status,cls:REG.claims.cls[x.status],go:`openRec('claims',${x.id})`}))].sort((a,b)=>b.d.localeCompare(a.d));
+  const owe=S.loans.filter(l=>l.emp===e.id).reduce((s,l)=>s+loanOut(l),0), btn=(l,go)=>`<button class="btn" onclick="${go}">${l}</button>`;
+  return top+`<div class="filters"><select onchange="ESF.emp=+this.value;render()" aria-label="الموظف" style="max-width:100%">${empOpts(e.id)}</select><span class="small muted">معاينة البوابة كما يراها الموظف. في النسخة الخادمية يدخل كل موظف بحسابه ويرى ملفه فقط.</span></div>
+    <div class="card" style="margin-bottom:16px"><div class="row between" style="flex-wrap:wrap;gap:10px"><div><div class="small muted">${e.no} · ${coName(e.co)}</div><h3 style="margin:2px 0 0">${esc(e.name)}</h3><div class="small">${esc(e.title)} · ${esc(e.dept)}</div></div><span class="pill ${empCls[empSt(e)]}">${empSt(e)}</span></div>
+      <div class="kvs" style="margin-top:12px">${kv('تاريخ الالتحاق',fmtD(e.join)+' · '+n(tenure(e),1)+' سنة')}${kv('الإقامة',e.iq?expPill(e.iq):'لا ينطبق')}${kv('عقد العمل',e.cend?expPill(e.cend):'غير محدد المدة')}${kv('المدير المباشر',esc((S.emps.find(x=>x.co===e.co&&x.dept===e.dept&&x.head&&x.id!==e.id)||{name:'—'}).name))}</div></div>
+    <div class="grid tiles">${tile('رصيد الإجازة السنوية',n(e.lb)+' يومًا')}${tile('صافي راتب '+monthName(m),sp?SAR(pl.net)+' ريال':'—','يُصرف في ٢٧ من الشهر')}${tile('رصيد السلف',SAR(owe)+' ريال',owe?'يُستقطع '+SAR(loanInst(e,m))+' هذا الشهر':'')}${tile('طلبات مفتوحة',n(reqs.filter(x=>['بانتظار الاعتماد','مقدّم','معتمد','مطلوب','مقدّمة','معتمدة'].includes(x.st)).length))}${tile('مكافأة نهاية الخدمة حتى اليوم',sp?SAR(eosb(e))+' ريال':'—')}</div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;margin:16px 0">${btn('طلب إجازة',`openRec('leave',null,{co:'${e.co}',emp:${e.id}})`)}${btn('طلب سلفة أو قرض',`openRec('loans',null,{co:'${e.co}',emp:${e.id}})`)}${btn('طلب خطاب رسمي',`openRec('letters',null,{co:'${e.co}',emp:${e.id}})`)}${btn('مطالبة مصروف',`openRec('claims',null,{co:'${e.co}',emp:${e.id}})`)}${sp?btn('نسخ قسيمة الراتب',`essSlip(${e.id})`):''}</div>
+    <div class="grid split2"><div class="card"><h3>قسيمة الراتب — ${monthName(m)}</h3>${sp?`<div class="tbl-x"><table class="stmt"><tbody><tr><td>الراتب الأساسي</td><td>${SAR(e.basic)}</td></tr><tr><td>بدل السكن</td><td>${SAR(e.hous)}</td></tr><tr><td>بدل النقل</td><td>${SAR(e.trans)}</td></tr>${e.oth?`<tr><td>بدلات أخرى</td><td>${SAR(e.oth)}</td></tr>`:''}${pl.ot?`<tr><td>العمل الإضافي</td><td>${SAR(pl.ot)}</td></tr>`:''}<tr class="sum"><td>إجمالي المستحقات</td><td>${SAR(pl.gross)}</td></tr>
+      ${pl.ge?`<tr><td>التأمينات الاجتماعية ٩٫٧٥٪</td><td class="down">−${SAR(pl.ge)}</td></tr>`:''}${pl.absAmt?`<tr><td>الغياب</td><td class="down">−${SAR(pl.absAmt)}</td></tr>`:''}${pl.ded?`<tr><td>خصومات وأقساط سلف</td><td class="down">−${SAR(pl.ded)}</td></tr>`:''}<tr class="sum"><td>صافي الراتب</td><td>${SAR(pl.net)}</td></tr></tbody></table></div><div class="small muted" style="margin-top:8px">يُحوّل إلى ${esc(e.bank)} عبر نظام حماية الأجور.</div>`:'<div class="notice">تظهر القسيمة للموظف نفسه عند دخوله بحسابه، وللرئيس ونائبته والممثل المالي وممثل الشركة.</div>'}</div>
+      <div class="card"><h3>طلباتي <small>${n(reqs.length)}</small></h3>${reqs.map(x=>`<div class="mini" onclick="${x.go}"><span>${esc(x.t)}<span class="small muted" style="display:block">${esc(x.s)}</span></span><span class="pill ${x.cls||'s-idle'}">${x.st}</span></div>`).join('')||'<div class="small muted">لا طلبات.</div>'}</div></div>`;
+}
+window.essSlip=id=>{ const e=emp(id), m=todayI().slice(0,7), r=runOf(e.co,m), pl=payLine(e,withLoan(e,m,r?r.adj[e.id]:null));
+  copyBox('قسيمة الراتب',[co(e.co).name,`قسيمة راتب ${monthName(m)}`,'',`الموظف: ${e.name} (${e.no})`,`الوظيفة: ${e.title} — ${e.dept}`,'',`الأساسي: ${SAR(e.basic)}`,`بدل السكن: ${SAR(e.hous)}`,`بدل النقل: ${SAR(e.trans)}`,pl.ot?`العمل الإضافي: ${SAR(pl.ot)}`:'',`الإجمالي: ${SAR(pl.gross)}`,pl.ge?`التأمينات الاجتماعية: −${SAR(pl.ge)}`:'',pl.absAmt?`الغياب: −${SAR(pl.absAmt)}`:'',pl.ded?`خصومات وأقساط سلف: −${SAR(pl.ded)}`:'',`الصافي: ${SAR(pl.net)} ريال`].filter(Boolean).join('\n'),'في النسخة الخادمية يحمّل الموظف قسيمته بصيغة PDF من حسابه.'); };
+
+/* ---------- approvals inbox ---------- */
+let IBF={k:''};
+function inboxItems(){ const L=[], m=todayI().slice(0,7), add=(k,c,t,s,go,q)=>L.push({k,c,t,s,go,q:q||[]});
+  S.payruns.filter(r=>inScope(r.co)&&r.month===m&&((r.status==='draft'&&canHR(r.co))||(r.status==='reviewed'&&['fin','chair'].includes(S.me))||(r.status==='approved'&&canFin(r.co)))).forEach(r=>add('الرواتب',r.co,'مسير رواتب '+monthName(m),'المرحلة: '+PSTL[r.status]+' — بانتظار '+(r.status==='draft'?'اعتماد الموارد البشرية':r.status==='reviewed'?'الاعتماد المالي':'تأكيد الصرف'),`PF.co='${r.co}';location.hash='payroll'`));
+  if(REVIEWERS.includes(S.me)) S.subs.filter(s=>s.month===curMonth()&&s.status==='submitted').forEach(s=>add('المجلس',s.co,'تقرير شهري بانتظار المراجعة',monthName(s.month),"location.hash='reports'"));
+  else if(co(S.me)&&['draft','returned'].includes((subOf(S.me)||{status:'draft'}).status)) add('المجلس',S.me,'التقرير الشهري لم يُرسل بعد',(subOf(S.me)||{}).status==='returned'?'أُعيد للاستكمال':'مسودة',"location.hash='reports'");
+  S.requests.filter(r=>inScope(r.co)&&myReqTurn(r)).forEach(r=>add('المجلس',r.co,r.title,'طلب اعتماد · '+(r.status==='قيد الإجراء'?RSTEPS[r.stage]:r.status),`openRequest(${r.id})`));
+  S.votes.filter(v=>v.status==='open'&&!v.v[S.me]&&!v.conflict.includes(S.me)).forEach(v=>add('المجلس',v.co,v.title,'تصويت بالتمرير · ينتهي '+fmtD(v.deadline),"location.hash='votes'"));
+  S.leaves.filter(l=>l.status==='بانتظار الاعتماد'&&inScope(l.co)&&canHR(l.co)).forEach(l=>add('الموارد البشرية',l.co,`إجازة ${l.type} — ${empName(l.emp)}`,`${fmtD(l.from)} – ${fmtD(l.to)} · ${n(lDays(l))} يومًا`,`openRec('leave',${l.id})`,[['اعتماد',`recSt('leave',${l.id},'معتمدة')`],['رفض',`recSt('leave',${l.id},'مرفوضة')`]]));
+  S.loans.filter(l=>inScope(l.co)&&((l.status==='مقدّم'&&canHR(l.co))||(l.status==='معتمد'&&canFin(l.co)))).forEach(l=>add('الموارد البشرية',l.co,`${l.type} — ${empName(l.emp)}`,`${SAR(l.amt)} ريال على ${n(l.n)} أقساط · ${l.status==='مقدّم'?'بانتظار الاعتماد':'بانتظار الصرف'}`,`openRec('loans',${l.id})`,l.status==='مقدّم'?[['اعتماد',`recSt('loans',${l.id},'معتمد')`]]:[['صرف',`recSt('loans',${l.id},'مصروف')`]]));
+  S.letters.filter(l=>inScope(l.co)&&l.status==='مطلوب'&&canHR(l.co)).forEach(l=>add('الموارد البشرية',l.co,`خطاب ${l.type} — ${empName(l.emp)}`,'موجّه إلى '+l.to,`openRec('letters',${l.id})`,[['إصدار',`letterIssue(${l.id})`]]));
+  S.claims.filter(c=>inScope(c.co)&&((c.status==='مقدّمة'&&canHR(c.co))||(c.status==='معتمدة'&&canFin(c.co)))).forEach(c=>add('المالية',c.co,'مطالبة مصروف — '+c.desc,`${empName(c.emp)} · ${SAR(c.amt)} ريال · ${c.status==='مقدّمة'?'بانتظار الاعتماد':'بانتظار الصرف'}`,`openRec('claims',${c.id})`,c.status==='مقدّمة'?[['اعتماد',`recSt('claims',${c.id},'معتمدة')`]]:[['صرف وقيد',`recSt('claims',${c.id},'مصروفة')`]]));
+  S.bills.filter(b=>inScope(b.co)&&canFin(b.co)&&(b.status==='received'||(b.status==='approved'&&daysTo(b.due)<=7))).forEach(b=>add('المالية',b.co,'فاتورة مورد — '+supName(b.sup),`${SAR(billTot(b))} ريال · يستحق ${fmtD(b.due)} · ${b.status==='received'?'بانتظار الاعتماد':'بانتظار السداد'}`,`openBill(${b.id})`,b.status==='received'?[['اعتماد وقيد',`billAct(${b.id},'approved')`]]:[['سداد',`billAct(${b.id},'paid')`]]));
+  S.preqs.filter(r=>inScope(r.co)&&r.status==='بانتظار الاعتماد'&&(canFin(r.co)||canHR(r.co))).forEach(r=>add('العمليات',r.co,'طلب شراء — '+r.title,`${SAR(r.amt)} ريال${r.amt>100000?' · يتطلب المجلس':''}`,`openRec('procure',${r.id})`,r.amt>100000?[]:[['اعتماد',`recSt('procure',${r.id},'معتمد')`]]));
+  S.invs.filter(i=>inScope(i.co)&&i.status==='draft'&&canFin(i.co)).forEach(i=>add('المالية',i.co,'مسودة فاتورة '+i.no,`${esc(invClient(i))} · ${SAR(invTot(i))} ريال`,`openInv(${i.id})`,[['إصدار وقيد',`invIssue(${i.id})`]]));
+  S.recur.filter(r=>inScope(r.co)&&canFin(r.co)&&recSt2(r)==='مستحقة').forEach(r=>add('المالية',r.co,'فاتورة متكررة مستحقة — '+r.desc,`${esc(clientLbl(r))} · ${SAR(r.amt)} ريال`,`openRec('recur',${r.id})`,[['إصدار',`recurRun(${r.id})`]]));
+  S.quotes.filter(r=>inScope(r.co)&&canFin(r.co)&&r.status==='مقبول').forEach(r=>add('المالية',r.co,'عرض مقبول لم يُفوتر — '+r.desc,`${esc(r.cname)} · ${SAR(r.qty*r.price)} ريال`,`openRec('quotes',${r.id})`,[['تحويل إلى فاتورة',`quoteInv(${r.id})`]]));
+  if(secEdit('clinic')()) S.insclaims.filter(r=>r.status==='قيد الإعداد'&&r.month<m).forEach(r=>add('القطاعات','clinic','دفعة مطالبات لم تُرسل — '+r.ins,monthName(r.month)+' · '+SAR(r.amt)+' ريال',`openRec('insclaims',${r.id})`,[['إرسال',`recSt('insclaims',${r.id},'مرسلة',{sent:todayI()})`]]));
+  if(secEdit('factory')()) S.mos.filter(moLate).forEach(r=>add('القطاعات','factory','أمر إنتاج متأخر — '+r.prod,`${r.no} · كان التسليم ${fmtD(r.due)}`,`openRec('mos',${r.id})`));
+  if(S.me==='law') S.cases.filter(r=>r.status!=='منتهية'&&daysTo(r.poa)<=30).forEach(r=>add('القطاعات','law','وكالة '+(daysTo(r.poa)<0?'منتهية':'تنتهي قريبًا')+' — '+r.no,'تنتهي '+fmtD(r.poa),`openRec('cases',${r.id})`));
+  return L; }
+function viewInbox(){
+  const all=inboxItems(), ks=[...new Set(all.map(x=>x.k))], f=IBF.k&&ks.includes(IBF.k)?IBF.k:'', L=f?all.filter(x=>x.k===f):all;
+  return header('بانتظار إجرائي',`كل ما ينتظر اعتمادك أو إجراءك في جميع الأنظمة — بصفتك ${me().role}`)
+  + (all.length?`<div class="filters"><div class="seg wrap"><button class="${!f?'on':''}" onclick="IBF.k='';render()">الكل (${n(all.length)})</button>${ks.map(k=>`<button class="${f===k?'on':''}" onclick="IBF.k='${k}';render()">${k} (${n(all.filter(x=>x.k===k).length)})</button>`).join('')}</div></div>`:'')
+  + `<div class="ibx">${L.map(x=>`<div class="it"><div class="tx"><div class="row small muted" style="gap:6px;flex-wrap:wrap">${dot(x.c)}<span>${coName(x.c)}</span><span>·</span><span>${x.k}</span></div><b>${esc(x.t)}</b><div class="small muted">${x.s}</div></div><div class="ac">${x.q.map(([l,fn])=>`<button class="btn gold" onclick="${fn}">${l}</button>`).join('')}<button class="btn" onclick="${x.go}">فتح</button></div></div>`).join('')||'<div class="card empty" style="padding:40px">✓ لا شيء بانتظار إجرائك الآن. جرّب «تعمل الآن بصفة» عضوًا آخر لترى ما ينتظره.</div>'}</div>`;
+}
+const inboxStrip=()=>{ const L=inboxItems(); if(!L.length) return ''; return `<div class="card" style="margin-top:16px;border-inline-start:4px solid var(--warn)"><h3>بانتظار إجرائك <small>${n(L.length)} عنصرًا</small> <a class="more-link" href="#inbox">عرض الكل ←</a></h3>${L.slice(0,4).map(x=>`<div class="mini" onclick="${x.go}"><span class="row" style="gap:8px">${dot(x.c)}<span>${esc(x.t)}<span class="small muted" style="display:block">${x.s}</span></span></span><span class="pill s-warn">${x.k}</span></div>`).join('')}</div>`; };
+
+/* ---------- statements: cash flow and cost centres ---------- */
+function stmtCF(cos,from,to,pl){
+  const CAT={rcpt:['op','المتحصّل من العملاء'],insc:['op','المتحصّل من شركات التأمين'],edufee:['op','المتحصّل من رسوم التدريب'],bpay:['op','المدفوع للموردين'],paypay:['op','الرواتب المدفوعة'],claim:['op','مصروفات الموظفين'],petty:['op','مصروفات الصندوق النقدي'],loan:['op','سلف الموظفين'],month:['op','صافي التدفق التشغيلي — ملخص أكتوبر'],ic:['op','تسويات بين الشركات'],gosi:['op','التأمينات الاجتماعية'],eosb:['op','مكافآت نهاية الخدمة'],asset:['inv','شراء أصول ثابتة']};
+  let open=0; const g={op:{},inv:{},fin:{}};
+  S.journal.forEach(j=>{ if(!cos.includes(j.co)||(ELIM&&j.ic)||j.d>to) return; const dlt=j.lines.reduce((s,l)=>s+(l[0]==='1110'||l[0]==='1120'?l[1]-l[2]:0),0); if(Math.abs(dlt)<.005) return;
+    if(j.d<from||j.src==='opening'){ open+=dlt; return; }
+    let c=CAT[j.src]; if(!c){ const ac=j.lines.map(l=>l[0]); c=ac.some(a=>['2220','3100'].includes(a))?['fin','تمويل ورأس مال']:ac.includes('1210')?['inv','شراء أصول ثابتة']:['op',j.src==='void'?'عكوسات وتصحيحات':'قيود يدوية وأخرى']; }
+    g[c[0]][c[1]]=(g[c[0]][c[1]]||0)+dlt; });
+  const T=o=>Object.values(o).reduce((s,v)=>s+v,0), net=T(g.op)+T(g.inv)+T(g.fin), close=open+net;
+  const books=cos.reduce((s,c)=>s+bal('1110',[c],null,to)+bal('1120',[c],null,to),0);
+  const sec=(k,t)=>`<tr class="grp"><td colspan="2">${t}</td></tr>${Object.entries(g[k]).sort((a,b)=>b[1]-a[1]).map(([l,v])=>`<tr><td>${l}</td><td class="${v<0?'down':''}">${SAR(v)}</td></tr>`).join('')||'<tr><td class="muted">لا حركات</td><td>٠</td></tr>'}<tr class="sum"><td>صافي ${t}</td><td>${SAR(T(g[k]))}</td></tr>`;
+  return `<div class="tbl-x"><table class="stmt"><thead><tr><th>قائمة التدفقات النقدية (الطريقة المباشرة) — ${pl}</th><th>ريال</th></tr></thead><tbody><tr><td><b>النقد أول الفترة</b></td><td><b>${SAR(open)}</b></td></tr>
+    ${sec('op','التدفقات من الأنشطة التشغيلية')}${sec('inv','التدفقات من الأنشطة الاستثمارية')}${sec('fin','التدفقات من الأنشطة التمويلية')}
+    <tr class="sum"><td>صافي التغير في النقد</td><td class="${net>=0?'up':'down'}">${SAR(net)}</td></tr><tr class="sum"><td>النقد آخر الفترة ${Math.abs(close-books)<1?'<span class="pill s-good">يطابق الدفاتر</span>':'<span class="pill s-crit">فرق '+SAR(close-books)+'</span>'}</td><td>${SAR(close)}</td></tr></tbody></table></div>
+    <div class="small muted" style="margin-top:8px">النقد = النقدية بالصندوق (١١١٠) والحساب البنكي (١١٢٠). تُصنف الحركات آليًا من مصدر كل قيد.</div>`;
+}
+function stmtCC(cos){
+  const rows=[]; cos.forEach(c=>DEPTS[c].forEach(([d])=>{ const es=S.emps.filter(e=>e.co===c&&isAct(e)&&e.dept===d);
+    const pay=es.reduce((s,e)=>s+pkg(e)+payLine(e).gc,0), cl=S.claims.filter(x=>x.co===c&&['معتمدة','مصروفة'].includes(x.status)&&(emp(x.emp)||{}).dept===d).reduce((s,x)=>s+x.amt,0);
+    const pr=S.preqs.filter(x=>x.co===c&&['أمر شراء','مستلم'].includes(x.status)&&x.dept===d).reduce((s,x)=>s+x.amt,0), tr=S.training.filter(x=>x.co===c&&x.status==='مكتمل').reduce((s,x)=>s+(+x.cost||0),0)*(es.length/Math.max(1,S.emps.filter(e=>e.co===c&&isAct(e)).length));
+    rows.push({c,d,n:es.length,pay,cl,pr,tr,tot:pay+cl+pr+tr}); }));
+  const tot=rows.reduce((s,r)=>s+r.tot,0)||1, multi=cos.length>1;
+  return `<div class="notice" style="margin-bottom:12px">مركز التكلفة هو الإدارة: الرواتب والتأمينات شهريًا، والمصروفات والمشتريات والتدريب منذ بداية الربع. في النسخة الخادمية يُحمّل كل قيد على مركز تكلفته مباشرة.</div>
+  <div class="tbl-x"><table class="stmt"><thead><tr><th>مركز التكلفة</th><th>الموظفون</th><th>الرواتب والتأمينات</th><th>المصروفات والعُهد</th><th>المشتريات</th><th>التدريب</th><th>الإجمالي</th><th>الحصة</th></tr></thead><tbody>
+  ${rows.sort((a,b)=>multi?0:b.tot-a.tot).map(r=>`<tr><td><b>${esc(r.d)}</b>${multi?`<div class="small muted">${coName(r.c)}</div>`:''}</td><td>${n(r.n)}</td><td>${SAR(r.pay)}</td><td>${r.cl?SAR(r.cl):'—'}</td><td>${r.pr?SAR(r.pr):'—'}</td><td>${r.tr?SAR(r.tr):'—'}</td><td><b>${SAR(r.tot)}</b></td><td style="min-width:110px">${n(r.tot/tot*100,1)}٪${meter(r.tot/tot*100)}</td></tr>`).join('')}
+  <tr class="sum"><td>الإجمالي</td><td>${n(rows.reduce((s,r)=>s+r.n,0))}</td><td>${SAR(rows.reduce((s,r)=>s+r.pay,0))}</td><td>${SAR(rows.reduce((s,r)=>s+r.cl,0))}</td><td>${SAR(rows.reduce((s,r)=>s+r.pr,0))}</td><td>${SAR(rows.reduce((s,r)=>s+r.tr,0))}</td><td>${SAR(tot)}</td><td></td></tr></tbody></table></div>`;
+}
+
+/* ---------- sector KPIs, trends and the auto board report ---------- */
+function sectorKPIs(c){ const t=todayI();
+  if(c==='clinic'){ const p=S.appts.filter(r=>r.date<=t&&['حضر','لم يحضر'].includes(r.status)), dec=S.insclaims.filter(r=>r.appr), am=dec.reduce((s,r)=>s+r.amt,0);
+    return [['appts','مواعيد اليوم',n(S.appts.filter(r=>r.date===t).length),p.length?'حضور '+n(p.filter(r=>r.status==='حضر').length/p.length*100)+'٪':''],['insclaims','لدى شركات التأمين',sarK(S.insclaims.filter(r=>['مرسلة','تمت التسوية'].includes(r.status)).reduce((s,r)=>s+(r.appr||r.amt),0)),am?'رفض '+n(dec.reduce((s,r)=>s+insRej(r),0)/am*100,1)+'٪':'',am&&dec.reduce((s,r)=>s+insRej(r),0)/am>.08?'s-warn':'']]; }
+  if(c==='factory'){ const op=S.mos.filter(r=>r.status!=='مكتمل'), dn=S.mos.filter(r=>r.pass);
+    return [['mos','أوامر إنتاج مفتوحة',n(op.length),n(op.filter(moLate).length)+' متأخرة',op.some(moLate)?'s-crit':''],['mos','متوسط مطابقة الجودة',dn.length?n(dn.reduce((s,r)=>s+r.pass,0)/dn.length,1)+'٪':'—','']]; }
+  if(c==='law'){ const a=S.cases.filter(r=>r.status!=='منتهية');
+    return [['cases','قضايا نشطة',n(a.length),n(a.filter(r=>r.next&&daysTo(r.next)>=0&&daysTo(r.next)<=14).length)+' جلسات خلال أسبوعين','s-info'],['hours','ساعات غير مفوترة',sarK(S.hours.filter(r=>r.status==='غير مفوترة').reduce((s,r)=>s+r.hrs*r.rate,0)),n(a.filter(r=>daysTo(r.poa)<=30).length)+' وكالات تنتهي',a.some(r=>daysTo(r.poa)<0)?'s-crit':'']]; }
+  if(c==='edu'){ const run=S.courses.filter(r=>crsSt(r)!=='منتهٍ'), seats=run.reduce((s,r)=>s+r.seats,0), occ=run.reduce((s,r)=>s+crsEn(r).length,0), en=S.enrol.filter(e=>e.status!=='منسحب');
+    return [['courses','إشغال البرامج',seats?n(occ/seats*100)+'٪':'—',n(run.length)+' برامج جارية وقادمة'],['enrol','رسوم متبقية على المتدربين',sarK(en.reduce((s,e)=>s+enrBal(e),0)),'']]; }
+  return []; }
+function sectorCard(cid){ const k=sectorKPIs(cid); if(!k.length) return '';
+  const names={clinic:'المواعيد ومطالبات التأمين',factory:'الإنتاج والجودة',law:'القضايا والأتعاب',edu:'البرامج والمتدربين'};
+  return `<div class="card" style="margin-top:16px"><h3>نظام القطاع — ${names[cid]}</h3><div class="cycle">${k.map(([go,l,v,s,cls])=>`<a class="cy" href="#${go}"><span class="small muted">${l}</span><b style="font-size:17px;color:var(--head)">${v}</b>${s?`<span class="pill ${cls||'s-idle'}">${s}</span>`:''}</a>`).join('')}</div></div>`; }
+let TRF={tab:'trend'};
+function boardData(){ const cs=scopeCos(), L5=MONTHS.length-1, sec=[], pct=(a,b)=>b?(a-b)/b*100:0;
+  const rv=cs.reduce((s,c)=>s+S.fin[c.id].rev[L5],0), rv0=cs.reduce((s,c)=>s+S.fin[c.id].rev[L5-1],0), ex=cs.reduce((s,c)=>s+S.fin[c.id].exp[L5],0), cash=cs.reduce((s,c)=>s+bal('1120',[c.id])+bal('1110',[c.id]),0);
+  const ar=S.invs.filter(i=>inScope(i.co)&&!['draft','void'].includes(i.status)), od=ar.filter(i=>invSt(i)==='متأخرة');
+  sec.push(['الملخص التنفيذي',[`الإيرادات الموحّدة لشهر ${MONTHS[L5]}: ${money(rv)} (${pct(rv,rv0)>=0?'+':''}${n(pct(rv,rv0),1)}٪ عن ${MONTHS[L5-1]})، والمصروفات ${money(ex)}، وصافي النتيجة ${money(rv-ex)} بهامش ${n((rv-ex)/rv*100,1)}٪.`,`النقد لدى الشركات في الدفاتر: ${sarK(cash)} ريال. الذمم القائمة ${sarK(ar.reduce((s,i)=>s+invBal(i),0))} ريال، منها متأخرة ${sarK(od.reduce((s,i)=>s+invBal(i),0))} ريال في ${n(od.length)} فواتير.`,`الموظفون ${n(actEmps().length)}، ونسبة التوطين ${n(actEmps().filter(isSa).length/Math.max(1,actEmps().length)*100,1)}٪.`]]);
+  cs.forEach(c=>{ const f=S.fin[c.id], r=f.rev[L5], e=f.exp[L5], es=actEmps(c.id), sa=es.filter(isSa).length/Math.max(1,es.length)*100, k=sectorKPIs(c.id);
+    sec.push([c.name,[`الإيرادات ${money(r)} (${pct(r,f.rev[L5-1])>=0?'+':''}${n(pct(r,f.rev[L5-1]),1)}٪) · المصروفات ${money(e)} · صافي النتيجة ${money(r-e)}.`,`النقد ${sarK(bal('1120',[c.id]))} ريال · الذمم المتأخرة ${sarK(S.invs.filter(i=>i.co===c.id&&invSt(i)==='متأخرة').reduce((s,i)=>s+invBal(i),0))} ريال.`,`الموظفون ${n(es.length)} · التوطين ${n(sa,1)}٪ (نطاق ${NBAND[nBand(c.id,sa)]}).`,k.map(x=>`${x[1]}: ${x[2]}${x[3]?' ('+x[3]+')':''}`).join(' · ')]]); });
+  const reqs=S.requests.filter(r=>inScope(r.co)&&r.status==='قيد الإجراء'), votes=S.votes.filter(v=>v.status==='open'), late=S.decisions.filter(d=>inScope(d.co)&&effStatus(d)==='متأخر');
+  sec.push(['بانتظار قرار المجلس',[`${n(reqs.length)} طلبات اعتماد قيد الإجراء${reqs.length?': '+reqs.slice(0,4).map(r=>r.title).join('؛ '):''}.`,`${n(votes.length)} تصويت بالتمرير مفتوح${votes.length?': '+votes.map(v=>v.title).join('؛ '):''}.`,`${n(late.length)} قرارات متأخرة التنفيذ.`]]);
+  const al=alerts().filter(a=>a.l==='crit').concat(alerts().filter(a=>a.l!=='crit')).slice(0,6);
+  sec.push(['أبرز التنبيهات',al.map(a=>a.t+' — '+String(a.s||'').replace(/<[^>]+>/g,''))]);
+  return sec; }
+window.copyBoard=()=>{ const d=boardData(); copyBox('تقرير المجلس الشهري',['المجلس الإشرافي المشترك — التقرير الشهري الآلي',monthName(todayI().slice(0,7)),'',...d.flatMap(([h,ls])=>[h,...ls.map(x=>'• '+x),''])].join('\n'),'يُولّد التقرير من بيانات المنصة لحظة النسخ. انسخه إلى حزمة الاجتماع أو أرسله للأعضاء.'); };
+function viewTrends(){ const cs=scopeCos(), L5=MONTHS.length-1;
+  const top=header('التقارير والاتجاهات','اتجاهات ستة أشهر وتقرير المجلس الشهري المولّد آليًا من بيانات المنصة',`${TRF.tab==='trend'?csvBtn:''}<button class="btn primary" onclick="copyBoard()">نسخ تقرير المجلس</button>`)+tabs('TRF.tab',TRF.tab,[['trend','الاتجاهات'],['board','تقرير المجلس الشهري']]);
+  if(TRF.tab==='board') return top+`<div class="card brep"><div class="small muted">المجلس الإشرافي المشترك · ${monthName(todayI().slice(0,7))} · يُولّد آليًا</div><h2 class="serif" style="color:var(--head);margin:4px 0 14px">التقرير الشهري للمجلس</h2>${boardData().map(([h,ls])=>`<h4>${esc(h)}</h4><ul>${ls.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`).join('')}</div>`;
+  const rev=cs.map(c=>({name:c.short,hex:c.hex,values:S.fin[c.id].rev})), net=cs.map(c=>({name:c.short,hex:c.hex,values:S.fin[c.id].rev.map((v,i)=>v-S.fin[c.id].exp[i])}));
+  const tr=MONTHS.map((_,i)=>cs.reduce((s,c)=>s+S.fin[c.id].rev[i],0)), tn=MONTHS.map((_,i)=>cs.reduce((s,c)=>s+S.fin[c.id].rev[i]-S.fin[c.id].exp[i],0));
+  const gr=cs.map(c=>({c,g:(S.fin[c.id].rev[L5]-S.fin[c.id].rev[0])/S.fin[c.id].rev[0]*100})).sort((a,b)=>b.g-a.g);
+  const leg=`<div class="legend" style="margin-top:8px">${cs.map(c=>`<span><i class="swatch" style="background:${c.hex}"></i>${c.short}</span>`).join('')}</div>`;
+  return top+`<div class="grid tiles">${tile('الإيرادات — '+MONTHS[L5],money(tr[L5]),(tr[L5]>=tr[0]?'+':'')+n((tr[L5]-tr[0])/tr[0]*100,1)+'٪ منذ '+MONTHS[0])}${tile('صافي النتيجة — '+MONTHS[L5],money(tn[L5]),'هامش '+n(tn[L5]/tr[L5]*100,1)+'٪')}${tile('الأعلى نموًا',gr[0].c.short,(gr[0].g>=0?'+':'')+n(gr[0].g,1)+'٪ في ستة أشهر')}${tile('الأقل نموًا',gr[gr.length-1].c.short,(gr[gr.length-1].g>=0?'+':'')+n(gr[gr.length-1].g,1)+'٪ في ستة أشهر',gr[gr.length-1].g<0?'crit':'')}</div>
+    <div class="grid split2" style="margin-top:16px"><div class="card"><h3>الإيرادات الشهرية <small>ريال</small></h3>${lineChart(rev,{label:'الإيرادات الشهرية لكل شركة'})}${leg}</div><div class="card"><h3>صافي النتيجة الشهرية <small>الإيرادات ناقص المصروفات</small></h3>${lineChart(net,{label:'صافي النتيجة الشهرية لكل شركة',zero:true})}${leg}</div></div>
+    <div class="tbl-x" style="margin-top:16px"><table class="stmt"><thead><tr><th>الشركة</th>${MONTHS.map(m=>`<th>${m}</th>`).join('')}<th>التغير</th></tr></thead><tbody>${cs.map(c=>{ const v=S.fin[c.id].rev; return `<tr><td><span class="row" style="gap:6px">${dot(c.id)}<b>${c.short}</b></span><div class="small muted">صافي ${money(v[L5]-S.fin[c.id].exp[L5])}</div></td>${v.map(x=>`<td>${money(x)}</td>`).join('')}<td class="${v[L5]>=v[0]?'up':'down'}">${v[L5]>=v[0]?'+':''}${n((v[L5]-v[0])/v[0]*100,1)}٪</td></tr>`; }).join('')}<tr class="sum"><td>الموحّد</td>${tr.map(x=>`<td>${money(x)}</td>`).join('')}<td>${n((tr[L5]-tr[0])/tr[0]*100,1)}٪</td></tr></tbody></table></div>`;
+}
+
+/* ---------- hooks into alerts, calendar, search, directory, company pages ---------- */
+const _erpAlerts0=erpAlerts; erpAlerts=function(a){ _erpAlerts0(a);
+  if(inScope('law')){ S.cases.filter(r=>r.next&&daysTo(r.next)>=0&&daysTo(r.next)<=2).forEach(r=>a.push({l:'warn',t:daysTo(r.next)?'جلسة خلال يومين':'جلسة اليوم',s:`${r.no} · ${r.court} · ${fmtD(r.next)}`,go:`openRec('cases',${r.id})`}));
+    S.cases.filter(r=>r.status!=='منتهية'&&daysTo(r.poa)<=30).forEach(r=>a.push({l:daysTo(r.poa)<0?'crit':'warn',t:daysTo(r.poa)<0?'وكالة منتهية لقضية نشطة':'وكالة تنتهي خلال ٣٠ يومًا',s:`${r.no} · ${fmtD(r.poa)}`,go:`openRec('cases',${r.id})`})); }
+  if(inScope('factory')){ const l=S.mos.filter(moLate); if(l.length) a.push({l:'crit',t:`${n(l.length)} أوامر إنتاج متأخرة عن التسليم`,s:l.map(r=>r.no).join('، '),go:"GF.mos={co:'',st:'',q:''};location.hash='mos'"}); }
+  if(inScope('clinic')){ S.insclaims.filter(r=>r.appr&&insRej(r)/r.amt>.1&&r.status!=='مدفوعة').forEach(r=>a.push({l:'warn',t:`نسبة رفض ${n(insRej(r)/r.amt*100,1)}٪ في مطالبات ${r.ins}`,s:monthName(r.month)+' · '+r.reason,go:`openRec('insclaims',${r.id})`})); }
+  if(inScope('edu')){ S.courses.filter(c=>crsSt(c)==='مفتوح للتسجيل'&&daysTo(c.start)<=14&&crsEn(c).length/c.seats<.5).forEach(c=>a.push({l:'warn',t:'برنامج يبدأ قريبًا بإشغال منخفض',s:`${c.title} · ${n(crsEn(c).length)} من ${n(c.seats)} مقعدًا · ${fmtD(c.start)}`,go:`openRec('courses',${c.id})`})); }
+  const rd=S.recur.filter(r=>inScope(r.co)&&canFin(r.co)&&recSt2(r)==='مستحقة'); if(rd.length) a.push({l:'warn',t:`${n(rd.length)} فواتير متكررة مستحقة الإصدار`,s:rd.map(r=>clientLbl(r)).slice(0,3).join('، '),go:"location.hash='recur'"}); };
+const _erpEvents0=erpEvents; erpEvents=function(ev){ _erpEvents0(ev);
+  if(inScope('law')) S.cases.filter(r=>r.next).forEach(r=>ev.push({d:r.next,t:'جلسة: '+r.no+' · '+r.court,k:'dl',go:`openRec('cases',${r.id})`}));
+  if(inScope('factory')) S.mos.filter(r=>r.status!=='مكتمل').forEach(r=>ev.push({d:r.due,t:'تسليم أمر إنتاج: '+r.prod,k:moLate(r)?'late':'dl',go:`openRec('mos',${r.id})`}));
+  if(inScope('edu')) S.courses.forEach(c=>ev.push({d:c.start,t:'بدء برنامج: '+c.title,k:'task',go:`openRec('courses',${c.id})`}));
+  S.recur.filter(r=>inScope(r.co)&&r.active==='نعم').forEach(r=>ev.push({d:r.next,t:'فاتورة متكررة: '+clientLbl(r),k:'dl',go:`openRec('recur',${r.id})`})); };
+const V5REG=['appts','insclaims','mos','cases','hours','courses','enrol','loans','letters','quotes','recur','ic','petty'];
+const _erpSearch0=erpSearch; erpSearch=function(has,q){ return [..._erpSearch0(has,q),...V5REG.filter(k=>!REG[k].only||inScope(REG[k].only)).map(k=>{ const D=REG[k]; return [D.title,S[D.key].filter(r=>regScope(D,r)&&D.text(r).includes(q)).map(r=>({t:D.name(r),s:(D.stOf||(x=>x.status))(r),c:r.co,go:`openRec('${k}',${r.id})`}))]; })]; };
+const _sysStat0=sysStat; sysStat=k=>_sysStat0(k)||(REG[k]&&REG[k].stat?REG[k].stat():'');
+const _erpCard0=erpCard; erpCard=cid=>(cid?sectorCard(cid):inboxStrip())+_erpCard0(cid);
+SYS.push(['appts','المواعيد والأطباء','العيادات',/الطب العام|الأسنان|الجلدية|الاستقبال/],['insclaims','مطالبات التأمين الطبي','التأمين والمطالبات',/مطالبات/],['mos','أوامر الإنتاج والجودة','الإنتاج والجودة',/الإنتاج|التشطيب|الجودة/],['cases','القضايا والجلسات','التقاضي',/التقاضي|الاستشارات|العقود والشركات/],['hours','ساعات العمل والأتعاب','المحامون والتحصيل',/التقاضي|الاستشارات|العقود والشركات|التحصيل/],['courses','البرامج والدورات','التدريب',/التدريب والتنفيذ|تصميم البرامج/],['enrol','المتدربون والرسوم','التدريب والعمليات',/التدريب والتنفيذ|العمليات والتشغيل/],
+  ['ess','بوابة الموظف','كل الموظفين',/./],['loans','السلف والقروض','الموارد البشرية والمالية',/موارد/],['letters','الخطابات الرسمية','الموارد البشرية',/موارد/],['quotes','عروض الأسعار','المبيعات',/مبيعات/],['recur','الفواتير المتكررة','المالية',/مالي|محاسب/],['petty','الصندوق والعهد النقدية','المالية',/مالي|محاسب/],['ic','المعاملات بين الشركات','المالية',/مالي|محاسب/],['inbox','بانتظار إجرائي','كل الأعضاء',/./],['trends','التقارير والاتجاهات','المجلس والإدارة العليا',/الإدارة العليا|الشركاء/]);
+Object.assign(ICON,{
+  inbox:'<path d="M3 13l2.5-8h13L21 13v6H3z"/><path d="M3 13h5l1.5 2.5h5L16 13h5"/>',
+  appt:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/>',
+  shield:'<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M12 9v6M9 12h6"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  gavel:'<path d="M13.5 4.5l6 6M11 7l6 6M9.5 8.5l6 6-2.5 2.5-6-6zM8 13l-5 5 2 2 5-5M14 21h7"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>',
+  course:'<path d="M4 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-5a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h5z"/>',
+  student:'<circle cx="12" cy="7.5" r="3.5"/><path d="M5 20c1-4 3.8-6 7-6s6 2 7 6M9 14.5l3 3 3-3"/>',
+  ess:'<circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5c.9-4 3.8-6.2 7.5-6.2s6.6 2.2 7.5 6.2"/>',
+  loan:'<circle cx="9" cy="12" r="5.5"/><path d="M9 9v6M7.2 10.4c.4-.9 3.2-1 3.4.3.2 1.5-3.6 1.1-3.4 2.8.2 1.2 2.9 1.1 3.4.2M17 7.5l3 3-3 3M14.5 10.5H20"/>',
+  letter:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6l8.5 7 8.5-7"/>',
+  quote:'<path d="M5 3h10l4 4v14H5z"/><path d="M15 3v4h4M9 12h6M9 16h4"/>',
+  recur:'<path d="M20 12a8 8 0 0 1-14 5.3M4 12a8 8 0 0 1 14-5.3"/><path d="M18 3v4h-4M6 21v-4h4"/>',
+  petty:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M12 11v3"/>',
+  ic:'<circle cx="6" cy="7" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 7h6a3 3 0 0 1 3 3v4M15 17H9a3 3 0 0 1-3-3v-4"/>',
+  trend:'<path d="M3 20h18M5 16l4.5-5 3.5 3 6-7"/><path d="M15 7h4v4"/>',
+});
+Object.assign(NAVI,{appts:'appt',insclaims:'shield',mos:'gear',cases:'gavel',hours:'clock',courses:'course',enrol:'student',ess:'ess',loans:'loan',letters:'letter',quotes:'quote',recur:'recur',petty:'petty',ic:'ic',inbox:'inbox',trends:'trend'});
+
 /* ================= Router ================= */
 function render(){
   const route=(location.hash||'#dashboard').slice(1);
   renderNav(route); renderTabbar(route);
   const p=route.startsWith('company-')?'company':route, arg=route.slice(8);
-  const v={dashboard:viewDashboard,company:()=>viewCompany(arg),decisions:viewDecisions,meetings:viewMeetings,authority:viewAuthority,plan:viewPlan,members:viewMembers,clients:viewClients,files:viewFiles,tasks:viewTasks,calendar:viewCalendar,risks:viewRisks,activity:viewActivity,settings:viewSettings,reports:viewReports,minutes:viewMinutes,votes:viewVotes,requests:viewRequests,pack:viewPack,finance:viewFinance,services:viewServices,people:viewPeople,kpiset:viewKpiSet,evaluation:viewEval,hr:viewHR,payroll:viewPayroll,recruit:viewRecruit,ledger:viewLedger,ar:viewAR,ap:viewAP,banks:viewBanks,statements:viewStatements,depts:viewDepts,...Object.fromEntries(Object.keys(REG).map(k=>[k,()=>viewReg(k)]))}[p]||viewDashboard;
+  const v={dashboard:viewDashboard,company:()=>viewCompany(arg),decisions:viewDecisions,meetings:viewMeetings,authority:viewAuthority,plan:viewPlan,members:viewMembers,clients:viewClients,files:viewFiles,tasks:viewTasks,calendar:viewCalendar,risks:viewRisks,activity:viewActivity,settings:viewSettings,reports:viewReports,minutes:viewMinutes,votes:viewVotes,requests:viewRequests,pack:viewPack,finance:viewFinance,services:viewServices,people:viewPeople,kpiset:viewKpiSet,evaluation:viewEval,hr:viewHR,payroll:viewPayroll,recruit:viewRecruit,ledger:viewLedger,ar:viewAR,ap:viewAP,banks:viewBanks,statements:viewStatements,depts:viewDepts,inbox:viewInbox,ess:viewESS,trends:viewTrends,...Object.fromEntries(Object.keys(REG).map(k=>[k,()=>viewReg(k)]))}[p]||viewDashboard;
   const y=window.scrollY; $('#main').innerHTML=v()+`<footer class="credit"><span class="credit-mark"></span>صُمّم وطُوّر بواسطة <a href="https://wa.me/966570091554?text=%D9%85%D8%B1%D8%AD%D8%A8%D9%8B%D8%A7%20%D8%B1%D9%88%D9%91%D8%A7%D8%AF%D8%8C%20%D8%B4%D8%A7%D9%87%D8%AF%D8%AA%20%D9%85%D9%86%D8%B5%D9%91%D8%A9%20%D8%A7%D9%84%D9%85%D8%AC%D9%84%D8%B3%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84" target="_blank" rel="noopener" title="تواصل مع روّاد عبر واتساب">روّاد</a></footer>`; if(render._last===route) window.scrollTo(0,y); else window.scrollTo(0,0);
   render._last=route;
   toggleMenu(false);
@@ -2913,5 +3454,6 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); if((
 $('#reset').addEventListener('click',e=>{ e.preventDefault(); resetAll(); });
 render();
 </script>
+
 </body>
 </html>
