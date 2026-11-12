@@ -284,7 +284,24 @@ input[type=number],input[type=tel],input[type=email]{border:1px solid var(--line
 .sec-title{font-size:13.5px;font-weight:700;color:var(--head);border-top:1px solid var(--line2);padding-top:12px}
 .loglist .it{padding:8px 0;border-bottom:1px solid var(--line2);font-size:13px}
 .notice{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--text2)}
+.cycle{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:10px}
+.cy{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px;cursor:pointer;background:var(--surface2);justify-items:start;min-width:0}
+a.cy:hover,div.cy[onclick]:hover{border-color:var(--gold2)}
+.steps{display:flex;gap:5px}
+.steps i{flex:1;height:6px;border-radius:3px;background:var(--line2)}
+.steps i.done{background:var(--good)}.steps i.cur{background:var(--gold)}
+.kpirow{display:grid;grid-template-columns:minmax(0,2fr) auto auto auto auto auto auto auto;gap:14px;align-items:center}
+.kpirow label{display:flex;flex-direction:column;gap:3px;color:var(--muted)}
+.pack{display:grid;gap:16px;max-width:920px}
+.pk-cover{text-align:center;padding:44px 20px;border-top:4px solid var(--gold)}
+.pk-cover h2{font-size:38px;color:var(--head);line-height:1.3;margin:6px 0}
+.pk-t{display:block;overflow-x:auto;margin-top:10px}
+.pk-t td{padding:7px 8px;font-size:13px}
+.pk-t tr{cursor:default}
+@media print{ aside,.tabbar,.wa-fab,.top .tools,.credit,.scrim,.toast{display:none!important} .app{display:block} main{padding:0!important} body{background:#fff} .card{box-shadow:none;break-inside:avoid} .pk-co{break-before:page} }
 @media (max-width:980px){
+  .kpirow{grid-template-columns:1fr 1fr}
+  .kpirow>div:first-child{grid-column:1/-1}
   .files-layout{grid-template-columns:minmax(0,1fr)}
   .folders{display:flex;overflow-x:auto;gap:6px;position:static;padding:10px}
   .folders h3,.folders .stor{display:none}
@@ -453,7 +470,7 @@ function seed(){
       {t:'التشغيل', d:[31,60], out:'أول دورة متابعة مكتملة', tasks:[['تشغيل الاجتماعات الشهرية',0],['تشغيل المتابعة الأسبوعية',0],['معالجة الأولويات',0],['خطط تحسين لكل شركة',0]]},
       {t:'القياس والتقييم', d:[61,90], out:'تقرير تقييم وخطة الربع التالي', tasks:[['قياس النتائج',0],['تقييم أداء المجلس',0],['تعديل الإجراءات',0]]},
     ],
-    me:'sec', seq:500,
+    me:'sec', seq:2000,
     // value = annual contract value, bal = outstanding receivable (thousand SAR); age = days the balance has been outstanding
     clients:[
       {id:201,co:'clinic',name:'تعاونية الشفاء للتأمين',kind:'شركة تأمين',contact:'إدارة المطالبات',phone:'012 600 1100',email:'claims@example.sa',city:'جدة',stage:'نشط',value:2400,bal:310,age:45,renew:'2027-01-31',last:'2026-11-04',notes:'أكبر جهة دافعة. مطالبات متأخرة بسبب نقص الترميز الطبي.',log:[{d:'2026-11-04',t:'اجتماع مطابقة المطالبات المرفوضة — اتُّفق على إعادة رفع ٤٢ مطالبة.',by:'clinic'}]},
@@ -523,12 +540,56 @@ function seed(){
       {ts:new Date('2026-11-01T10:45').getTime(),who:'sec',what:'أغلق القرار ق-٠٠٧ بدليل «النموذج المعتمد في محضر الاجتماع التأسيسي»'},
       {ts:new Date('2026-10-21T14:00').getTime(),who:'sec',what:'رفع «محضر الاجتماع التأسيسي.pdf»'},
     ],
+    budget:{
+      clinic:{rev:[800,830,860,890,920,960],exp:[690,700,715,730,745,760]},
+      factory:{rev:[1400,1400,1400,1400,1400,1400],exp:[1200,1200,1200,1200,1200,1200]},
+      law:{rev:[460,470,480,490,500,510],exp:[300,300,305,310,315,320]},
+      edu:{rev:[600,620,650,680,710,740],exp:[520,530,560,590,600,610]},
+    },
+    // monthly report submissions: draft → submitted → approved | returned
+    subs:[
+      {id:601,co:'law',month:'2026-11',status:'approved',rev:520,exp:322,cash:905,coll:68,payables:140,kv:[14,68,93,22,4.7],notes:'تحسّن طفيف في التحصيل، وبدء خطة المستحقات المتقادمة.',by:'law',at:'2026-11-09',review:'معتمد.',rby:'sec',rat:'2026-11-10'},
+      {id:602,co:'clinic',month:'2026-11',status:'submitted',rev:975,exp:776,cash:1120,coll:91,payables:380,kv:[3420,78,9,91,4.6],notes:'ارتفاع الزيارات بعد حملة التوعية، والإلغاءات ما زالت فوق المستهدف.',by:'clinic',at:'2026-11-11'},
+      {id:603,co:'factory',month:'2026-11',status:'returned',rev:1250,exp:1185,cash:610,coll:76,payables:720,kv:[1180,82,6.5,11,76],notes:'',by:'factory',at:'2026-11-10',review:'أرفقوا خطة معالجة التأخير وتفصيل المستحقات المتقادمة.',rby:'sec',rat:'2026-11-11'},
+      {id:604,co:'edu',month:'2026-11',status:'draft',rev:750,exp:630,cash:null,coll:null,payables:null,kv:[640,88,null,null,null],notes:'',by:'edu',at:''},
+    ],
+    minutes:[
+      {id:701,date:'2026-10-21',type:'تأسيسي',att:{chair:1,vice:1,sec:1,fin:1,clinic:1,factory:1,law:1,edu:1},items:[{t:'الإطار التنظيمي للمجلس',n:'اعتُمد الإطار التنظيمي وآلية عمل المجلس ومستويات الصلاحيات.'},{t:'الوضع الراهن للشركات',n:'عرض كل ممثل الوضع العام لشركته وأبرز التحديات.'},{t:'أولويات أول ٩٠ يومًا',n:'حُدّدت مراحل خطة التأسيس ومخرجاتها.'}],decs:[2,3,7],status:'approved',conf:{chair:'2026-10-23',vice:'2026-10-23',sec:'2026-10-22',fin:'2026-10-23',clinic:'2026-10-24',factory:'2026-10-24',law:'2026-10-23',edu:'2026-10-26'}},
+      {id:702,date:'2026-11-25',type:'شهري',att:{chair:1,vice:1,sec:1,fin:1,clinic:1,factory:1,law:1,edu:1},items:AGENDA.map(x=>({t:x.t,n:''})),decs:[],status:'draft',conf:{}},
+    ],
+    votes:[
+      {id:801,title:'تمويل مرحلي لخط التشطيب في العلامة الكبرى',co:'factory',desc:'تمويل مرحلي بقيمة ٣٥٠ ألف ريال لوردية إضافية مدة شهرين لمعالجة تأخر التسليم.',amount:350,opened:'2026-11-10',deadline:'2026-11-16',v:{chair:'yes',vice:'yes',fin:'yes'},conflict:['factory'],status:'open',dec:null},
+      {id:802,title:'توحيد مزوّد تقنية المعلومات للشركات الأربع',co:'all',desc:'التعاقد مع مزوّد واحد بدل أربعة عقود منفصلة لخفض التكلفة وتوحيد الدعم.',amount:0,opened:'2026-10-28',deadline:'2026-11-04',v:{chair:'yes',vice:'yes',sec:'yes',fin:'yes',clinic:'yes',factory:'no',law:'abstain',edu:'yes'},conflict:[],status:'closed',dec:null},
+    ],
+    // approval requests: stage 0 secretary review → 1 council study → 2 approval by the authority holder → 3 done
+    requests:[
+      {id:901,co:'factory',lvl:2,title:'مصروف صيانة طارئة لآلة القص',amount:180,budgeted:false,by:'factory',date:'2026-11-06',stage:1,status:'قيد الإجراء',files:[],steps:[{who:'factory',act:'تقديم الطلب',note:'توقف الآلة يؤخر ثلاث طلبيات.',d:'2026-11-06'},{who:'sec',act:'رفع إلى «دراسة المجلس ورفع التوصية»',note:'',d:'2026-11-07'}]},
+      {id:902,co:'clinic',lvl:4,title:'افتتاح فرع ثانٍ في شمال جدة',amount:2400,budgeted:false,by:'clinic',date:'2026-11-02',stage:0,status:'معاد للاستكمال',files:[],steps:[{who:'clinic',act:'تقديم الطلب',note:'',d:'2026-11-02'},{who:'sec',act:'إعادة للاستكمال',note:'يلزم إرفاق دراسة مالية وتشغيلية.',d:'2026-11-04'}]},
+      {id:903,co:'edu',lvl:3,title:'تعيين مدير عمليات',amount:0,budgeted:true,by:'edu',date:'2026-11-08',stage:2,status:'قيد الإجراء',files:[],steps:[{who:'edu',act:'تقديم الطلب',note:'المنصب شاغر منذ ثلاثة أشهر ويؤثر على جاهزية التنفيذ.',d:'2026-11-08'},{who:'sec',act:'رفع إلى «دراسة المجلس ورفع التوصية»',note:'',d:'2026-11-09'},{who:'vice',act:'رفع إلى «اعتماد صاحب الصلاحية»',note:'يوصي المجلس بالتعيين ضمن الموازنة.',d:'2026-11-11'}]},
+      {id:904,co:'law',lvl:2,title:'اشتراك منصة بحث قانوني',amount:45,budgeted:false,by:'law',date:'2026-10-25',stage:3,status:'معتمد',files:[],steps:[{who:'law',act:'تقديم الطلب',note:'',d:'2026-10-25'},{who:'sec',act:'رفع إلى «دراسة المجلس ورفع التوصية»',note:'',d:'2026-10-26'},{who:'fin',act:'رفع إلى «اعتماد صاحب الصلاحية»',note:'التكلفة مبررة بتوفير وقت البحث.',d:'2026-10-28'},{who:'chair',act:'اعتماد الطلب',note:'',d:'2026-10-30'}]},
+    ],
+    services:[
+      {id:1001,name:'المحاسبة والرواتب',prov:'all',cost:85,basis:'rev',use:{},ok:{clinic:1,factory:1,law:1}},
+      {id:1002,name:'تقنية المعلومات والدعم الفني',prov:'edu',cost:60,basis:'equal',use:{},ok:{clinic:1,law:1,edu:1}},
+      {id:1003,name:'المراجعة القانونية للعقود',prov:'law',cost:40,basis:'use',use:{clinic:30,factory:45,law:0,edu:25},ok:{clinic:1,factory:1,law:1,edu:1}},
+      {id:1004,name:'التسويق والهوية',prov:'all',cost:50,basis:'rev',use:{},ok:{}},
+    ],
+    people:{
+      clinic:{head:86,vac:4,turn:9,sat:4.1,key:[['المدير الطبي','مشغول'],['مدير العمليات','مشغول'],['رئيس التمريض','شاغر']]},
+      factory:{head:142,vac:7,turn:14,sat:3.6,key:[['مدير المصنع','مشغول'],['مدير الجودة','قيد التعيين'],['مدير المبيعات','مشغول']]},
+      law:{head:24,vac:1,turn:6,sat:4.3,key:[['الشريك المدير','مشغول'],['مدير التحصيل','شاغر']]},
+      edu:{head:38,vac:3,turn:11,sat:3.9,key:[['المدير التنفيذي','مشغول'],['مدير العمليات','قيد التعيين'],['مدير البرامج','مشغول']]},
+    },
+    evals:{'2026-Q4':{chair:[4,4,3,4,3,4,4,3],sec:[4,3,3,4,2,4,3,3],fin:[3,4,3,3,3,4,3,2]}},
   };
 }
 const KEY='majlis-platform-v1';
 let S;
 // older saves predate the clients/files/tasks/risks modules: fill any missing section from the seed
 try{ const st=JSON.parse(localStorage.getItem(KEY)); S = st ? Object.assign(seed(), st) : seed(); }catch(e){ S = seed(); }
+S.seq=Math.max(S.seq||0,2000);
+// six-month KPI history for sparklines (older saves have none)
+COMPANIES.forEach(c=>S.kpis[c.id].forEach((k,i)=>{ if(!k.h){ k.h=[0.86,0.9,0.93,0.95,0.98,1].map((f,j)=>+(k.v*(k.low?2-f:f)*(1+((i+j)%3-1)*0.015)).toFixed(1)); k.h[5]=k.v; } }));
 const save = ()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 
 /* ================= Helpers ================= */
@@ -656,11 +717,20 @@ const ICON = {
   cog:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
   bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  reports:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
+  minutes:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/>',
+  vote:'<path d="M4 14h16v6H4z"/><path d="M8 14l2.5-9 6 1.8L14 14"/>',
+  req:'<path d="M12 3l8 3.5V12c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6.5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  pack:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8.5 3v18M12 8h5M12 12h5"/>',
+  fin:'<path d="M4 4v16h16"/><path d="M8 15l3.5-4 3 2.5L19 8"/>',
+  svc:'<circle cx="12" cy="12" r="3"/><circle cx="5" cy="5.5" r="2"/><circle cx="19" cy="5.5" r="2"/><circle cx="12" cy="20" r="1.8"/><path d="M6.5 7l3.3 3.2M17.5 7l-3.3 3.2M12 15v3.2"/>',
+  eval:'<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  kpi:'<path d="M4 20h16"/><path d="M6 16v-3M10 16V8M14 16v-5M18 16V5"/>',
 };
 function renderTabbar(route){
   const late = S.decisions.filter(d=>inScope(d.co)&&effStatus(d)==='متأخر').length;
   const t=(h,ic,lbl,extra='')=>`<a href="#${h}" class="${route===h?'on':''}"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${lbl}${extra}</a>`;
-  $('#tabbar').innerHTML = t('dashboard','dash','اللوحة') + t('decisions','dec','القرارات', late?`<span class="badge">${n(late)}</span>`:'') + t('clients','clients','العملاء') + t('files','files','المستندات')
+  $('#tabbar').innerHTML = t('dashboard','dash','اللوحة') + t('decisions','dec','القرارات', late?`<span class="badge">${n(late)}</span>`:'') + t('clients','clients','العملاء') + t('reports','reports','التقارير')
     + `<button type="button" onclick="toggleMenu(true)"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>المزيد</button>`;
 }
 window.toggleMenu=open=>{ $('#aside').classList.toggle('open',open); $('#scrim').classList.toggle('open',open); };
@@ -669,14 +739,25 @@ function renderNav(route){
   const lateT = S.tasks.filter(t=>inScope(t.co)&&t.status!=='done'&&parseD(t.due)<today()).length;
   const a=(h,ic,t,extra='')=>`<a href="#${h}" class="${route===h?'on':''}"><svg viewBox="0 0 24 24">${ICON[ic]}</svg>${t}${extra}</a>`;
   const b=x=>x?`<span class="badge">${n(x)}</span>`:'';
+  const pendS=REVIEWERS.includes(S.me)?S.subs.filter(s=>s.month===curMonth()&&s.status==='submitted').length:(co(S.me)&&['draft','returned'].includes((subOf(S.me)||{status:'draft'}).status)?1:0);
+  const myVotes=S.votes.filter(v=>v.status==='open'&&!v.v[S.me]&&!v.conflict.includes(S.me)).length, myReq=S.requests.filter(r=>inScope(r.co)&&myReqTurn(r)).length;
   $('#nav').innerHTML = a('dashboard','dash','لوحة المجلس')
     + `<div class="grp">الشركات</div>`
     + COMPANIES.filter(c=>inScope(c.id)).map(c=>`<a href="#company-${c.id}" class="${route==='company-'+c.id?'on':''}"><i class="dot" style="background:${c.hex}"></i>${c.short}</a>`).join('')
+    + `<div class="grp">الدورة الشهرية</div>`
+    + a('reports','reports','التقارير الشهرية', b(pendS))
+    + a('minutes','minutes','محاضر الاجتماعات')
+    + a('votes','vote','التصويت بالتمرير', b(myVotes))
+    + a('requests','req','طلبات الاعتماد', b(myReq))
+    + a('pack','pack','حزمة الاجتماع')
     + `<div class="grp">الأعمال</div>`
     + a('clients','clients','العملاء')
     + a('files','files','المستندات')
     + a('tasks','tasks','المهام والمتابعة', b(lateT))
     + a('calendar','cal','التقويم')
+    + a('finance','fin','المالية والموازنة')
+    + a('services','svc','الخدمات المشتركة')
+    + a('people','team','الموارد البشرية')
     + `<div class="grp">الحوكمة</div>`
     + a('decisions','dec','سجل القرارات', b(late))
     + a('meetings','meet','الاجتماعات والنصاب')
@@ -684,7 +765,9 @@ function renderNav(route){
     + a('authority','auth','مستويات الصلاحيات')
     + a('plan','plan','خطة ٩٠ يومًا')
     + a('members','team','أعضاء المجلس')
+    + a('evaluation','eval','تقييم المجلس')
     + `<div class="grp">النظام</div>`
+    + a('kpiset','kpi','إعداد المؤشرات')
     + a('activity','log','سجل النشاط')
     + a('settings','cog','الإعدادات');
   $('#roleBox').innerHTML = `<label>تعمل الآن بصفة<select onchange="setRole(this.value)">${MEMBERS.map(m=>`<option value="${m.key}" ${S.me===m.key?'selected':''}>${shortName(m.name)} — ${m.role}</option>`).join('')}</select></label>`;
@@ -736,6 +819,11 @@ function viewDashboard(){
       ${late.length? late.map(d=>`<div class="row between" style="padding:9px 0;border-bottom:1px solid var(--line2)"><span><b>${esc(d.desc)}</b><span class="muted small"> · ${coName(d.co)} · ${esc(d.owner)}</span></span><span class="row">${pill('متأخر')}<span class="small muted">كان مستحقًا ${fmtD(d.due)}</span></span></div>`).join('') : '<div class="muted">لا توجد قرارات متأخرة.</div>'}
       ${COMPANIES.filter(c=>coHealth(c.id)==='crit').map(c=>`<div class="row between" style="padding:9px 0;border-bottom:1px solid var(--line2)"><span><b>${c.short}</b><span class="muted small"> · مؤشرات متعددة دون المستهدف — يُطلب خطة معالجة (المستوى ٢)</span></span>${stPill('crit')}</div>`).join('')}
     </div>
+    <div class="card" style="margin-top:16px"><h3>الدورة الشهرية — ${monthName(curMonth())} <a class="more-link" href="#reports">التقارير الشهرية ←</a></h3>
+      <div class="cycle">${COMPANIES.map(c=>{const st=(subOf(c.id)||{status:'draft'}).status; return `<div class="cy" onclick="openSub('${c.id}')"><span class="row" style="gap:6px">${dot(c.id)}<b>${c.short}</b></span><span class="pill ${subCls[st]}">التقرير: ${SUBST[st]}</span></div>`;}).join('')}
+      <a class="cy" href="#requests"><b>طلبات الاعتماد</b><span class="pill s-info">${n(S.requests.filter(r=>r.status==='قيد الإجراء').length)} قيد الإجراء</span></a>
+      <a class="cy" href="#votes"><b>التصويت بالتمرير</b><span class="pill s-info">${n(S.votes.filter(v=>v.status==='open').length)} مفتوح</span></a>
+      <a class="cy" href="#pack"><b>حزمة الاجتماع</b><span class="pill s-idle">${fmtD(S.meeting.date)}</span></a></div></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));margin-top:16px">
       <div class="card"><h3>المواعيد القادمة <a class="more-link" href="#calendar">التقويم ←</a></h3>${upcoming(14,7)}</div>
       <div class="card"><h3>العملاء والمستحقات <a class="more-link" href="#clients">العملاء ←</a></h3>
@@ -761,7 +849,7 @@ function viewCompany(id){
       <div class="card"><h3>الإيرادات والمصروفات <small>آخر ستة أشهر</small></h3>${barPair(id)}</div>
       <div class="card"><h3>مؤشرات الأداء <small>الفعلي مقابل المستهدف</small></h3>
         ${k.map((x,i)=>{const s=kpiState(x); const ratio=x.low? Math.min(1,x.g/x.v) : Math.min(1,x.v/x.g);
-          return `<div class="kpi"><div class="row between"><span>${x.t}</span>${stPill(s)}</div>
+          return `<div class="kpi"><div class="row between"><span class="row" style="gap:8px;flex-wrap:wrap">${x.t}${spark(x.h,c.hex,70,22)}</span>${stPill(s)}</div>
           <div class="row between" style="margin-top:4px"><b style="font-size:18px">${n(x.v,1)}${x.u}</b><span class="muted small">المستهدف ${n(x.g,1)}${x.u}${x.low?' (الأقل أفضل)':''}</span></div>
           <div class="meter"><i style="width:${ratio*100}%;background:${c.hex}"></i></div></div>`;}).join('')}
       </div>
@@ -832,7 +920,7 @@ window.openDecision=function(id, presetCo){
   <footer><button class="btn primary" onclick="saveDecision(${id||'null'})">حفظ</button><button class="btn" onclick="closeModal()">إلغاء</button>${id?`<button class="btn" style="margin-right:auto;color:var(--crit)" onclick="delDecision(${id})">حذف</button>`:''}</footer>`;
   $('#modal').classList.add('open'); setTimeout(()=>$('#f_desc').focus(),50);
 };
-window.closeModal=()=>{ $('#modal').classList.remove('open'); $('#modalBox').className='modal'; (window._urls||[]).forEach(u=>URL.revokeObjectURL(u)); window._urls=[]; };
+window.closeModal=()=>{ $('#modal').classList.remove('open'); $('#modalBox').className='modal'; (window._urls||[]).forEach(u=>URL.revokeObjectURL(u)); window._urls=[]; window._fromMeeting=null; };
 window.saveDecision=function(id){
   const v={co:$('#f_co').value,desc:$('#f_desc').value.trim(),owner:$('#f_owner').value,due:$('#f_due').value,status:$('#f_status').value,evidence:$('#f_ev').value.trim(),reason:$('#f_reason').value.trim(),fileId:+$('#f_file').value||null};
   const err=$('#f_err'); err.style.display='block';
@@ -843,7 +931,8 @@ window.saveDecision=function(id){
   const was=id?S.decisions.find(x=>x.id===id).status:null;
   if(id){ Object.assign(S.decisions.find(x=>x.id===id),v); } else { id=S.nextId++; S.decisions.push({id,...v}); }
   logAct(v.status==='مكتمل'&&was!=='مكتمل' ? `أغلق القرار ${decRef(id)} بدليل «${v.evidence}»` : `${was===null?'أضاف':'حدّث'} القرار ${decRef(id)}`);
-  save(); closeModal(); render(); toast('تم حفظ القرار');
+  const fm=window._fromMeeting; if(fm){ const m=S.minutes.find(x=>x.id===fm); if(m&&!m.decs.includes(id)) m.decs.push(id); }
+  save(); closeModal(); render(); toast('تم حفظ القرار'); if(fm) openMinutes(fm);
 };
 function ask(title,msg,yes,onYes){
   $('#modalBox').innerHTML=`<header><h2>${title}</h2><button class="x" onclick="closeModal()" aria-label="إغلاق">×</button></header><div class="body"><p class="full">${msg}</p></div><footer><button class="btn primary" id="askYes" style="background:var(--crit);border-color:var(--crit)">${yes}</button><button class="btn" onclick="closeModal()">تراجع</button></footer>`;
@@ -1002,7 +1091,7 @@ function logAct(what){ S.log.unshift({ts:Date.now(),who:S.me,what}); if(S.log.le
 const rtf=new Intl.RelativeTimeFormat('ar',{numeric:'auto'});
 function ago(ts){ const s=(Date.now()-ts)/1000; if(s<60) return 'الآن'; if(s<3600) return rtf.format(-Math.round(s/60),'minute'); if(s<86400) return rtf.format(-Math.round(s/3600),'hour'); if(s<86400*7) return rtf.format(-Math.round(s/86400),'day'); return fmtD(iso(new Date(ts))); }
 function copyBox(title,text,hint){
-  openModal(mhead(title)+`<div class="body"><p class="full small muted">${hint}</p><textarea id="cbOut" class="full" rows="8" readonly dir="ltr">${esc(text)}</textarea></div><footer><button class="btn primary" id="cbCopy">نسخ</button><button class="btn" onclick="closeModal()">إغلاق</button></footer>`);
+  openModal(mhead(title)+`<div class="body"><p class="full small muted">${hint}</p><textarea id="cbOut" class="full" rows="8" readonly dir="auto">${esc(text)}</textarea></div><footer><button class="btn primary" id="cbCopy">نسخ</button><button class="btn" onclick="closeModal()">إغلاق</button></footer>`);
   const fb=()=>{ const t=$('#cbOut'); t.focus(); t.select(); toast('النص محدد، انسخه يدويًا'); };
   $('#cbCopy').onclick=()=>{ try{ navigator.clipboard.writeText(text).then(()=>toast('تم النسخ')).catch(fb); }catch(e){ fb(); } };
 }
@@ -1031,6 +1120,7 @@ function events(){
   S.tasks.filter(t=>inScope(t.co)&&t.due&&t.status!=='done').forEach(t=>ev.push({d:t.due,t:'مهمة: '+t.title,k:isLateTask(t)?'late':'task',go:`openTask(${t.id})`}));
   S.clients.filter(c=>inScope(c.co)&&c.renew).forEach(c=>ev.push({d:c.renew,t:'تجديد عقد: '+clName(c),k:'renew',go:`openClient(${c.id})`}));
   S.risks.filter(r=>inScope(r.co)&&r.review&&r.status!=='مغلق').forEach(r=>ev.push({d:r.review,t:'مراجعة خطر: '+r.title,k:'risk',go:`openRisk(${r.id})`}));
+  S.votes.filter(v=>v.status==='open'&&inScope(v.co)).forEach(v=>ev.push({d:v.deadline,t:'نهاية تصويت: '+v.title,k:'dl',go:"location.hash='votes'"}));
   return ev;
 }
 function upcoming(days,max){
@@ -1047,13 +1137,18 @@ function alerts(){
   S.risks.filter(r=>inScope(r.co)&&r.status!=='مغلق'&&r.L*r.I>=16).forEach(r=>a.push({l:'crit',t:'خطر حرج',s:r.title,go:`openRisk(${r.id})`}));
   S.clients.filter(c=>inScope(c.co)&&c.bal>0&&c.age>90).forEach(c=>a.push({l:'warn',t:'مستحقات تجاوزت ٩٠ يومًا',s:`${clName(c)} · ${money(c.bal)} ريال`,go:`openClient(${c.id})`}));
   S.clients.filter(c=>inScope(c.co)&&c.renew&&daysTo(c.renew)>=0&&daysTo(c.renew)<=45).forEach(c=>a.push({l:'warn',t:`تجديد عقد خلال ${n(daysTo(c.renew))} يومًا`,s:clName(c),go:`openClient(${c.id})`}));
-  const rd=addBiz(parseD(S.meeting.date),-3), left=Math.round((rd-today())/864e5);
-  if(left>=0&&left<=10) COMPANIES.filter(c=>inScope(c.id)&&S.reports[c.id].some(x=>!x)).forEach(c=>a.push({l:'warn',t:'تقرير شهري غير مكتمل',s:`${c.short} · آخر موعد ${fmtD(iso(rd))}`,go:`location.hash='company-${c.id}'`}));
+  const rd=subDl(), left=Math.round((rd-today())/864e5);
+  COMPANIES.filter(c=>inScope(c.id)).forEach(c=>{ const sb=subOf(c.id), st=sb?sb.status:'draft';
+    if((st==='draft'||st==='returned')&&left<=10) a.push({l:left<0?'crit':'warn',t:st==='returned'?'تقرير شهري معاد للتعديل':'تقرير شهري لم يُرسل',s:`${c.short} · آخر موعد ${fmtD(iso(rd))}`,go:`openSub('${c.id}')`});
+    if(st==='submitted'&&REVIEWERS.includes(S.me)) a.push({l:'warn',t:'تقرير شهري بانتظار مراجعتك',s:c.short,go:`openSub('${c.id}')`}); });
+  S.requests.filter(r=>inScope(r.co)&&myReqTurn(r)).forEach(r=>a.push({l:'warn',t:'طلب اعتماد بانتظار إجرائك',s:r.title,go:`openRequest(${r.id})`}));
+  S.votes.filter(v=>v.status==='open'&&!v.v[S.me]&&!v.conflict.includes(S.me)).forEach(v=>a.push({l:'warn',t:'تصويت بانتظار صوتك',s:v.title+' · ينتهي '+fmtD(v.deadline),go:"location.hash='votes'"}));
+  S.minutes.filter(m=>m.status==='circulated'&&m.att[S.me]&&!m.conf[S.me]).forEach(m=>a.push({l:'warn',t:'محضر بانتظار تأكيدك',s:'اجتماع '+fmtD(m.date),go:`openMinutes(${m.id})`}));
   return a;
 }
 window.openAlerts=function(){
   const a=alerts();
-  openModal(mhead('التنبيهات')+`<div style="padding:8px 22px 20px">${a.length?a.map(x=>`<button class="sitem" onclick="closeModal();${x.go}"><span class="pill ${x.l==='crit'?'s-crit':'s-warn'}">${x.l==='crit'?'عاجل':'متابعة'}</span><span><b>${esc(x.t)}</b><span class="small muted">${esc(x.s)}</span></span></button>`).join(''):'<div class="empty">لا توجد تنبيهات.</div>'}</div>`);
+  openModal(mhead('التنبيهات')+`<div style="padding:8px 22px 20px">${a.length?a.map(x=>`<button class="sitem" onclick="closeModal();${x.go}"><span class="pill ${x.l==='crit'?'s-crit':'s-warn'}">${x.l==='crit'?'عاجل':'متابعة'}</span><span><b>${esc(x.t)}</b><span class="small muted">${esc(x.s)}</span></span></button>`).join(''):'<div class="empty">لا توجد تنبيهات.</div>'}</div><footer><button class="btn primary" onclick="digest()">نسخ الملخص الأسبوعي للواتساب</button></footer>`);
 };
 window.openSearch=function(){
   openModal(mhead('البحث الشامل')+`<div style="padding:16px 22px 22px"><input type="search" id="gq" placeholder="ابحث في القرارات والعملاء والمستندات والمهام والمخاطر…" style="width:100%;font-size:15px;padding:11px 14px" oninput="runSearch(this.value)"><div id="gres" class="sres"><div class="muted small" style="padding:14px 0">اكتب حرفين على الأقل.</div></div></div>`);
@@ -1068,6 +1163,9 @@ window.runSearch=function(q){
     ['المستندات',S.files.filter(f=>inScope(f.co)&&(has(f.name)||has(f.tags)||has(f.folder))).map(f=>({t:f.name,s:f.folder+' · '+coName(f.co),c:f.co,go:`openFile(${f.id})`}))],
     ['المهام',S.tasks.filter(t=>inScope(t.co)&&(has(t.title)||has(t.owner))).map(t=>({t:t.title,s:TST[t.status]+' · '+coName(t.co),c:t.co,go:`openTask(${t.id})`}))],
     ['المخاطر',S.risks.filter(r=>inScope(r.co)&&(has(r.title)||has(r.mit))).map(r=>({t:r.title,s:rLbl[rLvl(r.L*r.I)]+' · '+coName(r.co),c:r.co,go:`openRisk(${r.id})`}))],
+    ['طلبات الاعتماد',S.requests.filter(r=>inScope(r.co)&&has(r.title)).map(r=>({t:r.title,s:r.status+' · '+coName(r.co),c:r.co,go:`openRequest(${r.id})`}))],
+    ['التصويت',S.votes.filter(v=>inScope(v.co)&&(has(v.title)||has(v.desc))).map(v=>({t:v.title,s:(v.status==='open'?'مفتوح':'مغلق')+' · '+coName(v.co),c:v.co,go:"location.hash='votes'"}))],
+    ['المحاضر',S.minutes.filter(m=>m.items.some(it=>has(it.n)||has(it.t))).map(m=>({t:'محضر اجتماع '+m.type+' · '+fmtD(m.date),s:MST[m.status],c:'all',go:`openMinutes(${m.id})`}))],
     ['الأعضاء',MEMBERS.filter(m=>has(m.name)||has(m.role)).map(m=>({t:m.name,s:m.role,c:'all',go:"location.hash='members'"}))],
   ].filter(g=>g[1].length);
   box.innerHTML=groups.length?groups.map(([g,items])=>`<div class="sgrp">${g} <span class="muted">${n(items.length)}</span></div>`+items.slice(0,6).map(i=>`<button class="sitem" onclick="closeModal();${i.go}">${dot(i.c)}<span><b>${esc(i.t)}</b><span class="small muted">${esc(i.s)}</span></span></button>`).join('')).join(''):'<div class="empty">لا نتائج مطابقة.</div>';
@@ -1447,12 +1545,393 @@ window.restoreIn=function(){
 };
 window.resetAll=function(){ ask('إعادة تعيين البيانات','ستعود جميع البيانات التجريبية في هذا المتصفح إلى حالتها الأصلية، وتُحذف تعديلاتك والملفات المرفوعة.','إعادة التعيين',async()=>{ await BLOB.clear(); S=seed(); save(); render(); toast('أُعيدت البيانات التجريبية'); }); };
 
+/* ================= v3: monthly cycle, approvals, finance, services, people, KPIs, pack, evaluation ================= */
+const curMonth=()=>S.meeting.date.slice(0,7);
+const monthName=ym=>new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{month:'long',year:'numeric'}).format(parseD(ym+'-01'));
+const SUBST={draft:'لم يُرسل',submitted:'بانتظار المراجعة',returned:'معاد للتعديل',approved:'معتمد'};
+const subCls={draft:'s-idle',submitted:'s-info',returned:'s-warn',approved:'s-good'};
+const REVIEWERS=['sec','chair','vice'];
+const subOf=c=>S.subs.find(s=>s.co===c&&s.month===curMonth());
+const subDl=()=>addBiz(parseD(S.meeting.date),-3);
+const numIn=(id,v,extra='')=>`<input type="number" step="any" id="${id}" value="${v??''}" ${extra}>`;
+function spark(h,col,w=90,hh=26){
+  if(!h||h.length<2) return '';
+  const mn=Math.min(...h),mx=Math.max(...h),r=mx-mn||1;
+  const p=h.map((v,i)=>[(w-3-i*(w-6)/(h.length-1)).toFixed(1),(hh-4-(v-mn)/r*(hh-8)).toFixed(1)]); // time runs right→left
+  return `<svg width="${w}" height="${hh}" viewBox="0 0 ${w} ${hh}" aria-hidden="true" style="flex:none"><polyline points="${p.map(x=>x.join(',')).join(' ')}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${p[p.length-1][0]}" cy="${p[p.length-1][1]}" r="2.8" fill="${col}"/></svg>`;
+}
+
+/* ---- Monthly reports ---- */
+function viewReports(){
+  const dl=subDl(), list=COMPANIES.filter(c=>inScope(c.id));
+  const st=c=>(subOf(c.id)||{status:'draft'}).status, cnt=k=>list.filter(c=>st(c)===k).length;
+  return header('التقارير الشهرية',`دورة ${monthName(curMonth())} · آخر موعد للإرسال ${fmtD(iso(dl))} (قبل الاجتماع بثلاثة أيام عمل)`)
+  + `<div class="grid tiles">${[['approved','معتمدة'],['submitted','بانتظار المراجعة'],['returned','معادة للتعديل'],['draft','لم تُرسل']].map(([k,l])=>`<div class="card tile"><div class="lbl">${l}</div><div class="val">${n(cnt(k))} <span class="small muted">/ ${n(list.length)}</span></div></div>`).join('')}</div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));margin-top:16px">
+    ${list.map(c=>{const s=subOf(c.id), k=s?s.status:'draft', onTime=s&&s.at?parseD(s.at)<=dl:null, lateNow=!s?.at&&today()>dl;
+      const act=S.me===c.id&&(k==='draft'||k==='returned')?'تعبئة التقرير وإرساله':(REVIEWERS.includes(S.me)&&k==='submitted'?'مراجعة واعتماد':'عرض التقرير');
+      return `<div class="card co" onclick="openSub('${c.id}')"><i class="bar" style="background:${c.hex}"></i>
+        <div class="row between"><span class="name">${c.short}</span><span class="pill ${subCls[k]}">${SUBST[k]}</span></div>
+        <div class="kv"><div><span>الإيرادات</span><b>${s&&s.rev!=null?money(s.rev):'—'}</b></div><div><span>المصروفات</span><b>${s&&s.exp!=null?money(s.exp):'—'}</b></div>
+        <div><span>تاريخ الإرسال</span><b style="font-size:14px">${s&&s.at?fmtD(s.at):'—'}</b></div><div><span>الالتزام بالموعد</span><b style="font-size:14px">${onTime===null?(lateNow?'<span class="down">متأخر</span>':'—'):onTime?'<span class="up">في الموعد</span>':'<span class="down">متأخر</span>'}</b></div></div>
+        ${k==='returned'&&s.review?`<div class="notice" style="margin-top:10px">ملاحظة المراجع: ${esc(s.review)}</div>`:''}
+        <button class="btn ${act==='عرض التقرير'?'':'primary'}" style="margin-top:12px">${act}</button></div>`;}).join('')}
+    </div>
+    <p class="small muted" style="margin-top:12px">يعبّئ ممثل كل شركة تقريرها ويرسله، ويراجعه أمين المجلس فيعتمده أو يعيده بملاحظات. الأرقام المعتمدة تحدّث لوحة المجلس وملف الشركة تلقائيًا — جرّب ذلك بتغيير «تعمل الآن بصفة».</p>`;
+}
+window.openSub=function(c){
+  let s=subOf(c);
+  if(!s){ s={id:uid(),co:c,month:curMonth(),status:'draft',rev:null,exp:null,cash:null,coll:null,payables:null,kv:S.kpis[c].map(()=>null),notes:'',by:c,at:''}; S.subs.push(s); save(); }
+  const edit=S.me===c&&(s.status==='draft'||s.status==='returned'), rev=REVIEWERS.includes(S.me)&&s.status==='submitted', ro=edit?'':'disabled';
+  const f=(lbl,k)=>field(lbl,numIn('sb_'+k,s[k],ro));
+  openModal(mhead(`التقرير الشهري — ${co(c).short}`)+`<div class="body">
+    <div class="full row between"><span class="small muted">${monthName(s.month)} · آخر موعد ${fmtD(iso(subDl()))}</span><span class="pill ${subCls[s.status]}">${SUBST[s.status]}</span></div>
+    ${!edit&&!rev&&s.status!=='approved'?`<div class="full notice">${s.status==='submitted'?'التقرير بانتظار مراجعة أمين المجلس.':'يعبّئ هذا التقرير ممثل '+co(c).short+' — غيّر «تعمل الآن بصفة» لتجربة ذلك.'}</div>`:''}
+    ${s.status==='returned'&&s.review?`<div class="full notice">ملاحظة المراجع: ${esc(s.review)}</div>`:''}
+    ${f('الإيرادات (ألف ريال)','rev')}${f('المصروفات (ألف ريال)','exp')}${f('السيولة المتاحة (ألف ريال)','cash')}${f('الالتزامات القادمة (ألف ريال)','payables')}${f('نسبة التحصيل ٪','coll')}
+    <div class="full sec-title">مؤشرات الأداء</div>
+    ${S.kpis[c].map((k,i)=>field(`${esc(k.t)} <span class="muted">· المستهدف ${n(k.g,1)}${k.u}</span>`,numIn('sb_k'+i,s.kv[i],ro))).join('')}
+    ${field('أبرز الإنجازات والتحديات والقرارات المطلوبة',`<textarea id="sb_notes" rows="3" ${ro}>${esc(s.notes)}</textarea>`,1)}
+    ${rev?field('ملاحظة المراجعة (مطلوبة عند الإعادة)',`<textarea id="sb_review" rows="2"></textarea>`,1):''}
+    ${s.status==='approved'?`<div class="full small muted">اعتمده ${esc(shortName(memberOf(s.rby).name))} في ${fmtD(s.rat)}</div>`:''}
+    <div class="err" id="sb_err"></div></div>
+  <footer style="flex-wrap:wrap">${edit?`<button class="btn primary" onclick="subAct('${c}','send')">إرسال للمراجعة</button><button class="btn" onclick="subAct('${c}','save')">حفظ كمسودة</button>`:''}${rev?`<button class="btn primary" onclick="subAct('${c}','approve')">اعتماد</button><button class="btn" onclick="subAct('${c}','return')">إعادة للتعديل</button>`:''}<button class="btn" onclick="closeModal()">إغلاق</button></footer>`);
+};
+window.subAct=function(c,a){
+  const s=subOf(c), err=$('#sb_err'), F5=['rev','exp','cash','payables','coll'];
+  if(a==='save'||a==='send'){
+    const g=k=>{ const v=$('#sb_'+k).value; return v===''?null:+v; };
+    F5.forEach(k=>s[k]=g(k)); s.kv=S.kpis[c].map((_,i)=>g('k'+i)); s.notes=$('#sb_notes').value.trim();
+    if(a==='send'){
+      if(F5.some(k=>s[k]==null)||s.kv.some(v=>v==null)){ err.style.display='block'; err.textContent='أكمل جميع الأرقام والمؤشرات قبل الإرسال.'; save(); return; }
+      s.status='submitted'; s.at=iso(today()); s.by=S.me; logAct(`أرسل التقرير الشهري لـ ${co(c).short}`);
+    }
+    save(); closeModal(); render(); toast(a==='send'?'أُرسل التقرير للمراجعة':'حُفظت المسودة'); return;
+  }
+  const note=$('#sb_review').value.trim();
+  if(a==='return'){ if(!note){ err.style.display='block'; err.textContent='اكتب ملاحظة توضح المطلوب تعديله.'; return; } Object.assign(s,{status:'returned',review:note,rby:S.me,rat:iso(today())}); logAct(`أعاد التقرير الشهري لـ ${co(c).short} للتعديل`); }
+  if(a==='approve'){
+    Object.assign(s,{status:'approved',review:note,rby:S.me,rat:iso(today())});
+    const f=S.fin[c]; f.rev[f.rev.length-1]=s.rev; f.exp[f.exp.length-1]=s.exp; Object.assign(f,{cash:s.cash,coll:s.coll,payables:s.payables});
+    S.kpis[c].forEach((k,i)=>{ if(s.kv[i]!=null){ k.v=s.kv[i]; if(k.h) k.h[k.h.length-1]=s.kv[i]; } });
+    S.reports[c]=REPORT_ITEMS.map(()=>1); logAct(`اعتمد التقرير الشهري لـ ${co(c).short}`);
+  }
+  save(); closeModal(); render(); toast(a==='approve'?'اعتُمد التقرير وحُدّثت اللوحة':'أُعيد التقرير للتعديل');
+};
+
+/* ---- Minutes ---- */
+const MST={draft:'مسودة',circulated:'معمّم للتأكيد',approved:'معتمد'}, mCls={draft:'s-idle',circulated:'s-info',approved:'s-good'};
+function viewMinutes(){
+  const list=[...S.minutes].sort((a,b)=>b.date.localeCompare(a.date));
+  return header('محاضر الاجتماعات','يُعمَّم المحضر خلال يومي عمل، ويُعتمد بتأكيد جميع الأعضاء الحاضرين',S.me==='sec'?`<button class="btn primary" onclick="newMeeting()">+ اجتماع استثنائي</button>`:'')
+  + `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))">${list.map(m=>{const att=MEMBERS.filter(x=>m.att[x.key]), cf=att.filter(x=>m.conf[x.key]).length;
+    return `<div class="card co" onclick="openMinutes(${m.id})"><div class="row between"><span class="name">اجتماع ${m.type} · ${fmtD(m.date)}</span><span class="pill ${mCls[m.status]}">${MST[m.status]}</span></div>
+    <div class="kv"><div><span>الحضور</span><b>${n(att.length)} / ${n(MEMBERS.length)}</b></div><div><span>القرارات المتخذة</span><b>${n(m.decs.length)}</b></div>
+    <div><span>تأكيد الأعضاء</span><b>${n(m.status==='draft'?0:cf)} / ${n(att.length)}</b><div class="meter"><i style="width:${att.length&&m.status!=='draft'?cf/att.length*100:0}%;background:var(--gold)"></i></div></div><div><span>موعد التعميم</span><b style="font-size:14px">${fmtD(iso(addBiz(parseD(m.date),2)))}</b></div></div></div>`;}).join('')}</div>
+    ${S.me!=='sec'?'<p class="small muted" style="margin-top:12px">يحرّر المحضر أمين المجلس، ويؤكده كل عضو حاضر بعد تعميمه.</p>':''}`;
+}
+window.newMeeting=function(){ const m={id:uid(),date:iso(today()),type:'استثنائي',att:{},items:[{t:'موضوع الاجتماع',n:''}],decs:[],status:'draft',conf:{}}; S.minutes.push(m); logAct('أنشأ محضر اجتماع استثنائي'); save(); render(); openMinutes(m.id); };
+window.openMinutes=function(id){
+  const m=S.minutes.find(x=>x.id===id); if(!m) return;
+  const ed=m.status==='draft'&&S.me==='sec', ro=ed?'':'disabled';
+  const att=MEMBERS.filter(x=>m.att[x.key]), qok=att.length>=5&&(m.att.chair||m.att.vice);
+  const canConf=m.status==='circulated'&&m.att[S.me]&&!m.conf[S.me];
+  openModal(mhead(`محضر اجتماع ${m.type} — ${fmtD(m.date)}`)+`<div class="body">
+    <div class="full row between"><span class="pill ${mCls[m.status]}">${MST[m.status]}</span>${ed?`<input type="date" value="${m.date}" onchange="mSet(${id},'date',this.value)">`:''}</div>
+    <div class="full sec-title" style="border:none;padding:0">الحضور <span class="small ${qok?'up':'down'}">· ${qok?'النصاب مكتمل':'النصاب غير مكتمل'} (${n(att.length)})</span></div>
+    <div class="full grid q-grid" style="grid-template-columns:1fr 1fr;gap:4px 12px">${MEMBERS.map(x=>`<label class="row small" style="flex-direction:row;cursor:pointer"><input type="checkbox" ${m.att[x.key]?'checked':''} ${ro} onchange="mAtt(${id},'${x.key}',this.checked)">${shortName(x.name)}${m.status!=='draft'&&m.conf[x.key]?' <span class="pill s-good">أكّد</span>':''}</label>`).join('')}</div>
+    <div class="full sec-title">البنود والمناقشات</div>
+    ${m.items.map((it,i)=>field(`${n(i+1)}. ${esc(it.t)}`,`<textarea rows="2" ${ro} onchange="mItem(${id},${i},this.value)" placeholder="ملخص النقاش وما انتهى إليه">${esc(it.n)}</textarea>`,1)).join('')}
+    <div class="full sec-title row between">القرارات المتخذة ${ed?`<button class="btn" onclick="decFromMeeting(${id})">+ قرار من هذا الاجتماع</button>`:''}</div>
+    <div class="full">${m.decs.map(d=>S.decisions.find(x=>x.id===d)).filter(Boolean).map(d=>`<div class="mini" onclick="openDecision(${d.id})"><span>${decRef(d.id)} · ${esc(d.desc)}</span>${pill(effStatus(d))}</div>`).join('')||'<div class="muted small">لم تُسجّل قرارات بعد.</div>'}</div>
+    ${m.status!=='draft'?`<div class="full small muted">التأكيدات: ${att.map(x=>`${shortName(x.name)} ${m.conf[x.key]?'('+fmtD(m.conf[x.key])+')':'— بانتظار'}`).join(' · ')}</div>`:''}
+  </div>
+  <footer style="flex-wrap:wrap">${ed?`<button class="btn primary" onclick="mCirculate(${id})">تعميم المحضر للأعضاء</button>`:''}${canConf?`<button class="btn primary" onclick="mConfirm(${id})">أؤكد اطلاعي على المحضر وموافقتي</button>`:''}<button class="btn" onclick="mText(${id})">نص المحضر</button><button class="btn" onclick="closeModal()">إغلاق</button></footer>`,true);
+};
+const mGet=id=>S.minutes.find(x=>x.id===id);
+window.mSet=(id,k,v)=>{ mGet(id)[k]=v; save(); };
+window.mAtt=(id,k,v)=>{ const m=mGet(id); if(v) m.att[k]=1; else delete m.att[k]; save(); openMinutes(id); };
+window.mItem=(id,i,v)=>{ mGet(id).items[i].n=v; save(); };
+window.decFromMeeting=id=>{ openDecision(null,'all'); window._fromMeeting=id; };
+window.mCirculate=id=>{ const m=mGet(id); if(!MEMBERS.some(x=>m.att[x.key])){ toast('حدّد الحضور أولًا'); return; } m.status='circulated'; m.conf={}; if(m.att.sec) m.conf.sec=iso(today()); logAct(`عمّم محضر اجتماع ${fmtD(m.date)}`); save(); render(); openMinutes(id); toast('عُمّم المحضر للأعضاء'); };
+window.mConfirm=id=>{ const m=mGet(id); m.conf[S.me]=iso(today()); if(MEMBERS.every(x=>!m.att[x.key]||m.conf[x.key])) m.status='approved'; logAct(`أكّد محضر اجتماع ${fmtD(m.date)}`); save(); render(); openMinutes(id); toast(m.status==='approved'?'اكتملت التأكيدات واعتُمد المحضر':'سُجّل تأكيدك'); };
+window.mText=id=>{ const m=mGet(id);
+  const t=[`محضر اجتماع ${m.type} — المجلس الإشرافي المشترك`,`التاريخ: ${fmtD(m.date)}`,`الحضور: ${MEMBERS.filter(x=>m.att[x.key]).map(x=>x.name).join('، ')}`,'',...m.items.map((it,i)=>`${i+1}. ${it.t}${it.n?'\n   '+it.n:''}`),'','القرارات:',...m.decs.map(d=>S.decisions.find(x=>x.id===d)).filter(Boolean).map(d=>`- ${decRef(d.id)}: ${d.desc} — المسؤول: ${d.owner} — الموعد: ${fmtD(d.due)}`)].join('\n');
+  copyBox('نص المحضر',t,'انسخ النص لمشاركته أو أرشفته.'); };
+
+/* ---- Voting between meetings ---- */
+const VLBL={yes:'موافق',no:'غير موافق',abstain:'ممتنع'};
+function vTally(v){ const el=MEMBERS.filter(m=>!v.conflict.includes(m.key)), c={yes:0,no:0,abstain:0}; el.forEach(m=>{ const x=v.v[m.key]; if(x) c[x]++; }); const need=Math.floor(el.length/2)+1; return {...c,el:el.length,cast:c.yes+c.no+c.abstain,need,pass:c.yes>=need}; }
+function viewVotes(){
+  const list=S.votes.filter(v=>inScope(v.co)).sort((a,b)=>(a.status==='open'?0:1)-(b.status==='open'?0:1)||b.opened.localeCompare(a.opened));
+  return header('التصويت بالتمرير','قرارات عاجلة بين الاجتماعات · يُقرّ البند بموافقة أغلبية الأعضاء المؤهلين',['chair','vice','sec'].includes(S.me)?`<button class="btn primary" onclick="openVoteNew()">+ طرح بند للتصويت</button>`:'')
+  + `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr))">${list.map(voteCard).join('')||'<div class="empty">لا توجد عمليات تصويت.</div>'}</div>`;
+}
+function voteCard(v){
+  const t=vTally(v), mine=v.v[S.me], conf=v.conflict.includes(S.me), open=v.status==='open', mgr=['chair','sec'].includes(S.me);
+  const seg=(k,col)=>t[k]?`<div style="flex:${t[k]};background:${col};border-radius:4px" title="${VLBL[k]}: ${n(t[k])}"></div>`:'';
+  return `<div class="card"><div class="row between" style="align-items:flex-start"><b style="font-size:15px;color:var(--head)">${esc(v.title)}</b><span class="pill ${open?'s-info':t.pass?'s-good':'s-crit'}">${open?'مفتوح':t.pass?'أُقرّ':'لم يُقرّ'}</span></div>
+   <div class="small muted row" style="margin:6px 0;gap:6px;flex-wrap:wrap">${dot(v.co)}${coName(v.co)}${v.amount?' · '+money(v.amount)+' ريال':''} · ${open?'ينتهي '+fmtD(v.deadline):'أُغلق'}</div>
+   <div class="small">${esc(v.desc)}</div>
+   <div style="display:flex;gap:2px;height:12px;margin:12px 0 8px;background:var(--line2);border-radius:4px">${seg('yes','var(--good)')}${seg('no','var(--crit)')}${seg('abstain','var(--idle)')}${t.el-t.cast?`<div style="flex:${t.el-t.cast}"></div>`:''}</div>
+   <div class="legend"><span><i class="swatch" style="background:var(--good)"></i>موافق ${n(t.yes)}</span><span><i class="swatch" style="background:var(--crit)"></i>غير موافق ${n(t.no)}</span><span><i class="swatch" style="background:var(--idle)"></i>ممتنع ${n(t.abstain)}</span><span class="muted">لم يصوّت ${n(t.el-t.cast)} · المطلوب للإقرار ${n(t.need)}</span></div>
+   ${v.conflict.length?`<div class="small muted" style="margin-top:6px">أفصح عن تعارض مصالح: ${v.conflict.map(k=>shortName(memberOf(k).name)).join('، ')}</div>`:''}
+   ${open?`<hr class="sep">${conf?'<div class="small">أفصحت عن تعارض مصالح، فلا تصوّت على هذا البند.</div>':`<div class="row" style="flex-wrap:wrap"><span class="small muted">صوتك:</span>${Object.keys(VLBL).map(k=>`<button class="btn ${mine===k?'primary':''}" onclick="castVote(${v.id},'${k}')">${VLBL[k]}</button>`).join('')}</div>`}
+     <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn" onclick="toggleConflict(${v.id})">${conf?'إلغاء الإفصاح':'إفصاح عن تعارض مصالح'}</button>${mgr?`<button class="btn" onclick="closeVote(${v.id})">إغلاق التصويت</button>`:''}</div>`
+   :(t.pass?(v.dec?`<div class="small" style="margin-top:10px">سُجّل في سجل القرارات: <a href="#decisions" class="more-link" onclick="event.preventDefault();openDecision(${v.dec})">${decRef(v.dec)}</a></div>`:(mgr?`<button class="btn" style="margin-top:10px" onclick="voteToDecision(${v.id})">تحويل إلى قرار في السجل</button>`:'')):'')}
+  </div>`;
+}
+const vGet=id=>S.votes.find(x=>x.id===id);
+window.castVote=(id,k)=>{ const v=vGet(id); v.v[S.me]=k; logAct(`صوّت على «${v.title}»`); save(); render(); toast('سُجّل صوتك: '+VLBL[k]); };
+window.toggleConflict=id=>{ const v=vGet(id); if(v.conflict.includes(S.me)) v.conflict=v.conflict.filter(k=>k!==S.me); else { v.conflict.push(S.me); delete v.v[S.me]; logAct(`أفصح عن تعارض مصالح في «${v.title}»`); } save(); render(); };
+window.closeVote=id=>{ const v=vGet(id), t=vTally(v); ask('إغلاق التصويت',`النتيجة الحالية: ${n(t.yes)} موافق من ${n(t.el)} أعضاء مؤهلين، والمطلوب ${n(t.need)}. ${t.pass?'سيُقرّ البند.':'لن يُقرّ البند.'}`,'إغلاق التصويت',()=>{ v.status='closed'; logAct(`أغلق التصويت على «${v.title}» — ${t.pass?'أُقرّ':'لم يُقرّ'}`); save(); render(); }); };
+window.voteToDecision=id=>{ const v=vGet(id), did=S.nextId++; S.decisions.push({id:did,co:v.co,desc:v.title,owner:'الممثل الإداري',due:iso(addBiz(today(),10)),status:'لم يبدأ',evidence:'',reason:'أُقرّ بالتصويت بالتمرير'}); v.dec=did; logAct(`حوّل نتيجة التصويت إلى القرار ${decRef(did)}`); save(); render(); toast('أُضيف إلى سجل القرارات'); };
+window.openVoteNew=()=>{ openModal(mhead('طرح بند للتصويت')+`<div class="body">${field('البند',`<input type="text" id="v_t">`,1)}${field('الشركة',`<select id="v_co">${coOpts('all')}</select>`)}${field('المبلغ (ألف ريال، اختياري)',`<input type="number" id="v_a" min="0">`)}${field('آخر موعد للتصويت',`<input type="date" id="v_d" value="${iso(addBiz(today(),3))}">`)}${field('التفاصيل والمبررات',`<textarea id="v_desc" rows="3"></textarea>`,1)}<div class="err" id="v_err"></div></div><footer><button class="btn primary" onclick="saveVote()">طرح للتصويت</button><button class="btn" onclick="closeModal()">إلغاء</button></footer>`); setTimeout(()=>$('#v_t').focus(),50); };
+window.saveVote=()=>{ const t=$('#v_t').value.trim(); if(!t){ const e=$('#v_err'); e.style.display='block'; e.textContent='اكتب البند.'; return; } S.votes.push({id:uid(),title:t,co:$('#v_co').value,desc:$('#v_desc').value.trim(),amount:+$('#v_a').value||0,opened:iso(today()),deadline:$('#v_d').value,v:{},conflict:[],status:'open',dec:null}); logAct(`طرح للتصويت «${t}»`); save(); closeModal(); render(); toast('طُرح البند للتصويت'); };
+
+/* ---- Approval requests ---- */
+const RSTEPS=['مراجعة أمين المجلس','دراسة المجلس ورفع التوصية','اعتماد صاحب الصلاحية'];
+const RACT=[['sec'],['chair','vice','fin','sec'],['chair']];
+const reqCls={'قيد الإجراء':'s-info','معاد للاستكمال':'s-warn','معتمد':'s-good','مرفوض':'s-crit'};
+const canActR=r=>r.status==='قيد الإجراء'&&!!RACT[r.stage]&&RACT[r.stage].includes(S.me);
+const myReqTurn=r=>canActR(r)||(r.status==='معاد للاستكمال'&&S.me===r.co);
+const stepper=r=>`<div class="steps">${RSTEPS.map((s,i)=>`<i class="${r.status==='معتمد'||i<r.stage?'done':(i===r.stage&&r.status==='قيد الإجراء'?'cur':'')}" title="${s}"></i>`).join('')}</div>`;
+let QF='';
+function viewRequests(){
+  const vis=S.requests.filter(r=>inScope(r.co));
+  const rows=vis.filter(r=>!QF||(QF==='mine'?myReqTurn(r):r.status===QF)).sort((a,b)=>b.date.localeCompare(a.date));
+  const sum=vis.filter(r=>r.status==='قيد الإجراء').reduce((s,r)=>s+(r.amount||0),0);
+  return header('طلبات الاعتماد','كل طلب يسلك مساره بحسب مستوى الصلاحية: مراجعة ← دراسة ← اعتماد',`<button class="btn primary" onclick="openReqNew()">+ طلب جديد</button>`)
+  + `<div class="grid tiles">
+      <div class="card tile"><div class="lbl">قيد الإجراء</div><div class="val">${n(vis.filter(r=>r.status==='قيد الإجراء').length)}</div></div>
+      <div class="card tile"><div class="lbl">بانتظار إجرائك</div><div class="val" style="color:${vis.some(myReqTurn)?'var(--warn)':'var(--head)'}">${n(vis.filter(myReqTurn).length)}</div></div>
+      <div class="card tile"><div class="lbl">معتمدة</div><div class="val">${n(vis.filter(r=>r.status==='معتمد').length)}</div></div>
+      <div class="card tile"><div class="lbl">قيمة الطلبات قيد الإجراء</div><div class="val">${money(sum)}</div><div class="delta muted">ريال</div></div></div>
+    <div class="filters" style="margin-top:16px"><div class="seg">${[['','الكل'],['mine','بانتظار إجرائي'],['قيد الإجراء','قيد الإجراء'],['معاد للاستكمال','معادة'],['معتمد','معتمدة'],['مرفوض','مرفوضة']].map(([k,l])=>`<button class="${QF===k?'on':''}" onclick="QF='${k}';render()">${l}</button>`).join('')}</div></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))">${rows.map(r=>`<div class="card co" onclick="openRequest(${r.id})"><i class="bar" style="background:${r.co==='all'?'var(--gold)':co(r.co).hex}"></i>
+      <div class="row between" style="align-items:flex-start"><b style="color:var(--head)">${esc(r.title)}</b><span class="pill ${reqCls[r.status]}">${r.status}</span></div>
+      <div class="small muted" style="margin:4px 0 10px">${coName(r.co)} · المستوى ${n(r.lvl+1)}: ${LEVELS[r.lvl].t}${r.amount?' · '+money(r.amount)+' ريال':''}${r.budgeted?'':' · خارج الموازنة'}</div>
+      ${stepper(r)}<div class="small" style="margin-top:6px">${r.status==='قيد الإجراء'?'المرحلة: '+RSTEPS[r.stage]:'آخر إجراء: '+esc(r.steps[r.steps.length-1].act)}${myReqTurn(r)?' <span class="pill s-warn">بانتظار إجرائك</span>':''}</div></div>`).join('')||'<div class="empty">لا توجد طلبات مطابقة.</div>'}</div>`;
+}
+window.openRequest=function(id){
+  const r=S.requests.find(x=>x.id===id); if(!r) return;
+  const act=canActR(r), resub=r.status==='معاد للاستكمال'&&S.me===r.co, files=S.files.filter(f=>(r.files||[]).includes(f.id));
+  openModal(mhead(esc(r.title))+`<div class="body">
+   <div class="full row between"><span class="pill ${reqCls[r.status]}">${r.status}</span><span class="small muted">قدّمه ${esc(shortName(memberOf(r.by).name))} · ${fmtD(r.date)}</span></div>
+   <div class="full kvs"><div><div class="small">الشركة</div><b>${coName(r.co)}</b></div><div><div class="small">المبلغ</div><b>${r.amount?money(r.amount)+' ريال':'—'}</b></div><div><div class="small">مستوى الصلاحية</div><b>${n(r.lvl+1)} — ${LEVELS[r.lvl].t}</b></div><div><div class="small">ضمن الموازنة</div><b>${r.budgeted?'نعم':'لا'}</b></div></div>
+   <div class="full notice">المسار: ${LEVELS[r.lvl].who}</div>
+   <div class="full">${stepper(r)}<div class="row between small muted" style="margin-top:4px">${RSTEPS.map(s=>`<span>${s}</span>`).join('')}</div></div>
+   <div class="full sec-title">سجل الإجراءات</div>
+   <div class="full loglist">${r.steps.map(s=>`<div class="it"><span class="muted small">${fmtD(s.d)} · ${esc(shortName(memberOf(s.who).name))}</span><div><b>${esc(s.act)}</b>${s.note?' — '+esc(s.note):''}</div></div>`).join('')}</div>
+   <div class="full sec-title">المرفقات</div>
+   <div class="full">${files.map(f=>`<div class="mini" onclick="openFile(${f.id})"><span class="row" style="gap:8px"><span class="fext">${extOf(f.name)}</span>${esc(f.name)}</span></div>`).join('')||'<div class="muted small">لا مرفقات.</div>'}
+     <select style="width:100%;margin-top:8px" onchange="if(this.value) reqAttach(${id},+this.value)"><option value="">+ إرفاق ملف من المستندات</option>${S.files.filter(f=>inScope(f.co)&&!(r.files||[]).includes(f.id)).map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('')}</select></div>
+   ${act||resub?field(act?'ملاحظة أو توصية (مطلوبة عند الإعادة أو الرفض)':'ما الذي استُكمل؟',`<textarea id="rq_note" rows="2"></textarea>`,1):''}
+   ${!act&&!resub&&r.status==='قيد الإجراء'?`<div class="full small muted">الإجراء الحالي لـ: ${RACT[r.stage].map(k=>shortName(memberOf(k).name)).join(' أو ')}</div>`:''}
+   <div class="err" id="rq_err"></div></div>
+  <footer style="flex-wrap:wrap">${act?`<button class="btn primary" onclick="reqAct(${id},'ok')">${r.stage===2?'اعتماد الطلب':'رفع للمرحلة التالية'}</button><button class="btn" onclick="reqAct(${id},'back')">إعادة للاستكمال</button><button class="btn" style="color:var(--crit)" onclick="reqAct(${id},'no')">رفض</button>`:''}${resub?`<button class="btn primary" onclick="reqAct(${id},'resub')">إعادة التقديم</button>`:''}<button class="btn" onclick="closeModal()">إغلاق</button></footer>`);
+};
+window.reqAttach=(id,fid)=>{ const r=S.requests.find(x=>x.id===id); (r.files=r.files||[]).push(fid); save(); openRequest(id); };
+window.reqAct=function(id,a){
+  const r=S.requests.find(x=>x.id===id), note=($('#rq_note')||{value:''}).value.trim();
+  if((a==='back'||a==='no')&&!note){ const e=$('#rq_err'); e.style.display='block'; e.textContent='اكتب سبب الإعادة أو الرفض.'; return; }
+  const lbl={ok:r.stage===2?'اعتماد الطلب':'رفع إلى «'+RSTEPS[r.stage+1]+'»',back:'إعادة للاستكمال',no:'رفض الطلب',resub:'إعادة التقديم'}[a];
+  r.steps.push({who:S.me,act:lbl,note,d:iso(today())});
+  if(a==='ok'){ if(r.stage===2){ r.status='معتمد'; r.stage=3; } else r.stage++; }
+  if(a==='back'){ r.status='معاد للاستكمال'; r.stage=0; }
+  if(a==='no') r.status='مرفوض';
+  if(a==='resub'){ r.status='قيد الإجراء'; r.stage=0; }
+  logAct(`${lbl}: «${r.title}»`); save(); closeModal(); render(); toast(lbl);
+};
+window.openReqNew=function(){
+  openModal(mhead('طلب اعتماد جديد')+`<div class="body">${field('موضوع الطلب',`<input type="text" id="rn_t">`,1)}${field('الشركة',`<select id="rn_co">${coOpts(myScope()!=='all'?myScope():'clinic')}</select>`)}${field('مستوى الصلاحية',`<select id="rn_l">${LEVELS.map((l,i)=>i?`<option value="${i}">${n(i+1)} — ${l.t}</option>`:'').join('')}</select>`)}${field('المبلغ (ألف ريال)',`<input type="number" id="rn_a" min="0">`)}${field('ضمن الموازنة المعتمدة؟',`<select id="rn_b"><option value="0">لا</option><option value="1">نعم</option></select>`)}${field('المبررات والأثر المتوقع',`<textarea id="rn_n" rows="3"></textarea>`,1)}<div class="err" id="rn_err"></div></div><footer><button class="btn primary" onclick="saveReq()">تقديم الطلب</button><button class="btn" onclick="closeModal()">إلغاء</button></footer>`);
+  setTimeout(()=>$('#rn_t').focus(),50);
+};
+window.saveReq=function(){
+  const t=$('#rn_t').value.trim(); if(!t){ const e=$('#rn_err'); e.style.display='block'; e.textContent='اكتب موضوع الطلب.'; return; }
+  const r={id:uid(),co:$('#rn_co').value,lvl:+$('#rn_l').value,title:t,amount:+$('#rn_a').value||0,budgeted:$('#rn_b').value==='1',by:S.me,date:iso(today()),stage:0,status:'قيد الإجراء',files:[],steps:[{who:S.me,act:'تقديم الطلب',note:$('#rn_n').value.trim(),d:iso(today())}]};
+  S.requests.push(r); logAct(`قدّم طلب اعتماد «${t}»`); save(); closeModal(); render(); openRequest(r.id);
+};
+
+/* ---- Finance: budget vs actual + cash forecast ---- */
+const NEXTM=['ديسمبر','يناير','فبراير'];
+const avg3=a=>a.slice(-3).reduce((s,x)=>s+x,0)/3, sumA=a=>a.reduce((s,x)=>s+x,0);
+function forecast(c){ // simple 3-month projection: inflow = avg revenue × collection rate + a quarter of overdue balances; outflow = avg expenses + a third of upcoming payables
+  const f=S.fin[c], od=S.clients.filter(x=>x.co===c&&x.age>60).reduce((s,x)=>s+x.bal,0); let cash=f.cash;
+  return NEXTM.map(m=>{ const inflow=avg3(f.rev)*f.coll/100+od*0.25, out=avg3(f.exp)+f.payables/3; cash+=inflow-out; return {m,inflow,out,cash}; });
+}
+function varPill(a,b,lowGood){ const v=(a-b)/b*100, good=lowGood?v<=0:v>=0, near=Math.abs(v)<=5; return `<span class="pill ${good?'s-good':near?'s-warn':'s-crit'}">${v>=0?'+':'−'}${n(Math.abs(v),1)}٪</span>`; }
+function viewFinance(){
+  const L=MONTHS.length-1, list=COMPANIES.filter(c=>inScope(c.id)), B=c=>S.budget[c.id];
+  const tot=(k,src)=>list.reduce((s,c)=>s+sumA(src(c)[k]),0);
+  const ar=tot('rev',c=>S.fin[c.id]), br=tot('rev',B), ae=tot('exp',c=>S.fin[c.id]), be=tot('exp',B);
+  const endCash=list.reduce((s,c)=>s+forecast(c.id)[2].cash,0);
+  return header('المالية والموازنة',`الفعلي مقابل الموازنة · ${MONTHS[L]} ٢٠٢٦ ومنذ ${MONTHS[0]}`,['fin','sec','chair'].includes(S.me)?`<button class="btn" onclick="openBudget()">تعديل الموازنة</button>`:'')
+  + `<div class="grid tiles">
+      <div class="card tile"><div class="lbl">الإيرادات منذ ${MONTHS[0]}</div><div class="val">${money(ar)}</div><div class="delta">${varPill(ar,br)} <span class="muted">عن الموازنة ${money(br)}</span></div></div>
+      <div class="card tile"><div class="lbl">المصروفات منذ ${MONTHS[0]}</div><div class="val">${money(ae)}</div><div class="delta">${varPill(ae,be,true)} <span class="muted">عن الموازنة ${money(be)}</span></div></div>
+      <div class="card tile"><div class="lbl">النتيجة التشغيلية منذ ${MONTHS[0]}</div><div class="val">${money(ar-ae)}</div><div class="delta">${varPill(ar-ae,br-be)} <span class="muted">عن الموازنة</span></div></div>
+      <div class="card tile"><div class="lbl">السيولة المتوقعة نهاية ${NEXTM[2]}</div><div class="val">${money(endCash)}</div><div class="delta muted">مجموع الشركات · تقديري</div></div></div>
+    <div class="tbl-wrap" style="margin-top:16px"><table><thead><tr><th>الشركة</th><th>إيرادات ${MONTHS[L]}</th><th>الموازنة</th><th>الانحراف</th><th>مصروفات ${MONTHS[L]}</th><th>الموازنة</th><th>الانحراف</th><th>الإيرادات منذ ${MONTHS[0]}</th><th>الانحراف</th></tr></thead><tbody>
+    ${list.map(c=>{const f=S.fin[c.id],b=B(c); return `<tr onclick="location.hash='company-${c.id}'"><td><span class="row" style="gap:6px">${dot(c.id)}<b>${c.short}</b></span></td><td>${money(f.rev[L])}</td><td class="muted">${money(b.rev[L])}</td><td>${varPill(f.rev[L],b.rev[L])}</td><td>${money(f.exp[L])}</td><td class="muted">${money(b.exp[L])}</td><td>${varPill(f.exp[L],b.exp[L],true)}</td><td>${money(sumA(f.rev))}</td><td>${varPill(sumA(f.rev),sumA(b.rev))}</td></tr>`;}).join('')}
+    </tbody></table></div>
+    <div class="dec-cards">${list.map(c=>{const f=S.fin[c.id],b=B(c); return `<div class="dec-card"><div class="row between"><span class="row" style="gap:6px">${dot(c.id)}<b>${c.short}</b></span>${varPill(sumA(f.rev),sumA(b.rev))}</div><div class="meta"><span>إيرادات الشهر ${money(f.rev[L])} ${varPill(f.rev[L],b.rev[L])}</span><span>مصروفات الشهر ${money(f.exp[L])} ${varPill(f.exp[L],b.exp[L],true)}</span></div></div>`;}).join('')}</div>
+    <div class="grid split2" style="margin-top:16px">
+      <div class="card"><h3>توقع السيولة لثلاثة أشهر <small>رصيد نهاية كل شهر · تقديري</small></h3>
+        ${list.map(c=>{const fc=forecast(c.id), ex=avg3(S.fin[c.id].exp); return `<div class="mini" style="cursor:default;flex-wrap:wrap"><span class="row" style="gap:6px">${dot(c.id)}<b>${c.short}</b><span class="small muted">الحالية ${money(S.fin[c.id].cash)}</span></span><span class="row" style="gap:6px;flex-wrap:wrap">${fc.map(x=>`<span class="pill ${x.cash<0?'s-crit':x.cash<ex?'s-warn':'s-idle'}">${x.m}: ${money(x.cash)}</span>`).join('')}</span></div>`;}).join('')}
+        <div class="small muted" style="margin-top:10px">الداخل = متوسط الإيرادات × نسبة التحصيل + ربع المستحقات التي تجاوزت ٦٠ يومًا · الخارج = متوسط المصروفات + ثلث الالتزامات القادمة. الأصفر: أقل من مصروفات شهر واحد.</div></div>
+      <div class="card"><h3>انحراف الإيرادات عن الموازنة <small>منذ ${MONTHS[0]}</small></h3>
+        ${list.map(c=>{const v=(sumA(S.fin[c.id].rev)-sumA(B(c).rev))/sumA(B(c).rev)*100, w=Math.min(50,Math.abs(v)/12*50);
+          return `<div style="padding:8px 0"><div class="row between small"><span class="row" style="gap:6px">${dot(c.id)}${c.short}</span><b class="${v>=0?'up':'down'}">${v>=0?'+':'−'}${n(Math.abs(v),1)}٪</b></div><div style="position:relative;height:10px;background:var(--line2);border-radius:5px;margin-top:5px"><i style="position:absolute;top:0;bottom:0;${v>=0?'right':'left'}:50%;width:${w}%;background:${v>=0?'var(--good)':'var(--crit)'};border-radius:5px"></i><i style="position:absolute;top:-3px;bottom:-3px;left:50%;width:2px;background:var(--axis)"></i></div></div>`;}).join('')}
+        <div class="row between small muted" style="margin-top:6px"><span>دون الموازنة →</span><span>← فوق الموازنة</span></div></div>
+    </div>`;
+}
+window.openBudget=function(c){ c=c||'clinic'; const b=S.budget[c];
+  openModal(mhead('تعديل الموازنة')+`<div class="body">${field('الشركة',`<select onchange="openBudget(this.value)">${COMPANIES.map(x=>`<option value="${x.id}" ${x.id===c?'selected':''}>${x.short}</option>`).join('')}</select>`,1)}
+  ${MONTHS.map((m,i)=>field(`${m} ٢٠٢٦ — الإيرادات / المصروفات (ألف ريال)`,`<div class="row"><input type="number" id="bg_r${i}" value="${b.rev[i]}" style="flex:1;min-width:0" aria-label="إيرادات ${m}"><input type="number" id="bg_e${i}" value="${b.exp[i]}" style="flex:1;min-width:0" aria-label="مصروفات ${m}"></div>`)).join('')}</div>
+  <footer><button class="btn primary" onclick="saveBudget('${c}')">حفظ</button><button class="btn" onclick="closeModal()">إلغاء</button></footer>`); };
+window.saveBudget=c=>{ const b=S.budget[c]; MONTHS.forEach((_,i)=>{ b.rev[i]=+$('#bg_r'+i).value||0; b.exp[i]=+$('#bg_e'+i).value||0; }); logAct(`عدّل موازنة ${co(c).short}`); save(); closeModal(); render(); toast('حُفظت الموازنة'); };
+
+/* ---- Shared services ---- */
+const BASIS={rev:'حسب الإيرادات',equal:'بالتساوي',use:'حسب الاستخدام'};
+function alloc(s){
+  const out={};
+  if(s.basis==='equal') COMPANIES.forEach(c=>out[c.id]=1/COMPANIES.length);
+  else if(s.basis==='use'){ const t=COMPANIES.reduce((a,c)=>a+(s.use[c.id]||0),0)||1; COMPANIES.forEach(c=>out[c.id]=(s.use[c.id]||0)/t); }
+  else { const t=COMPANIES.reduce((a,c)=>a+last(S.fin[c.id].rev),0); COMPANIES.forEach(c=>out[c.id]=last(S.fin[c.id].rev)/t); }
+  return out;
+}
+function viewServices(){
+  const tot={}; COMPANIES.forEach(c=>tot[c.id]=0); S.services.forEach(s=>{ const a=alloc(s); COMPANIES.forEach(c=>tot[c.id]+=s.cost*a[c.id]); });
+  const mgr=['sec','fin','chair'].includes(S.me), pend=S.services.filter(s=>COMPANIES.some(c=>!s.ok[c.id])).length;
+  return header('الخدمات والتكاليف المشتركة','لكل خدمة مقدّمها وأساس توزيع تكلفتها، وتعتمد كل شركة حصتها',mgr?`<button class="btn primary" onclick="openService()">+ خدمة مشتركة</button>`:'')
+  + `<div class="grid tiles">
+      <div class="card tile"><div class="lbl">التكلفة الشهرية المشتركة</div><div class="val">${money(S.services.reduce((s,x)=>s+x.cost,0))}</div><div class="delta muted">${n(S.services.length)} خدمات</div></div>
+      ${COMPANIES.map(c=>`<div class="card tile"><div class="lbl row" style="gap:6px">${dot(c.id)}حصة ${c.short}</div><div class="val">${money(tot[c.id])}</div></div>`).join('')}</div>
+    ${pend?`<div class="notice" style="margin-top:16px">${n(pend)} خدمات بانتظار اعتماد حصص بعض الشركات. يعتمد ممثل كل شركة حصتها عند العمل بصفته.</div>`:''}
+    <div class="grid" style="margin-top:16px">${S.services.map(s=>{const a=alloc(s); return `<div class="card"><h3><span>${esc(s.name)} <small>${s.prov==='all'?'تُقدَّم مركزيًا':'يقدّمها '+co(s.prov).short} · ${money(s.cost)} ريال شهريًا · ${BASIS[s.basis]}</small></span>${mgr?`<button class="btn" onclick="openService(${s.id})">تعديل</button>`:''}</h3>
+      <div style="display:flex;gap:2px;height:12px;margin-bottom:12px">${COMPANIES.map(c=>a[c.id]?`<div style="flex:${a[c.id]};background:${c.hex};border-radius:3px" title="${c.short} ${n(a[c.id]*100)}٪"></div>`:'').join('')}</div>
+      <div class="cycle">${COMPANIES.map(c=>`<div class="cy" style="cursor:default"><span class="row" style="gap:6px">${dot(c.id)}<b>${c.short}</b></span><span class="small">${n(a[c.id]*100)}٪ · ${money(s.cost*a[c.id])}</span>${s.ok[c.id]?'<span class="pill s-good">اعتمدت حصتها</span>':(S.me===c.id?`<button class="btn primary" onclick="svcOk(${s.id},'${c.id}')">اعتماد حصتنا</button>`:'<span class="pill s-idle">بانتظار الاعتماد</span>')}</div>`).join('')}</div></div>`;}).join('')}</div>`;
+}
+window.svcOk=(id,c)=>{ const s=S.services.find(x=>x.id===id); s.ok[c]=1; logAct(`اعتمد حصة ${co(c).short} من «${s.name}»`); save(); render(); toast('اعتُمدت الحصة'); };
+window.openService=function(id){ const s=id?S.services.find(x=>x.id===id):{name:'',prov:'all',cost:0,basis:'rev',use:{},ok:{}};
+  openModal(mhead(id?'تعديل الخدمة':'خدمة مشتركة جديدة')+`<div class="body">${field('اسم الخدمة',`<input type="text" id="sv_n" value="${esc(s.name)}">`,1)}${field('مقدّم الخدمة',`<select id="sv_p">${coOpts(s.prov)}</select>`)}${field('التكلفة الشهرية (ألف ريال)',`<input type="number" id="sv_c" value="${s.cost}">`)}${field('أساس التوزيع',`<select id="sv_b">${Object.entries(BASIS).map(([k,l])=>`<option value="${k}" ${s.basis===k?'selected':''}>${l}</option>`).join('')}</select>`,1)}${COMPANIES.map(c=>field(`نسبة استخدام ${c.short} ٪`,`<input type="number" id="sv_u_${c.id}" value="${s.use[c.id]||0}">`)).join('')}<div class="full small muted">نسب الاستخدام تُطبّق عند اختيار «حسب الاستخدام». أي تعديل يعيد طلب اعتماد الحصص من الشركات.</div><div class="err" id="sv_err"></div></div><footer><button class="btn primary" onclick="saveService(${id||'null'})">حفظ</button><button class="btn" onclick="closeModal()">إلغاء</button></footer>`); };
+window.saveService=function(id){ const v={name:$('#sv_n').value.trim(),prov:$('#sv_p').value,cost:+$('#sv_c').value||0,basis:$('#sv_b').value,use:{},ok:{}}; COMPANIES.forEach(c=>v.use[c.id]=+$('#sv_u_'+c.id).value||0);
+  if(!v.name){ const e=$('#sv_err'); e.style.display='block'; e.textContent='اكتب اسم الخدمة.'; return; }
+  if(id) Object.assign(S.services.find(x=>x.id===id),v); else S.services.push({id:uid(),...v}); logAct(`${id?'عدّل':'أضاف'} الخدمة المشتركة «${v.name}»`); save(); closeModal(); render(); toast('حُفظت الخدمة'); };
+
+/* ---- People ---- */
+const PST={'مشغول':'s-good','قيد التعيين':'s-info','شاغر':'s-crit'};
+function viewPeople(){
+  const list=COMPANIES.filter(c=>inScope(c.id)), P=c=>S.people[c.id];
+  const head=list.reduce((s,c)=>s+P(c).head,0), vac=list.reduce((s,c)=>s+P(c).vac,0), kv=list.reduce((s,c)=>s+P(c).key.filter(k=>k[1]!=='مشغول').length,0);
+  return header('الموارد البشرية','لمحة عن القوى العاملة والمناصب القيادية — دون بيانات شخصية')
+  + `<div class="grid tiles">
+      <div class="card tile"><div class="lbl">إجمالي الموظفين</div><div class="val">${n(head)}</div></div>
+      <div class="card tile"><div class="lbl">وظائف شاغرة</div><div class="val">${n(vac)}</div></div>
+      <div class="card tile"><div class="lbl">مناصب قيادية غير مشغولة</div><div class="val" style="color:${kv?'var(--warn)':'var(--head)'}">${n(kv)}</div></div>
+      <div class="card tile"><div class="lbl">متوسط دوران الموظفين السنوي</div><div class="val">${n(list.reduce((s,c)=>s+P(c).turn,0)/list.length,1)}٪</div></div></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));margin-top:16px">${list.map(c=>{const p=P(c); return `<div class="card co" style="cursor:default"><i class="bar" style="background:${c.hex}"></i>
+      <h3>${c.short}${S.me===c.id||S.me==='sec'?`<button class="btn" onclick="openPeople('${c.id}')">تحديث</button>`:''}</h3>
+      <div class="kv" style="margin-top:0"><div><span>الموظفون</span><b>${n(p.head)}</b></div><div><span>الشواغر</span><b>${n(p.vac)}</b></div><div><span>الدوران السنوي</span><b class="${p.turn>10?'down':''}">${n(p.turn)}٪</b></div><div><span>رضا الموظفين</span><b>${n(p.sat,1)} / ٥</b></div></div>
+      <hr class="sep"><div class="small muted" style="margin-bottom:4px">المناصب القيادية</div>${p.key.map(k=>`<div class="mini" style="cursor:default"><span>${esc(k[0])}</span><span class="pill ${PST[k[1]]}">${k[1]}</span></div>`).join('')}</div>`;}).join('')}</div>`;
+}
+window.openPeople=function(c){ const p=S.people[c];
+  openModal(mhead('الموارد البشرية — '+co(c).short)+`<div class="body">${field('عدد الموظفين',numIn('pp_h',p.head))}${field('الوظائف الشاغرة',numIn('pp_v',p.vac))}${field('دوران الموظفين السنوي ٪',numIn('pp_t',p.turn))}${field('رضا الموظفين (من ٥)',numIn('pp_s',p.sat))}<div class="full sec-title">المناصب القيادية</div>${p.key.map((k,i)=>field(esc(k[0]),`<select id="pp_k${i}">${Object.keys(PST).map(s=>`<option ${k[1]===s?'selected':''}>${s}</option>`).join('')}</select>`)).join('')}${field('إضافة منصب قيادي',`<input type="text" id="pp_new" placeholder="اسم المنصب">`,1)}</div><footer><button class="btn primary" onclick="savePeople('${c}')">حفظ</button><button class="btn" onclick="closeModal()">إلغاء</button></footer>`); };
+window.savePeople=function(c){ const p=S.people[c]; p.head=+$('#pp_h').value||0; p.vac=+$('#pp_v').value||0; p.turn=+$('#pp_t').value||0; p.sat=+$('#pp_s').value||0; p.key.forEach((k,i)=>k[1]=$('#pp_k'+i).value); const nw=$('#pp_new').value.trim(); if(nw) p.key.push([nw,'شاغر']); logAct(`حدّث بيانات الموارد البشرية لـ ${co(c).short}`); save(); closeModal(); render(); toast('تم الحفظ'); };
+
+/* ---- KPI settings ---- */
+let KC='clinic';
+function viewKpiSet(){
+  if(!inScope(KC)) KC=myScope()!=='all'?myScope():'clinic';
+  const c=co(KC), ks=S.kpis[KC], ed=['sec','chair'].includes(S.me)||S.me===KC;
+  const units=[['','عدد'],['%','٪'],[' / ٥','من ٥']];
+  return header('إعداد المؤشرات','المؤشرات والمستهدفات لكل شركة، مع اتجاهها في آخر ستة أشهر')
+  + `<div class="filters"><div class="seg">${COMPANIES.filter(x=>inScope(x.id)).map(x=>`<button class="${KC===x.id?'on':''}" onclick="KC='${x.id}';render()">${x.short}</button>`).join('')}</div></div>
+    <div class="grid">${ks.map((k,i)=>`<div class="card"><div class="kpirow">
+      <div style="min-width:0">${ed?`<input type="text" value="${esc(k.t)}" style="width:100%;font-weight:600" aria-label="اسم المؤشر" onchange="kSet(${i},'t',this.value)">`:`<b>${esc(k.t)}</b>`}</div>
+      <div>${spark(k.h,c.hex,110,30)}</div>
+      <label class="small">الفعلي<b style="font-size:17px;color:var(--head)">${n(k.v,1)}${k.u}</b></label>
+      <label class="small">المستهدف${ed?`<input type="number" step="any" value="${k.g}" onchange="kSet(${i},'g',+this.value)" style="width:96px">`:`<b>${n(k.g,1)}${k.u}</b>`}</label>
+      ${ed?`<label class="small">الوحدة<select onchange="kSet(${i},'u',this.value)">${units.map(([v,l])=>`<option value="${v}" ${k.u===v?'selected':''}>${l}</option>`).join('')}</select></label>`:''}
+      <label class="small" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" ${k.low?'checked':''} ${ed?'':'disabled'} onchange="kSet(${i},'low',this.checked)">الأقل أفضل</label>
+      ${stPill(kpiState(k))}
+      ${ed?`<button class="btn" style="color:var(--crit)" onclick="kDel(${i})">حذف</button>`:''}</div></div>`).join('')}</div>
+    ${ed?`<div class="card" style="margin-top:16px"><h3>إضافة مؤشر لـ ${c.short}</h3><div class="row" style="flex-wrap:wrap"><input type="text" id="kn_t" placeholder="اسم المؤشر" style="flex:2;min-width:180px"><input type="number" step="any" id="kn_v" placeholder="القيمة الحالية" style="flex:1;min-width:110px"><input type="number" step="any" id="kn_g" placeholder="المستهدف" style="flex:1;min-width:110px"><select id="kn_u">${units.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select><button class="btn primary" onclick="kAdd()">إضافة</button></div></div>`:'<p class="small muted" style="margin-top:12px">يعدّل المؤشرات أمين المجلس والرئيس وممثل الشركة.</p>'}`;
+}
+window.kSet=(i,k,v)=>{ S.kpis[KC][i][k]=v; logAct(`عدّل مؤشر «${S.kpis[KC][i].t}» لـ ${co(KC).short}`); save(); render(); };
+window.kDel=i=>{ const k=S.kpis[KC][i]; ask('حذف المؤشر',`سيُحذف مؤشر «${esc(k.t)}» من ${co(KC).short}.`,'حذف المؤشر',()=>{ S.kpis[KC].splice(i,1); S.subs.filter(s=>s.co===KC&&s.kv).forEach(s=>s.kv.splice(i,1)); logAct(`حذف مؤشر «${k.t}» من ${co(KC).short}`); save(); render(); }); };
+window.kAdd=()=>{ const t=$('#kn_t').value.trim(), v=+$('#kn_v').value||0, g=+$('#kn_g').value; if(!t||!g){ toast('اكتب اسم المؤشر والمستهدف'); return; } S.kpis[KC].push({t,v,g,u:$('#kn_u').value,h:[v,v,v,v,v,v]}); S.subs.filter(s=>s.co===KC&&s.kv).forEach(s=>s.kv.push(null)); logAct(`أضاف مؤشر «${t}» لـ ${co(KC).short}`); save(); render(); toast('أُضيف المؤشر'); };
+
+/* ---- Board pack ---- */
+function viewPack(){
+  const md=S.meeting.date, L=MONTHS.length-1, rev=consolidated('rev'), exp=consolidated('exp');
+  const late=S.decisions.filter(d=>effStatus(d)==='متأخر'), open=S.decisions.filter(d=>effStatus(d)!=='مكتمل');
+  const reqs=S.requests.filter(r=>r.status==='قيد الإجراء'&&r.stage>=1), vts=S.votes.filter(v=>v.status==='open');
+  let framed=true; try{ framed=window.top!==window.self; }catch(e){}
+  const kv=arr=>`<div class="kvs" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">${arr.map(([l,v])=>`<div><div class="small">${l}</div><b style="font-size:17px">${v}</b></div>`).join('')}</div>`;
+  return header('حزمة الاجتماع',`تُرسل للأعضاء قبل الاجتماع · ${fmtD(md)}`,framed?'':`<button class="btn primary" onclick="window.print()">طباعة / حفظ PDF</button>`)
+  + `<div class="pack">
+    <section class="card pk-cover"><div class="serif" style="color:var(--gold3);font-size:19px">المجلس الإشرافي المشترك</div><h2 class="serif">حزمة الاجتماع الشهري</h2><div>${new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(parseD(md))} · الساعة ${esc(S.meeting.time)}</div><div class="small muted" style="margin-top:8px">${COMPANIES.map(c=>c.short).join(' · ')}</div></section>
+    <section class="card"><h3>جدول الأعمال <small>${n(90)} دقيقة</small></h3>${(()=>{let a=0;return AGENDA.map((x,i)=>{const s=a;a+=x.m;return `<div class="mini" style="cursor:default"><span>${n(i+1)}. ${x.t}</span><span class="small muted">${n(s)} – ${n(a)} د</span></div>`;}).join('');})()}</section>
+    <section class="card"><h3>الملخص الموحد <small>${MONTHS[L]} ٢٠٢٦</small></h3>${kv([['الإيرادات',money(rev[L])],['المصروفات',money(exp[L])],['النتيجة التشغيلية',money(rev[L]-exp[L])],['السيولة',money(COMPANIES.reduce((s,c)=>s+S.fin[c.id].cash,0))],['قرارات مفتوحة',n(open.length)],['قرارات متأخرة',n(late.length)]])}</section>
+    ${COMPANIES.map(c=>{const f=S.fin[c.id], s=subOf(c.id), st=s?s.status:'draft', rk=S.risks.filter(r=>r.co===c.id&&r.status!=='مغلق').sort((a,b)=>b.L*b.I-a.L*a.I).slice(0,2);
+      return `<section class="card pk-co"><h3><span class="row" style="gap:8px">${dot(c.id)}${c.name}</span><span class="pill ${subCls[st]}">التقرير: ${SUBST[st]}</span></h3>
+      ${kv([['الإيرادات',money(f.rev[L])],['المصروفات',money(f.exp[L])],['النتيجة',money(f.rev[L]-f.exp[L])],['السيولة',money(f.cash)],['التحصيل',n(f.coll)+'٪']])}
+      <table class="pk-t"><tbody>${S.kpis[c.id].map(k=>`<tr><td>${esc(k.t)}</td><td><b>${n(k.v,1)}${k.u}</b></td><td class="muted">المستهدف ${n(k.g,1)}${k.u}</td><td>${stPill(kpiState(k))}</td></tr>`).join('')}</tbody></table>
+      <div class="small" style="margin-top:10px"><b>الأولويات:</b> ${S.priorities[c.id].map(esc).join(' · ')}</div>
+      ${rk.length?`<div class="small" style="margin-top:4px"><b>أبرز المخاطر:</b> ${rk.map(r=>esc(r.title)+' ('+rLbl[rLvl(r.L*r.I)]+')').join(' · ')}</div>`:''}
+      ${s&&s.notes?`<div class="small" style="margin-top:4px"><b>ملاحظات الشركة:</b> ${esc(s.notes)}</div>`:''}</section>`;}).join('')}
+    <section class="card"><h3>القرارات المفتوحة <small>${n(open.length)}</small></h3><table class="pk-t"><tbody>${open.map(d=>`<tr onclick="openDecision(${d.id})" style="cursor:pointer"><td class="serif" style="color:var(--gold3);white-space:nowrap">${decRef(d.id)}</td><td>${esc(d.desc)}</td><td class="small">${esc(shortName(d.owner))}</td><td class="small" style="white-space:nowrap">${fmtD(d.due)}</td><td>${pill(effStatus(d))}</td></tr>`).join('')}</tbody></table></section>
+    <section class="card"><h3>المطلوب من المجلس</h3>
+      ${reqs.map(r=>`<div class="mini" onclick="openRequest(${r.id})"><span>طلب اعتماد: ${esc(r.title)} · ${coName(r.co)}${r.amount?' · '+money(r.amount)+' ريال':''}</span><span class="pill s-info">${RSTEPS[r.stage]}</span></div>`).join('')}
+      ${vts.map(v=>{const t=vTally(v); return `<div class="mini" onclick="location.hash='votes'"><span>تصويت جارٍ: ${esc(v.title)}</span><span class="pill s-info">${n(t.yes)} من ${n(t.need)} مطلوب</span></div>`;}).join('')}
+      ${!reqs.length&&!vts.length?'<div class="muted">لا بنود معلّقة.</div>':''}</section>
+    ${framed?'<p class="small muted">للطباعة أو الحفظ PDF افتح المنصّة من رابطها على GitHub.</p>':''}
+  </div>`;
+}
+
+/* ---- Council self-assessment ---- */
+const EVQ=['يصل جدول الأعمال والتقارير قبل الاجتماع بوقت كافٍ','التقارير الشهرية دقيقة وفي موعدها','النقاش يركّز على القرارات لا على التفاصيل التشغيلية','لكل قرار مسؤول وموعد واضحان','القرارات تُنفَّذ وتُتابَع حتى الإغلاق','الصلاحيات واضحة ولا تتداخل مع إدارات الشركات','تعارض المصالح يُفصَح عنه ويُدار','المجلس يضيف قيمة ملموسة للشركات'];
+const qKey=()=>{ const d=today(); return d.getFullYear()+'-Q'+(Math.floor(d.getMonth()/3)+1); };
+function viewEval(){
+  const q=qKey(), E=S.evals[q]||{}, mine=E[S.me]||[];
+  const avg=i=>{ const v=Object.values(E).map(a=>a[i]).filter(Boolean); return v.length?v.reduce((s,x)=>s+x,0)/v.length:0; };
+  const avgs=EVQ.map((t,i)=>({t,a:avg(i)})), rated=avgs.filter(x=>x.a), overall=rated.length?rated.reduce((s,x)=>s+x.a,0)/rated.length:0;
+  const sorted=[...rated].sort((a,b)=>a.a-b.a);
+  return header('تقييم أداء المجلس',`التقييم الذاتي ربع السنوي · ${q.slice(0,4)} — الربع ${n(+q.slice(-1))}`)
+  + `<div class="grid tiles">
+      <div class="card tile"><div class="lbl">المشاركون</div><div class="val">${n(Object.keys(E).length)} <span class="small muted">/ ${n(MEMBERS.length)}</span></div></div>
+      <div class="card tile"><div class="lbl">التقييم العام</div><div class="val">${n(overall,1)} <span class="small muted">/ ٥</span></div><div class="meter"><i style="width:${overall/5*100}%;background:var(--gold)"></i></div></div>
+      <div class="card tile"><div class="lbl">أقوى جانب</div><div style="font-weight:600;margin-top:6px">${sorted.length?esc(sorted[sorted.length-1].t):'—'}</div></div>
+      <div class="card tile"><div class="lbl">أضعف جانب</div><div style="font-weight:600;margin-top:6px;color:var(--crit)">${sorted.length?esc(sorted[0].t):'—'}</div></div></div>
+    <div class="grid split2" style="margin-top:16px">
+      <div class="card"><h3>تقييمك <small>${esc(shortName(me().name))} · ١ لا أوافق بشدة — ٥ أوافق بشدة</small></h3>
+        ${EVQ.map((t,i)=>`<div class="kpi"><div>${t}</div><div class="seg" style="margin-top:6px" role="group" aria-label="${t}">${[1,2,3,4,5].map(v=>`<button class="${mine[i]===v?'on':''}" onclick="rate(${i},${v})">${n(v)}</button>`).join('')}</div></div>`).join('')}</div>
+      <div class="card"><h3>النتائج <small>متوسط إجابات الأعضاء</small></h3>
+        ${avgs.map(x=>`<div style="padding:7px 0"><div class="row between small"><span>${x.t}</span><b>${x.a?n(x.a,1):'—'}</b></div><div class="meter"><i style="width:${x.a/5*100}%;background:${x.a&&x.a<3?'var(--crit)':'var(--gold)'}"></i></div></div>`).join('')}
+        ${sorted.length?`<hr class="sep"><div class="small"><b>مجالات التحسين:</b> ${sorted.slice(0,2).map(x=>esc(x.t)).join('، ')}</div>`:''}</div>
+    </div>`;
+}
+window.rate=(i,v)=>{ const q=qKey(), E=S.evals[q]=S.evals[q]||{}, a=E[S.me]=E[S.me]||[]; const was=a.filter(Boolean).length; a[i]=v; if(was<EVQ.length&&a.filter(Boolean).length===EVQ.length) logAct('أكمل تقييم أداء المجلس للربع الحالي'); save(); render(); };
+
+/* ---- Weekly WhatsApp digest ---- */
+window.digest=function(){
+  const late=S.decisions.filter(d=>effStatus(d)==='متأخر'), wk=S.tasks.filter(t=>t.status!=='done'&&daysTo(t.due)>=0&&daysTo(t.due)<=7);
+  const L=['*الملخص الأسبوعي — المجلس الإشرافي المشترك*',fmtD(iso(today())),'',`الاجتماع القادم: ${fmtD(S.meeting.date)} الساعة ${S.meeting.time}`,`آخر موعد للتقارير: ${fmtD(iso(subDl()))}`,'',
+    '*التقارير الشهرية:* '+COMPANIES.map(c=>`${c.short}: ${SUBST[(subOf(c.id)||{status:'draft'}).status]}`).join(' · '),'',
+    `*قرارات متأخرة (${late.length}):*`,...late.map(d=>`- ${decRef(d.id)} ${d.desc} — ${d.owner}`),'',
+    `*مهام هذا الأسبوع (${wk.length}):*`,...wk.map(t=>`- ${t.title} — ${shortName(t.owner)} — ${fmtD(t.due)}`),'',
+    `*بانتظار المجلس:* ${S.requests.filter(r=>r.status==='قيد الإجراء').length} طلبات اعتماد · ${S.votes.filter(v=>v.status==='open').length} تصويت مفتوح`];
+  copyBox('الملخص الأسبوعي',L.join('\n'),'انسخ الملخص وأرسله في مجموعة واتساب المجلس.');
+};
+
 /* ================= Router ================= */
 function render(){
   const route=(location.hash||'#dashboard').slice(1);
   renderNav(route); renderTabbar(route);
   const p=route.startsWith('company-')?'company':route, arg=route.slice(8);
-  const v={dashboard:viewDashboard,company:()=>viewCompany(arg),decisions:viewDecisions,meetings:viewMeetings,authority:viewAuthority,plan:viewPlan,members:viewMembers,clients:viewClients,files:viewFiles,tasks:viewTasks,calendar:viewCalendar,risks:viewRisks,activity:viewActivity,settings:viewSettings}[p]||viewDashboard;
+  const v={dashboard:viewDashboard,company:()=>viewCompany(arg),decisions:viewDecisions,meetings:viewMeetings,authority:viewAuthority,plan:viewPlan,members:viewMembers,clients:viewClients,files:viewFiles,tasks:viewTasks,calendar:viewCalendar,risks:viewRisks,activity:viewActivity,settings:viewSettings,reports:viewReports,minutes:viewMinutes,votes:viewVotes,requests:viewRequests,pack:viewPack,finance:viewFinance,services:viewServices,people:viewPeople,kpiset:viewKpiSet,evaluation:viewEval}[p]||viewDashboard;
   const y=window.scrollY; $('#main').innerHTML=v()+`<footer class="credit"><span class="credit-mark"></span>صُمّم وطُوّر بواسطة <a href="https://wa.me/966570091554?text=%D9%85%D8%B1%D8%AD%D8%A8%D9%8B%D8%A7%20%D8%B1%D9%88%D9%91%D8%A7%D8%AF%D8%8C%20%D8%B4%D8%A7%D9%87%D8%AF%D8%AA%20%D9%85%D9%86%D8%B5%D9%91%D8%A9%20%D8%A7%D9%84%D9%85%D8%AC%D9%84%D8%B3%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84" target="_blank" rel="noopener" title="تواصل مع روّاد عبر واتساب">روّاد</a></footer>`; if(render._last===route) window.scrollTo(0,y); else window.scrollTo(0,0);
   render._last=route;
   toggleMenu(false);
